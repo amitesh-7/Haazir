@@ -30,8 +30,8 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // CORS: support comma-separated origins in CORS_ORIGIN env and trim trailing slashes
 const rawCors = process.env.CORS_ORIGIN || "http://localhost:3000";
@@ -42,7 +42,7 @@ const allowedOrigins = rawCors
   .map((o) => o.replace(/\/$/, ""));
 
 // Add production frontend URL if in production
-if (process.env.NODE_ENV === 'production' && process.env.FRONTEND_URL) {
+if (process.env.NODE_ENV === "production" && process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ""));
 }
 
@@ -68,7 +68,10 @@ app.use(
       }
 
       // For development, allow all localhost origins
-      if (process.env.NODE_ENV !== 'production' && normalized.startsWith("http://localhost:")) {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        normalized.startsWith("http://localhost:")
+      ) {
         console.log(`✅ CORS allowing localhost origin: ${origin}`);
         return callback(null, true);
       }
@@ -117,10 +120,17 @@ app.get("/", (req, res) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Error:", err);
-  res.status(500).json({ error: "Internal server error" });
-});
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+);
 
 // 404 handler
 app.use("*", (req, res) => {
@@ -128,7 +138,7 @@ app.use("*", (req, res) => {
 });
 
 // Start server (only in non-production environment)
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
