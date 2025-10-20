@@ -1,6 +1,7 @@
 # Next Steps - Deploy to Vercel
 
 ## ✅ Completed Steps
+
 - [x] Modified backend for serverless deployment
 - [x] Updated CORS configuration for production
 - [x] Created Vercel configuration files (fixed rewrites/routes conflict)
@@ -14,14 +15,17 @@
 ## 🚀 Next Steps to Deploy
 
 ### Step 1: Install Vercel CLI (if not already installed)
+
 ```powershell
 npm install -g vercel
 ```
 
 ### Step 2: Login to Vercel
+
 ```powershell
 vercel login
 ```
+
 This will open your browser to authenticate with Vercel.
 
 ### Step 3: Deploy to Vercel
@@ -68,37 +72,46 @@ After first deployment, add these environment variables:
 3. Add each variable below:
 
 #### Database Variables
+
 ```
 DATABASE_URL=postgresql://user:password@host:5432/haazir
 ```
+
 **Value**: Your PostgreSQL connection string from Supabase/Neon/Railway
 
 #### Authentication Variables
+
 ```
 JWT_SECRET=your_super_secret_jwt_key_at_least_32_characters_long
 JWT_EXPIRES_IN=7d
 SESSION_SECRET=your_session_secret_key
 ```
-**Generate secure secrets**: 
+
+**Generate secure secrets**:
+
 ```powershell
 # Generate random secret in PowerShell
 -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | ForEach-Object {[char]$_})
 ```
 
 #### Server Configuration
+
 ```
 NODE_ENV=production
 PORT=5000
 ```
 
 #### CORS Configuration
+
 ```
 FRONTEND_URL=https://your-deployment-url.vercel.app
 CORS_ORIGIN=https://your-deployment-url.vercel.app
 ```
+
 **Note**: After first deployment, Vercel will give you a URL. Add it here and redeploy.
 
 ### For Each Variable:
+
 - **Environment**: Select `Production`, `Preview`, and `Development`
 - Click **Save**
 
@@ -111,13 +124,14 @@ CORS_ORIGIN=https://your-deployment-url.vercel.app
 ```powershell
 vercel postgres create
 ```
+
 This automatically adds database environment variables.
 
 ### Option B: Use Supabase (Recommended)
 
 1. **Create Project**: Go to https://supabase.com
 2. **Create New Project**: Name it "haazir"
-3. **Get Connection String**: 
+3. **Get Connection String**:
    - Go to Project Settings → Database
    - Copy **Connection String** (URI format)
    - Replace `[YOUR-PASSWORD]` with your actual password
@@ -135,11 +149,13 @@ Similar to Supabase - create database, get connection string, add to Vercel.
 After adding environment variables:
 
 **Via Dashboard:**
+
 1. Go to Deployments tab
 2. Click on the latest deployment
 3. Click **"Redeploy"**
 
 **Via CLI:**
+
 ```powershell
 vercel --prod
 ```
@@ -149,16 +165,19 @@ vercel --prod
 ## ✅ Step 7: Test Your Deployment
 
 ### Check Deployment Status
+
 ```powershell
 vercel ls
 ```
 
 ### Open Your Application
+
 ```powershell
 vercel open
 ```
 
 ### Test Backend API
+
 ```powershell
 # Health check
 curl https://your-project.vercel.app/api/health
@@ -167,6 +186,7 @@ curl https://your-project.vercel.app/api/health
 ```
 
 ### Test Frontend
+
 1. Open your deployment URL in browser
 2. Open DevTools (F12) → Network tab
 3. Try logging in or registering
@@ -177,6 +197,7 @@ curl https://your-project.vercel.app/api/health
 ## 🐛 If You Encounter Issues
 
 ### Check Logs
+
 ```powershell
 vercel logs --follow
 ```
@@ -184,21 +205,25 @@ vercel logs --follow
 ### Common Issues:
 
 **Issue 1: Build Failed**
+
 - Check build logs in Vercel Dashboard
 - Verify all dependencies are in package.json
 - Check Node version compatibility
 
 **Issue 2: API Returns 404**
+
 - Verify environment variables are set
 - Check CORS_ORIGIN and FRONTEND_URL match your deployment URL
 - Redeploy after adding variables
 
 **Issue 3: Database Connection Failed**
+
 - Verify DATABASE_URL is correct
 - Check if database allows connections from Vercel
 - Ensure SSL is enabled in database config
 
 **Issue 4: Face-API Models Not Loading**
+
 - Models should be in `client/public/models/`
 - Check they're not in .gitignore
 - Verify they're committed to GitHub
@@ -238,6 +263,7 @@ vercel open
 ## 🎯 Current Status
 
 Your project is now:
+
 - ✅ Configured for Vercel serverless deployment
 - ✅ CORS set up for production
 - ✅ API endpoints properly routed
@@ -252,10 +278,12 @@ Your project is now:
 ## 🌐 After Successful Deployment
 
 Your Haazir application will be live at:
+
 - **Production**: `https://haazir-attendance-system.vercel.app`
 - **Preview URLs**: Auto-generated for each PR
 
 ### Enable Continuous Deployment
+
 Once connected, every push to `main` automatically deploys to production!
 
 ```powershell

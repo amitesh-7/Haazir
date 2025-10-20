@@ -48,6 +48,9 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   },
+  "optionalDependencies": {
+    "pg-native": "^3.0.1"
+  },
   "engines": {
     "node": ">=18"
   },

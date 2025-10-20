@@ -20,11 +20,13 @@ The production build automatically uses **relative URLs** (`/api`) which are pro
 ### Files Already Configured:
 
 **`client/.env`** (for local development):
+
 ```env
 REACT_APP_API_URL=http://localhost:5000/api
 ```
 
 **`client/.env.production`** (auto-used in production):
+
 ```env
 REACT_APP_API_URL=/api
 REACT_APP_ENVIRONMENT=production
@@ -59,11 +61,13 @@ Environment: Production, Preview, Development
 ```
 
 **Where to get this:**
+
 - **Supabase**: Project Settings → Database → Connection String (URI)
 - **Neon**: Dashboard → Connection String
 - **Vercel Postgres**: Auto-added when you run `vercel postgres create`
 
 **Example:**
+
 ```
 postgresql://postgres:yourpassword@db.example.supabase.co:5432/postgres
 ```
@@ -73,6 +77,7 @@ postgresql://postgres:yourpassword@db.example.supabase.co:5432/postgres
 ### 2. Authentication Secrets ⚠️ **CRITICAL**
 
 #### JWT_SECRET
+
 ```
 Variable: JWT_SECRET
 Value: <generate-a-secure-random-string-at-least-32-characters>
@@ -80,16 +85,19 @@ Environment: Production, Preview, Development
 ```
 
 **How to generate (PowerShell):**
+
 ```powershell
 -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 40 | ForEach-Object {[char]$_})
 ```
 
 **Example Output:**
+
 ```
 aB3dE7gH2jK9mN4pQ8rS5tV1wX6yZ0cF2hJ8
 ```
 
 #### SESSION_SECRET
+
 ```
 Variable: SESSION_SECRET
 Value: <another-secure-random-string>
@@ -103,6 +111,7 @@ Environment: Production, Preview, Development
 ### 3. CORS Configuration ⚠️ **IMPORTANT**
 
 #### FRONTEND_URL
+
 ```
 Variable: FRONTEND_URL
 Value: https://your-deployment-url.vercel.app
@@ -110,11 +119,13 @@ Environment: Production, Preview, Development
 ```
 
 **Note:** After first deployment, Vercel gives you a URL like:
+
 - `https://haazir-attendance-system.vercel.app`
 - Copy this URL and add it here
 - Then **redeploy**
 
 #### CORS_ORIGIN
+
 ```
 Variable: CORS_ORIGIN
 Value: https://your-deployment-url.vercel.app
@@ -128,6 +139,7 @@ Environment: Production, Preview, Development
 ### 4. Server Configuration
 
 #### NODE_ENV
+
 ```
 Variable: NODE_ENV
 Value: production
@@ -135,6 +147,7 @@ Environment: Production
 ```
 
 #### PORT
+
 ```
 Variable: PORT
 Value: 5000
@@ -205,6 +218,7 @@ vercel
 ```
 
 This will deploy your app and give you a URL like:
+
 ```
 https://haazir-attendance-system-abc123.vercel.app
 ```
@@ -216,12 +230,15 @@ https://haazir-attendance-system-abc123.vercel.app
 ### Step 2: Set Up Database
 
 **Option A: Vercel Postgres**
+
 ```powershell
 vercel postgres create
 ```
+
 This automatically adds `DATABASE_URL` and related variables.
 
 **Option B: Supabase**
+
 1. Go to https://supabase.com
 2. Create new project: "haazir"
 3. Wait 2 minutes for setup
@@ -234,6 +251,7 @@ This automatically adds `DATABASE_URL` and related variables.
 ### Step 3: Generate Secrets
 
 **PowerShell Command:**
+
 ```powershell
 # Generate JWT_SECRET
 -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 40 | ForEach-Object {[char]$_})
@@ -263,6 +281,7 @@ NODE_ENV = production
 ```
 
 For each variable:
+
 - Click **Add New**
 - Enter **Key** (variable name)
 - Enter **Value**
@@ -274,11 +293,13 @@ For each variable:
 ### Step 5: Redeploy
 
 **Via Dashboard:**
+
 1. Go to Deployments tab
 2. Click latest deployment
 3. Click "Redeploy"
 
 **Via CLI:**
+
 ```powershell
 vercel --prod
 ```
@@ -288,16 +309,19 @@ vercel --prod
 ### Step 6: Test Your Deployment
 
 **Test Backend API:**
+
 ```powershell
 curl https://your-app.vercel.app/api/health
 ```
 
 **Expected Response:**
+
 ```json
-{"status":"OK","timestamp":"2025-10-20T..."}
+{ "status": "OK", "timestamp": "2025-10-20T..." }
 ```
 
 **Test Frontend:**
+
 1. Open https://your-app.vercel.app
 2. Try registering/logging in
 3. Check browser console (F12) for errors
@@ -310,6 +334,7 @@ curl https://your-app.vercel.app/api/health
 ### Issue: "Failed to connect to database"
 
 **Solution:**
+
 1. Verify `DATABASE_URL` is correct
 2. Check database allows connections from `0.0.0.0/0` (all IPs)
 3. Ensure SSL is enabled in Supabase/Neon
@@ -317,6 +342,7 @@ curl https://your-app.vercel.app/api/health
 ### Issue: "Invalid token" or authentication errors
 
 **Solution:**
+
 1. Verify `JWT_SECRET` is set
 2. Make sure it's at least 32 characters
 3. Redeploy after adding it
@@ -324,6 +350,7 @@ curl https://your-app.vercel.app/api/health
 ### Issue: CORS errors
 
 **Solution:**
+
 1. Add your Vercel URL to `FRONTEND_URL` and `CORS_ORIGIN`
 2. Make sure there's no trailing slash
 3. Redeploy
@@ -331,6 +358,7 @@ curl https://your-app.vercel.app/api/health
 ### Issue: "Cannot read environment variable"
 
 **Solution:**
+
 1. Verify variable name is spelled correctly (case-sensitive)
 2. Check it's added for "Production" environment
 3. Redeploy after adding variables
@@ -340,6 +368,7 @@ curl https://your-app.vercel.app/api/health
 ## 🔒 Security Best Practices
 
 ### ✅ DO:
+
 - Generate strong random secrets (40+ characters)
 - Use different secrets for JWT and SESSION
 - Keep secrets private - never commit to Git
@@ -347,6 +376,7 @@ curl https://your-app.vercel.app/api/health
 - Use Vercel's built-in secrets management
 
 ### ❌ DON'T:
+
 - Use simple passwords like "password123"
 - Share secrets publicly
 - Commit .env files to GitHub
@@ -357,17 +387,17 @@ curl https://your-app.vercel.app/api/health
 
 ## 📊 Environment Variables Summary Table
 
-| Variable | Required? | Where to Set | Example Value |
-|----------|-----------|--------------|---------------|
-| `REACT_APP_API_URL` | ❌ No | Auto-configured | `/api` |
-| `DATABASE_URL` | ✅ Yes | Vercel Dashboard | `postgresql://...` |
-| `JWT_SECRET` | ✅ Yes | Vercel Dashboard | `aB3dE7gH2jK9...` |
-| `SESSION_SECRET` | ✅ Yes | Vercel Dashboard | `mN4pQ8rS5tV1...` |
-| `FRONTEND_URL` | ✅ Yes | Vercel Dashboard | `https://your-app.vercel.app` |
-| `CORS_ORIGIN` | ✅ Yes | Vercel Dashboard | `https://your-app.vercel.app` |
-| `NODE_ENV` | ✅ Yes | Vercel Dashboard | `production` |
-| `PORT` | ⚠️ Optional | Vercel Dashboard | `5000` |
-| `JWT_EXPIRES_IN` | ⚠️ Optional | Vercel Dashboard | `7d` |
+| Variable            | Required?   | Where to Set     | Example Value                 |
+| ------------------- | ----------- | ---------------- | ----------------------------- |
+| `REACT_APP_API_URL` | ❌ No       | Auto-configured  | `/api`                        |
+| `DATABASE_URL`      | ✅ Yes      | Vercel Dashboard | `postgresql://...`            |
+| `JWT_SECRET`        | ✅ Yes      | Vercel Dashboard | `aB3dE7gH2jK9...`             |
+| `SESSION_SECRET`    | ✅ Yes      | Vercel Dashboard | `mN4pQ8rS5tV1...`             |
+| `FRONTEND_URL`      | ✅ Yes      | Vercel Dashboard | `https://your-app.vercel.app` |
+| `CORS_ORIGIN`       | ✅ Yes      | Vercel Dashboard | `https://your-app.vercel.app` |
+| `NODE_ENV`          | ✅ Yes      | Vercel Dashboard | `production`                  |
+| `PORT`              | ⚠️ Optional | Vercel Dashboard | `5000`                        |
+| `JWT_EXPIRES_IN`    | ⚠️ Optional | Vercel Dashboard | `7d`                          |
 
 ---
 

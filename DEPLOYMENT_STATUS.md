@@ -13,12 +13,14 @@
 ## ✅ What Was Fixed
 
 ### 1. **Fixed `vercel.json`**
+
 - ❌ Removed conflicting `routes` array
 - ✅ Kept `rewrites` for API routing
 - ✅ Kept `headers` for caching
 - ✅ Now follows Vercel's configuration rules
 
 ### 2. **Created Comprehensive Environment Guide**
+
 - ✅ New file: `ENVIRONMENT_VARIABLES_GUIDE.md`
 - ✅ Clear explanation of what env variables to add
 - ✅ Step-by-step setup instructions
@@ -35,6 +37,7 @@
 You **DO NOT** need to add `REACT_APP_API_URL` or any client environment variables in Vercel.
 
 **Why?**
+
 - Your code automatically uses `/api` (relative path) in production
 - This is already configured in `client/.env.production`
 - Vercel's rewrites automatically route `/api/*` to your backend
@@ -91,11 +94,13 @@ This will give you a URL like: `https://haazir-attendance-system-xxx.vercel.app`
 ### Step 3: Set Up Database
 
 **Option A: Vercel Postgres** (Easiest)
+
 ```powershell
 vercel postgres create
 ```
 
 **Option B: Supabase** (Recommended)
+
 1. Go to https://supabase.com
 2. Create new project: "haazir"
 3. Copy connection string from Settings → Database
@@ -120,6 +125,7 @@ NODE_ENV = production
 ```
 
 For each:
+
 - Select: **Production**, **Preview**, **Development**
 - Click **Save**
 
@@ -136,6 +142,7 @@ vercel --prod
 ### Step 6: Test Your App
 
 **Test Backend:**
+
 ```powershell
 curl https://your-app.vercel.app/api/health
 ```
@@ -143,6 +150,7 @@ curl https://your-app.vercel.app/api/health
 **Expected:** `{"status":"OK","timestamp":"..."}`
 
 **Test Frontend:**
+
 1. Open `https://your-app.vercel.app` in browser
 2. Try login/registration
 3. Check browser console (F12) - should be no errors
@@ -152,11 +160,13 @@ curl https://your-app.vercel.app/api/health
 ## 📚 Documentation Files
 
 1. **`ENVIRONMENT_VARIABLES_GUIDE.md`** ⭐ **READ THIS FIRST!**
+
    - Complete guide to environment variables
    - What to add, where to add, and why
    - Step-by-step with commands
 
 2. **`NEXT_STEPS.md`**
+
    - Quick reference for deployment steps
    - Troubleshooting tips
 
@@ -209,11 +219,13 @@ vercel
 ## 🆘 If Something Goes Wrong
 
 **Check logs:**
+
 ```powershell
 vercel logs --follow
 ```
 
 **Common issues:**
+
 - Missing env variables → Add them and redeploy
 - Database connection failed → Check DATABASE_URL
 - CORS errors → Verify FRONTEND_URL matches deployment URL
