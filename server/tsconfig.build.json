@@ -1,0 +1,48 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/app_clean.ts",
+    "src/config/**/*.ts",
+    "src/models/**/*.ts",
+    "src/middleware/auth.ts",
+    // Controllers (new + core)
+    "src/controllers/*_new.ts",
+    "src/controllers/analyticsController.ts",
+    "src/controllers/attendanceController.ts",
+    "src/controllers/authController.ts",
+    "src/controllers/dashboardController.ts",
+    "src/controllers/departmentController.ts",
+    "src/controllers/timetableController.ts",
+    "src/controllers/uploadController.ts",
+    // Routes (new + core)
+    "src/routes/auth.ts",
+    "src/routes/analytics.ts",
+    "src/routes/attendance.ts",
+    "src/routes/dashboard.ts",
+    "src/routes/departments.ts",
+    "src/routes/timetable.ts",
+    "src/routes/upload.ts",
+    "src/routes/courses_new.ts",
+    "src/routes/students_new.ts",
+    "src/routes/teachers_new.ts",
+    // Types and utils
+    "src/types/**/*.ts",
+    "src/utils/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    // Explicitly exclude legacy files
+    "src/controllers/courseController.ts",
+    "src/controllers/studentController.ts",
+    "src/controllers/teacherController.ts",
+    "src/routes/students.ts",
+    "src/routes/teachers.ts",
+    "src/routes/courses.ts",
+    "src/middleware/validation.ts"
+  ]
+}
