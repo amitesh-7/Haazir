@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize";
 import * as dns from "dns";
 import * as dotenv from "dotenv";
+import pg from "pg";
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ const commonOptions = {
     underscored: true,
   },
   dialectOptions: buildDialectOptions(),
+  dialectModule: pg,
   pool: {
     max: 5,
     min: 0,
@@ -68,9 +70,6 @@ const commonOptions = {
   retry: {
     max: 3,
   },
-  // Disable native bindings for Vercel serverless
-  native: false,
-  dialectModule: require('pg'),
   // Force IPv4 for the main connection
   host: databaseUrl ? undefined : process.env.DB_HOST || "localhost",
 };

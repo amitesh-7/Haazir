@@ -30,6 +30,7 @@ PORT = 5000
 ```
 
 **Generate secrets:**
+
 ```powershell
 -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 40 | ForEach-Object {[char]$_})
 ```
@@ -43,6 +44,7 @@ The current `server/vercel.json` expects TypeScript to work directly, but Vercel
 **Fix Option 1: Use built output**
 
 Update `server/vercel.json`:
+
 ```json
 {
   "version": 2,
@@ -64,6 +66,7 @@ Update `server/vercel.json`:
 **Fix Option 2: Use TypeScript directly (simpler)**
 
 Keep current `server/vercel.json` but ensure `@vercel/node` handles TypeScript:
+
 ```json
 {
   "version": 2,
@@ -153,6 +156,7 @@ vercel --prod
 Go to Vercel Dashboard → Deployments → Click latest deployment → Build Logs
 
 Look for errors like:
+
 - "Cannot find module..."
 - "Missing environment variable..."
 - "TypeScript compilation error..."
@@ -172,6 +176,7 @@ If this works locally, the issue is environment variables in Vercel.
 Vercel Dashboard → Deployments → Runtime Logs
 
 Look for:
+
 - Database connection errors
 - Missing env variables
 - CORS errors
@@ -182,25 +187,29 @@ Look for:
 
 ### "Cannot connect to database"
 
-**Fix:** 
+**Fix:**
+
 - Add `DATABASE_URL` in Vercel environment variables
 - Ensure Supabase allows connections from `0.0.0.0/0`
 
 ### "Invalid JWT secret"
 
 **Fix:**
+
 - Add `JWT_SECRET` environment variable
 - Make it 40+ characters
 
 ### "CORS policy error"
 
 **Fix:**
+
 - Add `FRONTEND_URL` and `CORS_ORIGIN` with your frontend URL
 - No trailing slash: `https://your-frontend.vercel.app`
 
 ### "Cannot find module 'express'"
 
 **Fix:**
+
 - Ensure all runtime dependencies are in `dependencies`, not `devDependencies`
 - Redeploy
 
@@ -244,11 +253,13 @@ Use this exact configuration:
 ## 💡 Pro Tips
 
 1. **Always check logs first:**
+
    ```powershell
    vercel logs --follow
    ```
 
 2. **Test health endpoint:**
+
    ```powershell
    curl https://your-backend.vercel.app/api/health
    ```

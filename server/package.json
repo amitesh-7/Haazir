@@ -36,7 +36,6 @@
     "qrcode": "^1.5.4",
     "sequelize": "^6.6.5",
     "sharp": "^0.34.4",
-    "sqlite3": "^5.1.7",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
