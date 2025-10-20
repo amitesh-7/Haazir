@@ -10,7 +10,8 @@
     "postinstall": "npm run build",
     "test": "jest",
     "db:test": "ts-node src/scripts/testDbConnection.ts",
-    "db:seed:coordinator": "ts-node src/scripts/seedCoordinator.ts"
+    "db:seed:coordinator": "ts-node src/scripts/seedCoordinator.ts",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

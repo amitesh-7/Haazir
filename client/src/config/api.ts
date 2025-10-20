@@ -6,8 +6,17 @@
  * Override: Create .env.local file with REACT_APP_API_URL=http://localhost:5001/api
  */
 
-// Base API URL from environment variable or default to 5000
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Base API URL configuration based on environment
+const getApiBaseUrl = () => {
+  // Production: Use relative path (proxied by Vercel)
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.REACT_APP_API_URL || '/api';
+  }
+  // Development: Use local backend
+  return process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // Remove trailing /api if present to get base URL for direct fetch calls
 export const API_URL = API_BASE_URL.replace(/\/api$/, '');

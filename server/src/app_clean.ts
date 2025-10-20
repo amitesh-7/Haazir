@@ -41,6 +41,11 @@ const allowedOrigins = rawCors
   .filter(Boolean)
   .map((o) => o.replace(/\/$/, ""));
 
+// Add production frontend URL if in production
+if (process.env.NODE_ENV === 'production' && process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ""));
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -63,7 +68,7 @@ app.use(
       }
 
       // For development, allow all localhost origins
-      if (normalized.startsWith("http://localhost:")) {
+      if (process.env.NODE_ENV !== 'production' && normalized.startsWith("http://localhost:")) {
         console.log(`✅ CORS allowing localhost origin: ${origin}`);
         return callback(null, true);
       }
@@ -122,9 +127,14 @@ app.use("*", (req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
-  console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
-});
+// Start server (only in non-production environment)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
+    console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+  });
+}
+
+// Export for Vercel serverless
+export default app;
