@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "haazir-attendance-system",
   "builds": [
     {
       "src": "client/package.json",
@@ -10,36 +9,36 @@
       }
     },
     {
-      "src": "server/src/app_clean.ts",
-      "use": "@vercel/node"
+      "src": "server/package.json",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["src/**"]
+      }
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server/src/app_clean.ts"
-    },
+      "source": "/api/:path*",
+      "destination": "/server/src/app_clean.ts"
+    }
+  ],
+  "headers": [
     {
-      "src": "/static/(.*)",
-      "dest": "/client/build/static/$1",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/models/(.*)",
-      "dest": "/client/build/models/$1",
-      "headers": {
-        "cache-control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|json|woff|woff2|ttf|eot))",
-      "dest": "/client/build/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/client/build/index.html"
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
     }
   ]
 }
