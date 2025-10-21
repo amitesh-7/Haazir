@@ -2,6 +2,7 @@
   "name": "haazir-client",
   "version": "1.0.0",
   "private": true,
+  "homepage": ".",
   "proxy": "http://localhost:5000",
   "scripts": {
     "start": "craco start",
