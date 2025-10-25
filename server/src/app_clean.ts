@@ -148,12 +148,15 @@ app.use(
 );
 
 // Temporary diagnostics endpoint (remove in production)
-app.get("/__internal__/last-error", (req, res) => {
+const sendLastError = (req: express.Request, res: express.Response) => {
   res.json({
     lastError,
     timestamp: new Date().toISOString(),
   });
-});
+};
+
+app.get("/__internal__/last-error", sendLastError);
+app.get("/api/__internal__/last-error", sendLastError);
 
 // 404 handler
 app.use("*", (req, res) => {
