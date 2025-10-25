@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+// Initialize models and associations BEFORE routes
+import "./models";
+
 // Import routes
 import authRoutes from "./routes/auth";
 import attendanceRoutes from "./routes/attendance";
