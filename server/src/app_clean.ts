@@ -32,6 +32,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Store last error for debugging purposes
+let lastError: { message?: string; stack?: string } | null = null;
+
 // Middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -130,6 +133,10 @@ app.use(
     next: express.NextFunction
   ) => {
     console.error("Error:", err);
+    lastError = {
+      message: err?.message,
+      stack: err?.stack,
+    };
     res.status(500).json({
       error: err?.message || "Internal server error",
       stack:
@@ -139,6 +146,14 @@ app.use(
     });
   }
 );
+
+// Temporary diagnostics endpoint (remove in production)
+app.get("/__internal__/last-error", (req, res) => {
+  res.json({
+    lastError,
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // 404 handler
 app.use("*", (req, res) => {
