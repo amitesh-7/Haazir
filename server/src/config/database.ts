@@ -7,11 +7,6 @@ dotenv.config();
 
 let sequelize: Sequelize;
 
-// Force IPv4 resolution to avoid IPv6 connectivity issues
-try {
-  dns.setDefaultResultOrder?.("ipv4first");
-} catch {}
-
 // PostgreSQL (Supabase) configuration
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -30,9 +25,29 @@ if (!rejectUnauthorized) {
 // Enhanced connection options for better reliability
 const buildDialectOptions = () => {
   const opts: any = {
-    // Force IPv4 resolution
     lookup: (hostname: string, options: any, callback: any) => {
-      dns.lookup(hostname, { family: 4 }, callback);
+      const cb = typeof options === "function" ? options : callback;
+      const baseOptions =
+        typeof options === "object" && options ? { ...options } : {};
+
+      // Try IPv4 first, fall back to IPv6 to support IPv6-only hosts (e.g. Supabase)
+      dns.lookup(hostname, { ...baseOptions, family: 4 }, (err4, address4, family4) => {
+        if (!err4 && address4) {
+          return cb(null, address4, family4);
+        }
+
+        dns.lookup(
+          hostname,
+          { ...baseOptions, family: 6 },
+          (err6, address6, family6) => {
+            if (!err6 && address6) {
+              return cb(null, address6, family6);
+            }
+
+            cb(err6 || err4);
+          }
+        );
+      });
     },
     // Connection timeout and retry settings
     connectTimeout: 30000,
@@ -70,7 +85,7 @@ const commonOptions = {
   retry: {
     max: 3,
   },
-  // Force IPv4 for the main connection
+  // Local development fallback when DATABASE_URL is not provided
   host: databaseUrl ? undefined : process.env.DB_HOST || "localhost",
 };
 
