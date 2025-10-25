@@ -37,15 +37,15 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
         // Initialize TensorFlow.js backend first
         await tf.ready();
         console.log("TensorFlow.js backend initialized");
-        
+
         // Load face-api models
-  const MODEL_URL = "/models"; // ensure model assets resolve correctly on nested routes
+  const MODEL_URL = `${window.location.origin}/models`; // absolute path works in dev server and production
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
-        
+
         setModelsLoaded(true);
         console.log("Face-api models loaded successfully");
       } catch (err) {
@@ -63,7 +63,8 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
     const fetchRegisteredFaces = async () => {
       try {
         const token = localStorage.getItem("token");
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const API_URL =
+          process.env.REACT_APP_API_URL || "http://localhost:5000/api";
         const response = await fetch(
           `${API_URL}/smart-attendance/student/${studentId}/faces`,
           {
@@ -122,7 +123,8 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
 
       // Send face descriptor to backend
       const token = localStorage.getItem("token");
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const API_URL =
+        process.env.REACT_APP_API_URL || "http://localhost:5000/api";
       const response = await fetch(
         `${API_URL}/smart-attendance/register-face`,
         {

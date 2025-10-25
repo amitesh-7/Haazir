@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import * as faceapi from "face-api.js";
 import * as tf from "@tensorflow/tfjs";
@@ -42,7 +41,8 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
     const checkFaceEnrollment = async () => {
       try {
         const token = localStorage.getItem("token");
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+        const API_URL =
+          process.env.REACT_APP_API_URL || "http://localhost:5000/api";
         const response = await fetch(
           `${API_URL}/smart-attendance/student/${studentId}/faces`,
           {
@@ -109,15 +109,15 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         // Initialize TensorFlow.js backend first
         await tf.ready();
         console.log("TensorFlow.js backend initialized");
-        
+
         // Load face-api models
-  const MODEL_URL = "/models"; // always resolve face-api assets from the site root so nested routes work
+  const MODEL_URL = `${window.location.origin}/models`; // absolute URL keeps local dev and production in sync
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
-        
+
         setModelsLoaded(true);
         console.log("Face-api models loaded successfully");
       } catch (err) {
@@ -320,18 +320,16 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
     try {
       const token = localStorage.getItem("token");
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(
-        `${API_URL}/smart-attendance/validate-qr`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ qrToken }),
-        }
-      );
+      const API_URL =
+        process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/smart-attendance/validate-qr`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ qrToken }),
+      });
 
       const data = await response.json();
 
@@ -406,25 +404,23 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
       // Send to backend for verification
       const token = localStorage.getItem("token");
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(
-        `${API_URL}/smart-attendance/verify-face`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            sessionId: sessionData.sessionId,
-            studentId: studentId,
-            faceDescriptor: Array.from(detection.descriptor),
-            faceImageBase64: imageSrc,
-            locationLat: location.lat,
-            locationLng: location.lng,
-          }),
-        }
-      );
+      const API_URL =
+        process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/smart-attendance/verify-face`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sessionId: sessionData.sessionId,
+          studentId: studentId,
+          faceDescriptor: Array.from(detection.descriptor),
+          faceImageBase64: imageSrc,
+          locationLat: location.lat,
+          locationLng: location.lng,
+        }),
+      });
 
       const data = await response.json();
 

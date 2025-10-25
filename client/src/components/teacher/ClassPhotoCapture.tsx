@@ -43,15 +43,15 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
         // Initialize TensorFlow.js backend first
         await tf.ready();
         console.log("TensorFlow.js backend initialized");
-        
+
         // Load face-api models
-  const MODEL_URL = "/models"; // fetch face-api assets from root regardless of SPA path
+  const MODEL_URL = `${window.location.origin}/models`; // resolve models relative to current origin for dev + prod
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
-        
+
         setModelsLoaded(true);
         console.log("Face-api models loaded successfully");
       } catch (err) {
@@ -162,7 +162,9 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
       // Send to backend for matching
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/smart-attendance/process-class-photo`,
+        `${
+          process.env.REACT_APP_API_URL || "http://localhost:5000/api"
+        }/smart-attendance/process-class-photo`,
         {
           method: "POST",
           headers: {
