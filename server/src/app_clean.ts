@@ -36,52 +36,44 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// CORS: support comma-separated origins in CORS_ORIGIN env and trim trailing slashes
-const rawCors = process.env.CORS_ORIGIN || "http://localhost:3000";
-const allowedOrigins = rawCors
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean)
-  .map((o) => o.replace(/\/$/, ""));
+// CORS Configuration - Allow frontend and localhost
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5000",
+  "https://haazir-six.vercel.app",
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+].filter(Boolean); // Remove undefined values
 
-// Add production frontend URL if in production
-if (process.env.NODE_ENV === "production" && process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ""));
-}
+console.log("🔒 CORS allowed origins:", allowedOrigins);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow non-browser requests (no Origin header) like curl/health checks
-      if (!origin) return callback(null, true);
-
-      const normalized = origin.replace(/\/$/, "");
-
-      // Allow localhost:3000 and localhost:5000 (for proxy)
-      if (
-        normalized === "http://localhost:3000" ||
-        normalized === "http://localhost:5000"
-      ) {
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) {
+        console.log("✅ CORS: Allowing request with no origin");
         return callback(null, true);
       }
 
-      // Check against configured origins
-      if (allowedOrigins.includes(normalized)) {
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        console.log(`✅ CORS: Allowing origin: ${origin}`);
         return callback(null, true);
       }
 
-      // For development, allow all localhost origins
+      // In development, allow all localhost origins
       if (
         process.env.NODE_ENV !== "production" &&
-        normalized.startsWith("http://localhost:")
+        origin.startsWith("http://localhost")
       ) {
-        console.log(`✅ CORS allowing localhost origin: ${origin}`);
+        console.log(`✅ CORS: Allowing localhost origin: ${origin}`);
         return callback(null, true);
       }
 
-      console.warn(`⚠️ CORS blocked origin: ${origin}`);
-      // Don't throw error, just deny - this prevents 500 errors
-      return callback(null, false);
+      console.warn(`❌ CORS: Blocking origin: ${origin}`);
+      console.warn("Allowed origins:", allowedOrigins);
+      callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     optionsSuccessStatus: 204,
