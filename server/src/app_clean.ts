@@ -37,43 +37,50 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // CORS Configuration - Allow frontend and localhost
+const normalizeOrigin = (value?: string | null) =>
+  value ? value.trim().replace(/\/$/, "") : undefined;
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5000",
   "https://haazir-six.vercel.app",
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGIN,
-].filter(Boolean); // Remove undefined values
+]
+  .map(normalizeOrigin)
+  .filter(Boolean) as string[];
 
-console.log("🔒 CORS allowed origins:", allowedOrigins);
+const allowedOriginSet = new Set(allowedOrigins);
+
+console.log("🔒 CORS allowed origins:", Array.from(allowedOriginSet));
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
+    origin: (origin, callback) => {
       if (!origin) {
+        // Allow requests without origin (mobile apps, curl, etc.)
         console.log("✅ CORS: Allowing request with no origin");
         return callback(null, true);
       }
 
-      // Check if origin is in allowed list
-      if (allowedOrigins.includes(origin)) {
-        console.log(`✅ CORS: Allowing origin: ${origin}`);
+      const normalizedOrigin = normalizeOrigin(origin);
+
+      if (normalizedOrigin && allowedOriginSet.has(normalizedOrigin)) {
+        console.log(`✅ CORS: Allowing origin: ${normalizedOrigin}`);
         return callback(null, true);
       }
 
-      // In development, allow all localhost origins
       if (
         process.env.NODE_ENV !== "production" &&
-        origin.startsWith("http://localhost")
+        normalizedOrigin?.startsWith("http://localhost")
       ) {
-        console.log(`✅ CORS: Allowing localhost origin: ${origin}`);
+        console.log(`✅ CORS: Allowing localhost origin: ${normalizedOrigin}`);
         return callback(null, true);
       }
 
-      console.warn(`❌ CORS: Blocking origin: ${origin}`);
-      console.warn("Allowed origins:", allowedOrigins);
-      callback(new Error("Not allowed by CORS"));
+  console.warn(`❌ CORS: Blocking origin: ${origin}`);
+  console.warn("Allowed origins set:", Array.from(allowedOriginSet));
+  return callback(null, false);
     },
     credentials: true,
     optionsSuccessStatus: 204,
