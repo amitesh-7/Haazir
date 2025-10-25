@@ -15,5 +15,8 @@
     "vercel-build": "cd client && npm install && npm run build"
   },
   "author": "Priyanshu Chaurasia",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
 }

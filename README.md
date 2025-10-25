@@ -559,35 +559,81 @@ This project is licensed under the **MIT License** - see the LICENSE file for de
 
 ---
 
-## 👥 Team & Credits
+## 👥 Contributors
 
-**Developed by:** Priyanshu Chaurasia & Team  
-**Institution:** IIIT Gwalior  
-**Project Type:** Hackathon Project  
+**Project Lead & Development:** Amitesh Vishwakarma ([@amitesh-7](https://github.com/amitesh-7))
 
-### **Contributors:**
-- **Backend Development:** Priyanshu Chaurasia
-- **Frontend Development:** Development Team
-- **AI/ML Implementation:** AI Team
-- **Database Design:** Database Team
+### **Development Team:**
+- Full-stack implementation with React + Node.js + PostgreSQL
+- AI-powered timetable generation using CSP algorithms
+- Face recognition integration with TensorFlow.js
+- Serverless deployment architecture on Vercel
+- Database schema design and optimization
 
 ### **Special Thanks:**
-- Face-API.js community for facial recognition models
-- TensorFlow.js team for ML framework
-- Supabase for database infrastructure
+- Face-API.js community for pre-trained facial recognition models
+- TensorFlow.js team for browser-based ML framework
+- Supabase for managed PostgreSQL infrastructure
+- Vercel for seamless serverless deployment
+
+---
+
+## � Deployment
+
+**Live Application:**
+- **Frontend:** [haazir-six.vercel.app](https://haazir-six.vercel.app)
+- **Backend API:** [haazir-one.vercel.app/api](https://haazir-one.vercel.app/api)
+
+### **Deployment Stack:**
+- **Frontend Hosting:** Vercel (Static)
+- **Backend Hosting:** Vercel (Serverless Functions)
+- **Database:** Supabase (PostgreSQL with IPv6 connection pooling)
+
+### **Environment Configuration:**
+
+**Backend Environment Variables (Vercel):**
+```env
+DATABASE_URL=postgresql://postgres:<password>@aws-0-ap-south-1.pooler.supabase.net:6543/postgres?sslmode=require
+JWT_SECRET=<secure-random-string>
+SESSION_SECRET=<secure-random-string>
+FRONTEND_URL=https://haazir-six.vercel.app
+CORS_ORIGIN=https://haazir-six.vercel.app
+NODE_ENV=production
+PORT=5000
+```
+
+**Frontend Environment Variables:**
+```env
+REACT_APP_API_URL=/api
+REACT_APP_ENVIRONMENT=production
+```
+
+### **Key Deployment Features:**
+- ✅ Serverless architecture with automatic scaling
+- ✅ IPv6 DNS fallback for Supabase connectivity
+- ✅ Optimized CORS configuration for cross-origin requests
+- ✅ Root-relative model paths for face-api.js assets
+- ✅ Connection pooling for database reliability
+- ✅ Production-ready error handling and logging
 
 ---
 
 ## 📞 Contact & Support
 
-**Issues:** [GitHub Issues](https://github.com/priyanshu-1006/Haazir-Smart-Attendence-Management-System/issues)  
-**Email:** support@haazir.edu  
-**Documentation:** [Wiki](https://github.com/priyanshu-1006/Haazir-Smart-Attendence-Management-System/wiki)  
+**GitHub Repository:** [amitesh-7/Haazir](https://github.com/amitesh-7/Haazir)  
+**Issues:** [GitHub Issues](https://github.com/amitesh-7/Haazir/issues)  
+**Live Demo:** [haazir-six.vercel.app](https://haazir-six.vercel.app)
 
 ---
 
 ## 🙏 Acknowledgments
 
 Built with ❤️ using open-source technologies. Special thanks to the developer community for their amazing tools and libraries.
+
+**Deployment Credits:**
+- Vercel for seamless hosting and CI/CD
+- Supabase for managed PostgreSQL with global CDN
+- Face-API.js for client-side facial recognition
+- TensorFlow.js for in-browser ML inference
 
 **⭐ If you find this project helpful, please star the repository! ⭐**

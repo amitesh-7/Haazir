@@ -31,23 +31,55 @@ const buildDialectOptions = () => {
         typeof options === "object" && options ? { ...options } : {};
 
       // Try IPv4 first, fall back to IPv6 to support IPv6-only hosts (e.g. Supabase)
-      dns.lookup(hostname, { ...baseOptions, family: 4 }, (err4, address4, family4) => {
-        if (!err4 && address4) {
-          return cb(null, address4, family4);
-        }
-
-        dns.lookup(
-          hostname,
-          { ...baseOptions, family: 6 },
-          (err6, address6, family6) => {
-            if (!err6 && address6) {
-              return cb(null, address6, family6);
-            }
-
-            cb(err6 || err4);
+      dns.lookup(
+        hostname,
+        { ...baseOptions, family: 4 },
+        (err4, address4, family4) => {
+          if (!err4 && address4) {
+            return cb(null, address4, family4);
           }
-        );
-      });
+
+          console.warn(
+            `[DB] IPv4 DNS lookup failed for ${hostname}: ${
+              err4?.message || err4
+            }`
+          );
+
+          dns.lookup(
+            hostname,
+            { ...baseOptions, family: 6 },
+            (err6, address6, family6) => {
+              if (!err6 && address6) {
+                return cb(null, address6, family6);
+              }
+
+              console.warn(
+                `[DB] IPv6 DNS lookup via dns.lookup failed for ${hostname}: ${
+                  err6?.message || err6
+                }`
+              );
+
+              dns.resolve6(hostname, (errResolve6, addresses6) => {
+                if (
+                  !errResolve6 &&
+                  Array.isArray(addresses6) &&
+                  addresses6.length > 0
+                ) {
+                  return cb(null, addresses6[0], 6);
+                }
+
+                console.error(
+                  `[DB] Unable to resolve IPv6 address for ${hostname}: ${
+                    errResolve6?.message || errResolve6 || err6 || err4
+                  }`
+                );
+
+                cb(errResolve6 || err6 || err4);
+              });
+            }
+          );
+        }
+      );
     },
     // Connection timeout and retry settings
     connectTimeout: 30000,

@@ -45,7 +45,7 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
         console.log("TensorFlow.js backend initialized");
 
         // Load face-api models
-  const MODEL_URL = `${window.location.origin}/models`; // resolve models relative to current origin for dev + prod
+        const MODEL_URL = `${window.location.origin}/models`; // resolve models relative to current origin for dev + prod
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
