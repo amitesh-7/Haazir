@@ -78,9 +78,9 @@ app.use(
         return callback(null, true);
       }
 
-  console.warn(`❌ CORS: Blocking origin: ${origin}`);
-  console.warn("Allowed origins set:", Array.from(allowedOriginSet));
-  return callback(null, false);
+      console.warn(`❌ CORS: Blocking origin: ${origin}`);
+      console.warn("Allowed origins set:", Array.from(allowedOriginSet));
+      return callback(null, false);
     },
     credentials: true,
     optionsSuccessStatus: 204,
@@ -130,7 +130,13 @@ app.use(
     next: express.NextFunction
   ) => {
     console.error("Error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({
+      error: err?.message || "Internal server error",
+      stack:
+        process.env.NODE_ENV !== "production" && err?.stack
+          ? err.stack
+          : undefined,
+    });
   }
 );
 
