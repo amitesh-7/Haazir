@@ -111,7 +111,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         console.log("TensorFlow.js backend initialized");
         
         // Load face-api models
-        const MODEL_URL = process.env.PUBLIC_URL + "/models";
+  const MODEL_URL = "/models"; // always resolve face-api assets from the site root so nested routes work
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),

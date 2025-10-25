@@ -45,7 +45,7 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
         console.log("TensorFlow.js backend initialized");
         
         // Load face-api models
-        const MODEL_URL = process.env.PUBLIC_URL + "/models";
+  const MODEL_URL = "/models"; // fetch face-api assets from root regardless of SPA path
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),

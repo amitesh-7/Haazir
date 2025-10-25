@@ -39,7 +39,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
         console.log("TensorFlow.js backend initialized");
         
         // Load face-api models
-        const MODEL_URL = process.env.PUBLIC_URL + "/models";
+  const MODEL_URL = "/models"; // ensure model assets resolve correctly on nested routes
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
