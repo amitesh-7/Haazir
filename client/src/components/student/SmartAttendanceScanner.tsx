@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import * as faceapi from "face-api.js";
+import * as faceapi from "@vladmandic/face-api";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
 import {
@@ -119,7 +119,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         ]);
 
         setModelsLoaded(true);
-        console.log("Face-api models loaded successfully");
+        console.log("@vladmandic/face-api models loaded successfully");
       } catch (err) {
         console.error("Error loading face-api models:", err);
         setError("Failed to load face detection models");
@@ -390,7 +390,13 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
       // Detect face and get descriptor
       const detection = await faceapi
-        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .detectSingleFace(
+          img,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 416,
+            scoreThreshold: 0.5,
+          })
+        )
         .withFaceLandmarks()
         .withFaceDescriptor();
 

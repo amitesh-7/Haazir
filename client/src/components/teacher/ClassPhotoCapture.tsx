@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import * as faceapi from "face-api.js";
+import * as faceapi from "@vladmandic/face-api";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
 import Webcam from "react-webcam";
@@ -53,7 +53,7 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
         ]);
 
         setModelsLoaded(true);
-        console.log("Face-api models loaded successfully");
+        console.log("@vladmandic/face-api models loaded successfully");
       } catch (err) {
         console.error("Error loading face-api models:", err);
         setError(
@@ -67,7 +67,13 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
   const detectFacesInImage = async (imageElement: HTMLImageElement) => {
     try {
       const detections = await faceapi
-        .detectAllFaces(imageElement, new faceapi.TinyFaceDetectorOptions())
+        .detectAllFaces(
+          imageElement,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 416,
+            scoreThreshold: 0.5,
+          })
+        )
         .withFaceLandmarks()
         .withFaceDescriptors();
 
