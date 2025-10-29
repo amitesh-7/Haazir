@@ -38,23 +38,25 @@ export const register = async (req: Request, res: Response) => {
       contactNumber,
       parentName,
       parentContact,
-      address
+      address,
     });
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       console.log("❌ User already exists with email:", email);
-      return res
-        .status(400)
-        .json({ 
-          message: `A user with email '${email}' already exists. Please use a different email address.` 
-        });
+      return res.status(400).json({
+        message: `A user with email '${email}' already exists. Please use a different email address.`,
+      });
     }
 
     // Validate required fields
     if (!email || !password || !role) {
-      console.log("❌ Missing basic required fields:", { email: !!email, password: !!password, role: !!role });
+      console.log("❌ Missing basic required fields:", {
+        email: !!email,
+        password: !!password,
+        role: !!role,
+      });
       return res
         .status(400)
         .json({ message: "Email, password, and role are required" });
@@ -78,22 +80,22 @@ export const register = async (req: Request, res: Response) => {
         rollNumber,
         departmentId,
         semester,
-        sectionId
+        sectionId,
       });
-      
+
       if (!name || !rollNumber || !departmentId || !semester) {
         console.log("❌ Missing student required fields:", {
           name: !!name,
           rollNumber: !!rollNumber,
           departmentId: !!departmentId,
-          semester: !!semester
+          semester: !!semester,
         });
         return res.status(400).json({
           message:
             "For student registration, name, rollNumber, departmentId and semester are required",
         });
       }
-      
+
       const studentData = {
         user_id: newUser.user_id,
         name,
@@ -107,9 +109,9 @@ export const register = async (req: Request, res: Response) => {
         parent_contact: parentContact ?? null,
         address: address ?? null,
       };
-      
+
       console.log("📊 Student data to create:", studentData);
-      
+
       await Student.create(studentData);
     } else if (role === "teacher" && name && departmentId) {
       await Teacher.create({
@@ -125,7 +127,7 @@ export const register = async (req: Request, res: Response) => {
       email: newUser.email,
       role: newUser.role,
     };
-    const token = jwt.sign(payload, JWT_SECRET);
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 
     res.status(201).json({
       message: "User registered successfully",
@@ -182,7 +184,7 @@ export const login = async (req: Request, res: Response) => {
       email: user.email,
       role: user.role,
     };
-    const token = jwt.sign(payload, JWT_SECRET);
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 
     // Prepare user data
     const userData: any = {

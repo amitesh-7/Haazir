@@ -149,7 +149,16 @@ export const fetchTeacherTimetable = async (teacherId: string) => {
 };
 
 export const fetchAttendanceHistory = async (studentId: string | number) => {
-  const response = await api.get(`/attendance/history/${studentId}`);
+  // Use unified endpoint to get both manual and smart attendance
+  const response = await api.get(`/attendance/unified`, {
+    params: { student_id: studentId },
+  });
+
+  // Transform the response to match the expected format
+  if (response.data && response.data.records) {
+    return response.data.records;
+  }
+
   return response.data;
 };
 

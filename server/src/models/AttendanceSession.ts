@@ -90,4 +90,26 @@ AttendanceSession.init(
   }
 );
 
+// Define associations
+(AttendanceSession as any).associate = (models: any) => {
+  // AttendanceSession belongs to Timetable
+  AttendanceSession.belongsTo(models.Timetable, {
+    foreignKey: "schedule_id",
+    as: "timetable",
+  });
+
+  // AttendanceSession belongs to Teacher
+  AttendanceSession.belongsTo(models.Teacher, {
+    foreignKey: "teacher_id",
+    as: "teacher",
+  });
+
+  // AttendanceSession has many SmartAttendanceRecords
+  AttendanceSession.hasMany(models.SmartAttendanceRecord, {
+    foreignKey: "session_id",
+    sourceKey: "session_id",
+    as: "records",
+  });
+};
+
 export default AttendanceSession;

@@ -115,4 +115,26 @@ SmartAttendanceRecord.init(
   }
 );
 
+// Define associations
+(SmartAttendanceRecord as any).associate = (models: any) => {
+  // SmartAttendanceRecord belongs to AttendanceSession
+  SmartAttendanceRecord.belongsTo(models.AttendanceSession, {
+    foreignKey: "session_id",
+    targetKey: "session_id",
+    as: "session",
+  });
+
+  // SmartAttendanceRecord belongs to Student
+  SmartAttendanceRecord.belongsTo(models.Student, {
+    foreignKey: "student_id",
+    as: "student",
+  });
+
+  // SmartAttendanceRecord belongs to Timetable
+  SmartAttendanceRecord.belongsTo(models.Timetable, {
+    foreignKey: "schedule_id",
+    as: "schedule",
+  });
+};
+
 export default SmartAttendanceRecord;

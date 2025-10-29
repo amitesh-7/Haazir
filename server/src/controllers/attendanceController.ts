@@ -8,6 +8,7 @@ import Teacher from "../models/Teacher";
 import Department from "../models/Department";
 import Section from "../models/Section";
 import SmartAttendanceRecord from "../models/SmartAttendanceRecord";
+import AttendanceSession from "../models/AttendanceSession";
 
 // Mark attendance for a specific class
 export const markAttendance = async (req: Request, res: Response) => {
@@ -449,7 +450,7 @@ export const getAttendanceReport = async (req: Request, res: Response) => {
 };
 
 /**
- * Get student's attendance summary
+ * Get student's attendance summary (includes both manual and smart attendance)
  */
 export const getStudentAttendanceSummary = async (
   req: Request,
@@ -458,6 +459,9 @@ export const getStudentAttendanceSummary = async (
   try {
     const { student_id } = req.params;
     const { start_date, end_date } = req.query;
+
+    console.log("📊 Fetching attendance summary for student:", student_id);
+    console.log("📅 Date range:", { start_date, end_date });
 
     const whereClause: any = {
       student_id,
@@ -469,7 +473,8 @@ export const getStudentAttendanceSummary = async (
       };
     }
 
-    const attendanceRecords = (await Attendance.findAll({
+    // Fetch manual attendance records
+    const manualAttendanceRecords = (await Attendance.findAll({
       where: whereClause,
       include: [
         {
@@ -490,49 +495,114 @@ export const getStudentAttendanceSummary = async (
       order: [["date", "DESC"]],
     })) as any[];
 
+    console.log(
+      "✅ Manual attendance records:",
+      manualAttendanceRecords.length
+    );
+
+    // Fetch smart attendance records
+    const smartWhereClause: any = {
+      student_id,
+    };
+
+    if (start_date && end_date) {
+      smartWhereClause.created_at = {
+        [Op.between]: [start_date, end_date],
+      };
+    }
+
+    const smartAttendanceRecords = (await SmartAttendanceRecord.findAll({
+      where: smartWhereClause,
+      include: [
+        {
+          model: AttendanceSession,
+          as: "session",
+          include: [
+            {
+              model: Timetable,
+              as: "timetable",
+              include: [
+                {
+                  model: Course,
+                  as: "course",
+                },
+                {
+                  model: Teacher,
+                  as: "teacher",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      order: [["created_at", "DESC"]],
+    })) as any[];
+
+    console.log("✅ Smart attendance records:", smartAttendanceRecords.length);
+
+    // Combine both records into a unified format
+    const allRecords = [
+      ...manualAttendanceRecords.map((record: any) => ({
+        attendance_id: record.attendance_id,
+        date: record.date,
+        status: record.status,
+        type: "manual",
+        timetable: record.timetable,
+      })),
+      ...smartAttendanceRecords.map((record: any) => ({
+        attendance_id: record.record_id,
+        date: record.created_at
+          ? new Date(record.created_at).toISOString().split("T")[0]
+          : null,
+        status: record.status,
+        type: "smart",
+        verification_method: record.verification_method,
+        timetable: record.session?.timetable,
+      })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    console.log("✅ Total combined records:", allRecords.length);
+
     // Calculate summary statistics
-    const totalClasses = attendanceRecords.length;
-    const presentCount = attendanceRecords.filter(
+    const totalClasses = allRecords.length;
+    const presentCount = allRecords.filter(
       (record) => record.status === "present"
     ).length;
-    const absentCount = attendanceRecords.filter(
+    const absentCount = allRecords.filter(
       (record) => record.status === "absent"
     ).length;
     const attendancePercentage =
       totalClasses > 0 ? (presentCount / totalClasses) * 100 : 0;
 
     // Group by course
-    const courseWiseAttendance = attendanceRecords.reduce(
-      (acc: any, record: any) => {
-        const courseId = record.timetable?.course_id;
-        const courseName = record.timetable?.course?.course_name;
+    const courseWiseAttendance = allRecords.reduce((acc: any, record: any) => {
+      const courseId = record.timetable?.course_id;
+      const courseName = record.timetable?.course?.course_name;
 
-        if (courseId && !acc[courseId]) {
-          acc[courseId] = {
-            course_name: courseName || "Unknown Course",
-            total_classes: 0,
-            present: 0,
-            absent: 0,
-            percentage: 0,
-          };
+      if (courseId && !acc[courseId]) {
+        acc[courseId] = {
+          course_name: courseName || "Unknown Course",
+          total_classes: 0,
+          present: 0,
+          absent: 0,
+          percentage: 0,
+        };
+      }
+
+      if (courseId) {
+        acc[courseId].total_classes++;
+        if (record.status === "present") {
+          acc[courseId].present++;
+        } else {
+          acc[courseId].absent++;
         }
 
-        if (courseId) {
-          acc[courseId].total_classes++;
-          if (record.status === "present") {
-            acc[courseId].present++;
-          } else {
-            acc[courseId].absent++;
-          }
+        acc[courseId].percentage =
+          (acc[courseId].present / acc[courseId].total_classes) * 100;
+      }
 
-          acc[courseId].percentage =
-            (acc[courseId].present / acc[courseId].total_classes) * 100;
-        }
-
-        return acc;
-      },
-      {}
-    );
+      return acc;
+    }, {});
 
     res.json({
       student_id,
@@ -544,10 +614,14 @@ export const getStudentAttendanceSummary = async (
         attendance_percentage: Math.round(attendancePercentage * 100) / 100,
       },
       course_wise_attendance: courseWiseAttendance,
-      recent_attendance: attendanceRecords.slice(0, 10), // Last 10 records
+      recent_attendance: allRecords.slice(0, 10), // Last 10 records
     });
   } catch (error) {
-    console.error("Error getting student attendance summary:", error);
+    console.error("❌ Error getting student attendance summary:", error);
+    console.error(
+      "Error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
     res.status(500).json({
       message: "Error fetching student attendance summary",
       error: error instanceof Error ? error.message : "Unknown error",
@@ -1038,9 +1112,25 @@ export const getAttendanceDatesForTeacher = async (
  */
 export const getUnifiedAttendance = async (req: Request, res: Response) => {
   try {
-    const { schedule_id, date, method, status, teacher_id, start_date, end_date } = req.query;
+    const {
+      schedule_id,
+      date,
+      method,
+      status,
+      teacher_id,
+      student_id,
+      start_date,
+      end_date,
+    } = req.query;
 
-    console.log("📊 Fetching unified attendance:", { schedule_id, date, method, status, teacher_id });
+    console.log("📊 Fetching unified attendance:", {
+      schedule_id,
+      date,
+      method,
+      status,
+      teacher_id,
+      student_id,
+    });
 
     // Build where clause for timetable
     const timetableWhere: any = {};
@@ -1050,6 +1140,9 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
 
     // Build where clause for attendance records
     const attendanceWhere: any = {};
+    if (student_id) {
+      attendanceWhere.student_id = student_id;
+    }
     if (schedule_id) {
       attendanceWhere.schedule_id = schedule_id;
     }
@@ -1061,13 +1154,13 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
         [Op.between]: [start_date, end_date],
       };
     }
-    if (status && status !== 'all') {
+    if (status && status !== "all") {
       attendanceWhere.status = status;
     }
 
     // Fetch manual attendance records
     let manualRecords: any[] = [];
-    if (!method || method === 'all' || method === 'manual') {
+    if (!method || method === "all" || method === "manual") {
       const manualAttendance = await Attendance.findAll({
         where: attendanceWhere,
         include: [
@@ -1079,35 +1172,39 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
               {
                 model: Course,
                 as: "course",
-                attributes: ["id", "code", "name"],
+                attributes: ["course_id", "course_code", "course_name"],
               },
               {
                 model: Teacher,
                 as: "teacher",
-                attributes: ["id", "name", "email"],
+                attributes: ["teacher_id", "name"],
               },
             ],
           },
           {
             model: Student,
             as: "student",
-            attributes: ["id", "name", "roll_number", "email"],
+            attributes: ["student_id", "name", "roll_number"],
           },
         ],
         order: [["date", "DESC"]],
       });
 
       manualRecords = manualAttendance.map((record: any) => ({
-        id: record.id,
+        id: record.attendance_id,
         student_id: record.student_id,
         student_name: record.student?.name || "Unknown",
         roll_number: record.student?.roll_number || "N/A",
-        course_name: record.timetable?.course?.name || "Unknown",
-        course_code: record.timetable?.course?.code || "N/A",
+        course_name: record.timetable?.course?.course_name || "Unknown",
+        course_code: record.timetable?.course?.course_code || "N/A",
+        teacher_name: record.timetable?.teacher?.name || "Unknown",
         date: record.date,
         status: record.status,
         method: "manual",
-        time_slot: record.timetable?.time_slot || null,
+        time_slot:
+          record.timetable?.start_time && record.timetable?.end_time
+            ? `${record.timetable.start_time} - ${record.timetable.end_time}`
+            : null,
         verified_by_face: false,
         confidence_score: null,
       }));
@@ -1115,10 +1212,13 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
 
     // Fetch smart attendance records
     let smartRecords: any[] = [];
-    if (!method || method === 'all' || method === 'smart') {
+    if (!method || method === "all" || method === "smart") {
       const smartWhere: any = {};
+      if (student_id) {
+        smartWhere.student_id = student_id;
+      }
       if (schedule_id) {
-        smartWhere.timetable_id = schedule_id;
+        smartWhere.schedule_id = schedule_id;
       }
       if (date) {
         smartWhere.date = date;
@@ -1128,7 +1228,7 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
           [Op.between]: [start_date, end_date],
         };
       }
-      if (status && status !== 'all') {
+      if (status && status !== "all") {
         smartWhere.status = status;
       }
 
@@ -1137,43 +1237,48 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
         include: [
           {
             model: Timetable,
-            as: "timetable",
+            as: "schedule",
             where: timetableWhere,
             include: [
               {
                 model: Course,
                 as: "course",
-                attributes: ["id", "code", "name"],
+                attributes: ["course_id", "course_code", "course_name"],
               },
               {
                 model: Teacher,
                 as: "teacher",
-                attributes: ["id", "name", "email"],
+                attributes: ["teacher_id", "name"],
               },
             ],
           },
           {
             model: Student,
             as: "student",
-            attributes: ["id", "name", "roll_number", "email"],
+            attributes: ["student_id", "name", "roll_number"],
           },
         ],
         order: [["date", "DESC"]],
       });
 
       smartRecords = smartAttendance.map((record: any) => ({
-        id: record.id,
+        id: record.record_id,
         student_id: record.student_id,
         student_name: record.student?.name || "Unknown",
         roll_number: record.student?.roll_number || "N/A",
-        course_name: record.timetable?.course?.name || "Unknown",
-        course_code: record.timetable?.course?.code || "N/A",
+        course_name: record.schedule?.course?.course_name || "Unknown",
+        course_code: record.schedule?.course?.course_code || "N/A",
+        teacher_name: record.schedule?.teacher?.name || "Unknown",
         date: record.date,
         status: record.status,
         method: "smart",
-        time_slot: record.timetable?.time_slot || null,
-        verified_by_face: record.verified_by_face || false,
-        confidence_score: record.confidence_score || null,
+        time_slot:
+          record.schedule?.start_time && record.schedule?.end_time
+            ? `${record.schedule.start_time} - ${record.schedule.end_time}`
+            : null,
+        verified_by_face:
+          record.verified_by_scan || record.verified_by_class_photo || false,
+        confidence_score: null,
       }));
     }
 
@@ -1185,26 +1290,37 @@ export const getUnifiedAttendance = async (req: Request, res: Response) => {
     // Calculate statistics
     const stats = {
       total: allRecords.length,
-      present: allRecords.filter(r => r.status === 'present').length,
-      absent: allRecords.filter(r => r.status === 'absent').length,
+      present: allRecords.filter((r) => r.status === "present").length,
+      absent: allRecords.filter((r) => r.status === "absent").length,
       manual: manualRecords.length,
       smart: smartRecords.length,
-      attendance_rate: allRecords.length > 0 
-        ? (allRecords.filter(r => r.status === 'present').length / allRecords.length) * 100 
-        : 0,
+      attendance_rate:
+        allRecords.length > 0
+          ? (allRecords.filter((r) => r.status === "present").length /
+              allRecords.length) *
+            100
+          : 0,
     };
 
-    console.log("✅ Unified attendance fetched:", { 
-      total: stats.total, 
-      manual: stats.manual, 
-      smart: stats.smart 
+    console.log("✅ Unified attendance fetched:", {
+      total: stats.total,
+      manual: stats.manual,
+      smart: stats.smart,
     });
 
     res.json({
       success: true,
       records: allRecords,
       stats,
-      filters: { schedule_id, date, method, status, teacher_id, start_date, end_date },
+      filters: {
+        schedule_id,
+        date,
+        method,
+        status,
+        teacher_id,
+        start_date,
+        end_date,
+      },
     });
   } catch (error) {
     console.error("❌ Error fetching unified attendance:", error);

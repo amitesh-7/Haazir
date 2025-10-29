@@ -320,8 +320,46 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
     try {
       const token = localStorage.getItem("token");
+
+      // Check if token exists
+      if (!token) {
+        console.error("❌ No auth token found in localStorage");
+        setError("Session expired. Please login again.");
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = "/login";
+        }, 2000);
+        return;
+      }
+
+      // Validate QR token format (should be a JWT token, not a short numeric code)
+      if (qrToken.length < 100) {
+        console.error("❌ Invalid QR code format - too short:", qrToken.length);
+        setError(
+          "Invalid QR code! Please scan the QR code from the Smart Attendance page, not the regular attendance page."
+        );
+        setStep("qr");
+        return;
+      }
+
+      // Check if it looks like a JWT token (has 3 parts separated by dots)
+      const jwtParts = qrToken.split(".");
+      if (jwtParts.length !== 3) {
+        console.error("❌ Invalid QR code format - not a JWT token");
+        setError(
+          "Invalid QR code format! This appears to be from the old attendance system. Please use Smart Attendance."
+        );
+        setStep("qr");
+        return;
+      }
+
       const API_URL =
         process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
+      console.log("📤 Sending QR validation request...");
+      console.log("🔑 Auth token present:", !!token);
+      console.log("🎫 QR token length:", qrToken.length);
+
       const response = await fetch(`${API_URL}/smart-attendance/validate-qr`, {
         method: "POST",
         headers: {
@@ -338,6 +376,30 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         ok: response.ok,
         data: data,
       });
+
+      // Handle 401 specifically (auth token expired/invalid)
+      if (response.status === 401) {
+        console.error("❌ Authentication failed - token may be expired");
+
+        // Check if error is about auth token vs QR token
+        if (
+          data.message &&
+          (data.message.includes("Invalid token") ||
+            data.message.includes("No token provided"))
+        ) {
+          setError("Your session has expired. Please login again.");
+          setTimeout(() => {
+            localStorage.clear();
+            window.location.href = "/login";
+          }, 2000);
+          return;
+        }
+
+        // Otherwise it's a QR token issue
+        const errorMsg = data.error || "Invalid or expired QR code";
+        console.error("❌ QR validation error:", errorMsg);
+        throw new Error(errorMsg);
+      }
 
       if (!response.ok) {
         const errorMsg = data.error || "Invalid QR code";
