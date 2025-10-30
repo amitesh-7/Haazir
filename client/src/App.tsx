@@ -7,6 +7,8 @@ import {
 } from "react-router-dom";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import { ToastProvider } from "./components/common/Toast";
+import { LenisProvider } from "./contexts/LenisContext";
+import ScrollToTopOnRouteChange from "./components/common/ScrollToTopOnRouteChange";
 import LandingPage from "./pages/LandingPage";
 import LandingPageNew from "./pages/LandingPageNew";
 import PricingPage from "./pages/PricingPage";
@@ -257,108 +259,119 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        <Router>
-          <Switch>
-            {/* Public Routes */}
-            <Route path="/" exact component={LandingPageNew} />
-            <Route path="/landing" exact component={LandingPageNew} />
-            <Route path="/landing-old" exact component={LandingPage} />
-            <Route path="/pricing" exact component={PricingPage} />
-            <Route path="/features" exact component={FeaturesPage} />
-            <Route path="/about" exact component={AboutPage} />
-            <Route path="/contact" exact component={ContactPage} />
-            <Route path="/login" component={EnhancedLogin} />
-            <Route path="/login-old" component={Login} />
+        <LenisProvider
+          options={{
+            duration: 1.2,
+            smoothWheel: true,
+            smoothTouch: false, // Set to true for smooth touch scrolling on mobile
+          }}
+        >
+          <Router>
+            <ScrollToTopOnRouteChange />
+            <Switch>
+              {/* Public Routes */}
+              <Route path="/" exact component={LandingPageNew} />
+              <Route path="/landing" exact component={LandingPageNew} />
+              <Route path="/landing-old" exact component={LandingPage} />
+              <Route path="/pricing" exact component={PricingPage} />
+              <Route path="/features" exact component={FeaturesPage} />
+              <Route path="/about" exact component={AboutPage} />
+              <Route path="/contact" exact component={ContactPage} />
+              <Route path="/login" component={EnhancedLogin} />
+              <Route path="/login-old" component={Login} />
 
-            {/* Coordinator Routes */}
-            {coordinatorRoutes.map(({ path, component: Component, exact }) => (
-              <PrivateRoute
-                key={path}
-                path={path}
-                exact={exact}
-                roles={["coordinator"]}
-                render={() => (
-                  <Layout>
-                    <Component />
-                  </Layout>
-                )}
-              />
-            ))}
-
-            {/* Teacher Routes */}
-            {teacherRoutes.map(({ path, component: Component, exact }) => (
-              <PrivateRoute
-                key={path}
-                path={path}
-                exact={exact}
-                roles={["teacher"]}
-                render={() => (
-                  <Layout>
-                    <Component />
-                  </Layout>
-                )}
-              />
-            ))}
-
-            {/* Student Routes */}
-            {studentRoutes.map(({ path, component: Component, exact }) => (
-              <PrivateRoute
-                key={path}
-                path={path}
-                exact={exact}
-                roles={["student"]}
-                render={() => (
-                  <Layout>
-                    <Component />
-                  </Layout>
-                )}
-              />
-            ))}
-
-            {/* Shared Routes */}
-            {sharedRoutes.map(({ path, component: Component, roles }) => (
-              <PrivateRoute
-                key={path}
-                path={path}
-                roles={roles}
-                render={() => (
-                  <Layout>
-                    <Component />
-                  </Layout>
-                )}
-              />
-            ))}
-
-            {/* 404 Route */}
-            <Route
-              path="*"
-              render={() => {
-                const role = getRole();
-                const token = getToken();
-
-                if (!token || !role) {
-                  return <Redirect to="/login" />;
-                }
-
-                // Redirect to appropriate dashboard for unknown routes
-                const dashboardPaths = {
-                  coordinator: "/coordinator",
-                  teacher: "/teacher",
-                  student: "/student",
-                };
-
-                return (
-                  <Redirect
-                    to={
-                      dashboardPaths[role as keyof typeof dashboardPaths] ||
-                      "/login"
-                    }
+              {/* Coordinator Routes */}
+              {coordinatorRoutes.map(
+                ({ path, component: Component, exact }) => (
+                  <PrivateRoute
+                    key={path}
+                    path={path}
+                    exact={exact}
+                    roles={["coordinator"]}
+                    render={() => (
+                      <Layout>
+                        <Component />
+                      </Layout>
+                    )}
                   />
-                );
-              }}
-            />
-          </Switch>
-        </Router>
+                )
+              )}
+
+              {/* Teacher Routes */}
+              {teacherRoutes.map(({ path, component: Component, exact }) => (
+                <PrivateRoute
+                  key={path}
+                  path={path}
+                  exact={exact}
+                  roles={["teacher"]}
+                  render={() => (
+                    <Layout>
+                      <Component />
+                    </Layout>
+                  )}
+                />
+              ))}
+
+              {/* Student Routes */}
+              {studentRoutes.map(({ path, component: Component, exact }) => (
+                <PrivateRoute
+                  key={path}
+                  path={path}
+                  exact={exact}
+                  roles={["student"]}
+                  render={() => (
+                    <Layout>
+                      <Component />
+                    </Layout>
+                  )}
+                />
+              ))}
+
+              {/* Shared Routes */}
+              {sharedRoutes.map(({ path, component: Component, roles }) => (
+                <PrivateRoute
+                  key={path}
+                  path={path}
+                  roles={roles}
+                  render={() => (
+                    <Layout>
+                      <Component />
+                    </Layout>
+                  )}
+                />
+              ))}
+
+              {/* 404 Route */}
+              <Route
+                path="*"
+                render={() => {
+                  const role = getRole();
+                  const token = getToken();
+
+                  if (!token || !role) {
+                    return <Redirect to="/login" />;
+                  }
+
+                  // Redirect to appropriate dashboard for unknown routes
+                  const dashboardPaths = {
+                    coordinator: "/coordinator",
+                    teacher: "/teacher",
+                    student: "/student",
+                  };
+
+                  return (
+                    <Redirect
+                      to={
+                        dashboardPaths[role as keyof typeof dashboardPaths] ||
+                        "/login"
+                      }
+                    />
+                  );
+                }}
+              />
+            </Switch>
+          </Router>
+        </LenisProvider>
       </ToastProvider>
     </ErrorBoundary>
   );
