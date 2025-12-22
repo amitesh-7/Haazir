@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -204,6 +204,7 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const user = useMemo((): User | null => {
     try {
@@ -218,6 +219,38 @@ const Navbar: React.FC = () => {
     if (!user) return [];
     return navigationConfig[user.role] || [];
   }, [user]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
+  }, [location.pathname]);
+
+  // Toggle mobile menu with animation
+  const toggleMobileMenu = useCallback(() => {
+    console.log('Toggle mobile menu called, current state:', isMobileMenuOpen);
+    if (isMobileMenuOpen) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsMobileMenuOpen(false);
+        setIsAnimating(false);
+      }, 300);
+    } else {
+      setIsMobileMenuOpen(true);
+    }
+  }, [isMobileMenuOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -265,14 +298,13 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = () => {
       setIsProfileDropdownOpen(false);
-      setIsMobileMenuOpen(false);
     };
 
-    if (isProfileDropdownOpen || isMobileMenuOpen) {
+    if (isProfileDropdownOpen) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [isProfileDropdownOpen, isMobileMenuOpen]);
+  }, [isProfileDropdownOpen]);
 
   if (!user) {
     return null; // Don't show navbar if user is not logged in
@@ -449,41 +481,131 @@ const Navbar: React.FC = () => {
               )}
             </div>
 
-            {/* Mobile menu button */}
-            <div className="lg:hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Mobile menu button - Animated Hamburger */}
+            <div className="lg:hidden relative z-50">
               <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="bg-white/10 backdrop-blur-sm p-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200 border border-white/10"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMobileMenu();
+                }}
+                data-mobile-menu-button="true"
+                className="relative bg-white/10 backdrop-blur-sm p-3 rounded-xl text-gray-300 hover:text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200 border border-white/10 active:bg-white/30 touch-manipulation select-none"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                aria-expanded={isMobileMenuOpen}
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               >
-                {isMobileMenuOpen ? icons.close : icons.menu}
+                <span className="sr-only">{isMobileMenuOpen ? 'Close menu' : 'Open menu'}</span>
+                {/* Animated hamburger icon */}
+                <div className="w-6 h-6 flex flex-col justify-center items-center pointer-events-none">
+                  <span 
+                    className={`block w-5 h-0.5 bg-current transform transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-1'
+                    }`} 
+                  />
+                  <span 
+                    className={`block w-5 h-0.5 bg-current transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
+                    }`} 
+                  />
+                  <span 
+                    className={`block w-5 h-0.5 bg-current transform transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-1'
+                    }`} 
+                  />
+                </div>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Enhanced Mobile Navigation Menu */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur-xl border-t border-gray-700/50 shadow-2xl">
-          <div className="px-4 pt-4 pb-6 space-y-2">
-            {navigation.map((item, index) => (
+      {/* Mobile Menu Overlay */}
+      {(isMobileMenuOpen || isAnimating) && (
+        <div 
+          className={`fixed inset-0 bg-black z-40 lg:hidden transition-opacity duration-300 ${
+            isMobileMenuOpen && !isAnimating ? 'opacity-60' : 'opacity-0'
+          }`}
+          style={{ top: '64px' }}
+          onClick={toggleMobileMenu}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Enhanced Mobile Navigation Slide Panel */}
+      {(isMobileMenuOpen || isAnimating) && (
+        <div 
+          className={`fixed top-16 right-0 w-full sm:w-80 h-[calc(100vh-64px)] bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${
+            isMobileMenuOpen && !isAnimating ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* User Info Section */}
+            <div className="px-6 py-5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-b border-white/10">
+              <div className="flex items-center space-x-4">
+                <div className={`h-14 w-14 bg-gradient-to-br ${getRoleGradient(user.role)} rounded-2xl flex items-center justify-center shadow-lg`}>
+                  <span className="text-2xl font-bold text-white">
+                    {user.email.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white truncate">{user.name || user.email.split('@')[0]}</p>
+                  <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                  <span className={`inline-block text-xs px-3 py-1 ${getRoleBadgeStyle(user.role)} rounded-full mt-2`}>
+                    {getRoleDisplayName(user.role)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="flex-1 overflow-y-auto px-4 py-4">
+              <div className="space-y-2">
+                {navigation.map((item, index) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    exact={item.path === `/${user.role}`}
+                    className="flex items-center space-x-4 px-4 py-4 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 active:bg-white/20 transition-all duration-200 touch-manipulation group"
+                    activeClassName="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white shadow-lg border border-white/10"
+                    onClick={toggleMobileMenu}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${item.color} shadow-lg group-hover:scale-110 transition-transform duration-200`}>
+                      {item.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="block font-medium text-base">{item.label}</span>
+                      <span className="text-sm text-gray-500">{item.description}</span>
+                    </div>
+                  </NavLink>
+                ))}
+              </div>
+            </nav>
+
+            {/* Bottom Actions */}
+            <div className="border-t border-white/10 px-4 py-4 space-y-2 bg-slate-900/50">
               <NavLink
-                key={item.path}
-                to={item.path}
-                exact={item.path === `/${user.role}`}
-                className="flex items-center space-x-4 px-4 py-3 rounded-xl text-gray-300 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 transition-all duration-300 group"
-                activeClassName="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white shadow-lg backdrop-blur-sm border border-white/10"
-                onClick={() => setIsMobileMenuOpen(false)}
+                to="/profile"
+                className="flex items-center space-x-4 px-4 py-4 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 active:bg-white/20 transition-all duration-200 touch-manipulation"
+                onClick={toggleMobileMenu}
               >
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${item.color} shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-                  {item.icon}
-                </div>
-                <div className="flex-1">
-                  <span className="block font-medium">{item.label}</span>
-                  <span className="text-sm text-gray-500">{item.description}</span>
-                </div>
+                <span className="flex-shrink-0 w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                  {icons.profile}
+                </span>
+                <span className="text-base font-medium">Profile Settings</span>
               </NavLink>
-            ))}
+              
+              <button
+                onClick={() => { handleLogout(); toggleMobileMenu(); }}
+                className="flex items-center space-x-4 w-full px-4 py-4 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 active:bg-red-500/20 transition-all duration-200 touch-manipulation"
+              >
+                <span className="flex-shrink-0 w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center">
+                  {icons.logout}
+                </span>
+                <span className="text-base font-medium">Sign Out</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
