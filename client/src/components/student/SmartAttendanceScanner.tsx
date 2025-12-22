@@ -27,6 +27,10 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
   );
   const [cameraPermission, setCameraPermission] = useState<string>("prompt");
   const [scannerInitializing, setScannerInitializing] = useState(false);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">(
+    "environment"
+  ); // "user" = front, "environment" = back
+  const [availableCameras, setAvailableCameras] = useState<any[]>([]);
 
   const webcamRef = useRef<Webcam>(null);
   const qrScannerRef = useRef<Html5QrcodeScanner | null>(null);
@@ -187,14 +191,22 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         console.log("📷 Checking available cameras...");
         const cameras = await Html5Qrcode.getCameras();
         console.log(`✅ Found ${cameras.length} camera(s):`, cameras);
+        setAvailableCameras(cameras);
 
         if (cameras.length === 0) {
           throw new Error("No cameras found on this device");
         }
 
-        // Use the back camera if available (usually better for QR scanning)
-        const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
-        console.log(`📹 Using camera: ${cameraId}`);
+        // Select camera based on facing mode
+        let cameraId = cameras[0].id;
+        if (facingMode === "environment" && cameras.length > 1) {
+          // Use back camera (usually index 1)
+          cameraId = cameras[1].id;
+        } else if (facingMode === "user") {
+          // Use front camera (usually index 0)
+          cameraId = cameras[0].id;
+        }
+        console.log(`📹 Using camera (${facingMode}): ${cameraId}`);
 
         // Start scanning
         console.log("▶️ Starting camera and QR detection...");
@@ -273,7 +285,23 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
           });
       }
     };
-  }, [step]); // Only depend on step
+  }, [step, facingMode]); // Depend on step and facingMode
+
+  // Function to switch camera
+  const switchCamera = async () => {
+    if (html5QrcodeRef.current) {
+      try {
+        console.log("🔄 Switching camera...");
+        await html5QrcodeRef.current.stop();
+        html5QrcodeRef.current = null;
+      } catch (err) {
+        console.error("Error stopping scanner:", err);
+      }
+    }
+    // Toggle facing mode
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+    setScannerInitializing(false);
+  };
 
   // Countdown timer for face verification
   useEffect(() => {
@@ -644,6 +672,29 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
             )}
 
             <div id="qr-reader" className="w-full max-w-2xl mx-auto mb-4"></div>
+
+            {/* Camera Switch Button */}
+            {availableCameras.length > 1 &&
+              !scannerInitializing &&
+              html5QrcodeRef.current && (
+                <div className="flex justify-center mb-4">
+                  <button
+                    onClick={switchCamera}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 shadow-md"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M4 5a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" />
+                    </svg>
+                    🔄 Switch to {facingMode === "user" ? "Back" : "Front"}{" "}
+                    Camera
+                  </button>
+                </div>
+              )}
 
             {/* Help Text */}
             {!scannerInitializing && (
