@@ -1,6 +1,6 @@
 {
   "name": "haazir-attendance-system",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Haazir - Smart Attendance Management System with Face Recognition",
   "scripts": {
@@ -14,7 +14,7 @@
     "dev-server": "cd server && npm run dev",
     "vercel-build": "cd client && npm install && npm run build"
   },
-  "author": "Priyanshu Chaurasia",
+  "author": "Optimistic Mutant Coders",
   "license": "MIT",
   "dependencies": {
     "pg": "^8.16.3"
