@@ -170,6 +170,34 @@ const StudentAttendanceView: React.FC = () => {
         );
       }
 
+      // Remove duplicate attendance records based on date, course, teacher, and time
+      if (data.recent_attendance && data.recent_attendance.length > 0) {
+        const uniqueAttendance: AttendanceRecord[] = [];
+        const seenRecords = new Set<string>();
+
+        data.recent_attendance.forEach((record) => {
+          // Create a unique key based on date, course, teacher, and time
+          const uniqueKey = `${record.date}_${record.timetable?.course?.course_code}_${record.timetable?.teacher?.name}_${record.timetable?.start_time}_${record.timetable?.end_time}`;
+
+          if (!seenRecords.has(uniqueKey)) {
+            seenRecords.add(uniqueKey);
+            uniqueAttendance.push(record);
+          } else {
+            console.log("🔄 Duplicate record filtered:", uniqueKey);
+          }
+        });
+
+        data.recent_attendance = uniqueAttendance;
+        console.log(
+          `✅ Filtered duplicates: ${
+            data.recent_attendance.length
+          } unique records from original ${
+            data.recent_attendance.length +
+            (seenRecords.size - uniqueAttendance.length)
+          }`
+        );
+      }
+
       setAttendanceData(data);
       setLastUpdated(new Date());
 
