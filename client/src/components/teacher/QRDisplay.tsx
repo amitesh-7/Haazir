@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Clock, MapPin, RefreshCw, ArrowRight } from "lucide-react";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 interface TimetableSlot {
   schedule_id: number;
   course_name: string;
@@ -17,6 +19,7 @@ interface SessionData {
   expiresAt: string;
   isExpired: boolean;
   qrCodeUrl?: string;
+  rotationCount?: number;
   scans?: {
     total: number;
     verified: number;
@@ -37,6 +40,9 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isExpired, setIsExpired] = useState(false);
+  const [rotationCount, setRotationCount] = useState<number>(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [nextRotationTime, setNextRotationTime] = useState<number>(10); // Countdown to next rotation
 
   useEffect(() => {
     // Check if sessionData is valid and has QR code URL
@@ -49,49 +55,107 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
       console.log("📱 Setting QR Code URL:", sessionData.qrCodeUrl);
       setQrCodeUrl(sessionData.qrCodeUrl);
     }
-  }, [sessionData.sessionId, sessionData.qrCodeUrl]);
 
-  // Update countdown timer
+    // Set initial rotation count
+    if (sessionData.rotationCount !== undefined) {
+      setRotationCount(sessionData.rotationCount);
+    }
+  }, [sessionData.sessionId, sessionData.qrCodeUrl, sessionData.rotationCount]);
+
+  // Auto-refresh QR code every 10 seconds
+  useEffect(() => {
+    if (!sessionData?.sessionId || isExpired) {
+      return;
+    }
+
+    const refreshQR = async () => {
+      try {
+        setIsRefreshing(true);
+        setNextRotationTime(10); // Reset countdown
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(`${API_URL}/smart-attendance/refresh-qr`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sessionId: sessionData.sessionId,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to refresh QR:", errorData);
+
+          // If session expired or not found, mark as expired
+          if (response.status === 403 || response.status === 404) {
+            setIsExpired(true);
+          }
+          return;
+        }
+
+        const data = await response.json();
+        console.log(`🔄 QR Refreshed - Rotation ${data.session.rotationCount}`);
+
+        // Update QR code, rotation count, and session expiry
+        setQrCodeUrl(data.qrCode);
+        setRotationCount(data.session.rotationCount);
+      } catch (error) {
+        console.error("Error refreshing QR:", error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+
+    // Refresh immediately on mount, then every 10 seconds
+    const interval = setInterval(refreshQR, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [sessionData.sessionId, isExpired]);
+
+  // Countdown timer for next QR rotation (10 seconds)
+  useEffect(() => {
+    if (isExpired || isRefreshing) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setNextRotationTime((prev) => {
+        if (prev <= 1) {
+          return 10; // Reset when reaching 0
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isExpired, isRefreshing]);
+
+  // Update session expiry countdown timer (session stays active with rolling window)
   useEffect(() => {
     // Check if sessionData is valid
     if (!sessionData?.expiresAt) {
       return;
     }
 
-    console.log("⏰ QRDisplay - Expires At:", sessionData.expiresAt);
-    console.log("⏰ QRDisplay - Current Time:", new Date().toISOString());
-    console.log(
-      "⏰ QRDisplay - Expiry Time:",
-      new Date(sessionData.expiresAt).toISOString()
-    );
-
-    const now = new Date().getTime();
-    const expiry = new Date(sessionData.expiresAt).getTime();
-    const initialRemaining = Math.max(0, Math.floor((expiry - now) / 1000));
-
-    console.log(
-      "⏰ QRDisplay - Initial Time Remaining (seconds):",
-      initialRemaining
-    );
-    setTimeRemaining(initialRemaining);
-
-    if (initialRemaining === 0) {
-      setIsExpired(true);
-      return;
-    }
-
-    const interval = setInterval(() => {
+    const updateTimeRemaining = () => {
       const now = new Date().getTime();
       const expiry = new Date(sessionData.expiresAt).getTime();
       const remaining = Math.max(0, Math.floor((expiry - now) / 1000));
-
       setTimeRemaining(remaining);
 
       if (remaining === 0) {
         setIsExpired(true);
-        clearInterval(interval);
       }
-    }, 1000);
+    };
+
+    // Update immediately
+    updateTimeRemaining();
+
+    // Then update every second
+    const interval = setInterval(updateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
   }, [sessionData.expiresAt]);
@@ -157,11 +221,7 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
           {/* Timer Display - ABOVE QR Code */}
           <div
             className={`mb-4 px-6 py-3 rounded-full font-bold text-xl shadow-lg ${
-              isExpired
-                ? "bg-red-500 text-white"
-                : timeRemaining < 120
-                ? "bg-yellow-500 text-white"
-                : "bg-green-500 text-white"
+              isExpired ? "bg-red-500 text-white" : "bg-green-500 text-white"
             }`}
           >
             {isExpired ? (
@@ -172,7 +232,8 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
             ) : (
               <span className="flex items-center">
                 <Clock size={20} className="inline mr-2" />
-                {formatTime(timeRemaining)}
+                Next Rotation: {nextRotationTime}s
+                {isRefreshing && " (Refreshing...)"}
               </span>
             )}
           </div>
@@ -203,6 +264,29 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
           <p className="text-sm text-gray-600 mt-4 font-mono">
             Session: {sessionData?.sessionId?.slice(0, 16) || "N/A"}...
           </p>
+
+          {/* Rotation Count Indicator */}
+          <div className="mt-2 flex items-center justify-center space-x-2">
+            <div
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                isRefreshing
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {isRefreshing ? (
+                <span className="flex items-center">
+                  <RefreshCw size={12} className="animate-spin mr-1" />
+                  Refreshing...
+                </span>
+              ) : (
+                <span>🔄 Rotation #{rotationCount}</span>
+              )}
+            </div>
+            <div className="text-xs text-gray-500">
+              (Auto-refresh every 10s)
+            </div>
+          </div>
         </div>
 
         {/* Instructions */}
@@ -253,11 +337,20 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
         {/* QR Code Info */}
         <div className="mt-6 text-center text-sm text-gray-600 bg-blue-50 rounded-lg p-4">
           <p className="font-semibold mb-1">
-            ✅ QR Code valid for 60 seconds from generation
+            ✅ Session stays active with auto-refresh
           </p>
-          <p>⏱️ Face verification timeout: 60 seconds</p>
+          <p className="font-semibold text-orange-600">
+            🔄 QR Code rotates every 10 seconds (prevents sharing)
+          </p>
+          <p className="mt-1">⏱️ Face verification timeout: 60 seconds</p>
           <p className="mt-2">
             📱 Students must have registered their face before scanning
+          </p>
+          <p className="mt-2 text-xs text-gray-500">
+            🔒 Old QR codes become invalid immediately when rotation occurs
+          </p>
+          <p className="mt-2 text-xs font-semibold text-green-600">
+            Current Rotation: #{rotationCount}
           </p>
         </div>
       </div>

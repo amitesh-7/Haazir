@@ -1,6 +1,7 @@
 import express from "express";
 import {
   generateAttendanceQR,
+  refreshAttendanceQR,
   validateQR,
   verifyFace,
   processClassPhoto,
@@ -23,6 +24,9 @@ router.use(authMiddleware);
 
 // Generate QR code for attendance session (Teacher)
 router.post("/generate-qr", generateAttendanceQR);
+
+// Refresh QR code for existing session (Teacher - called every 10 seconds)
+router.post("/refresh-qr", refreshAttendanceQR);
 
 // Process class photo captured by teacher (Teacher)
 router.post("/process-class-photo", processClassPhoto);
