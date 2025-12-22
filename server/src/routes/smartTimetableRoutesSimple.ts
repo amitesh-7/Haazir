@@ -20,6 +20,17 @@ import {
   fetchTimetableViewSettingsBySection,
 } from "../controllers/timetableController";
 
+// Import unified timetable controller
+import {
+  generateUnifiedTimetable,
+  generateCSPTimetable,
+  generateAITimetable,
+  generateHybridTimetable,
+  getGenerationCapabilities,
+  compareSolutions,
+  validateRequest,
+} from "../controllers/unifiedTimetableController";
+
 import { authMiddleware } from "../middleware/auth";
 import TimetableExportService from "../services/timetableExportService";
 import GeminiTimetableService from "../services/geminiTimetableService";
@@ -585,5 +596,103 @@ router.post(
     }
   }
 );
+
+// ==================== UNIFIED TIMETABLE GENERATION ROUTES ====================
+// These routes use the improved CSP and AI-based generation
+
+// Get generation capabilities (available methods, defaults)
+router.get("/unified/capabilities", getGenerationCapabilities);
+
+// Validate generation request before processing
+router.post("/unified/validate", validateRequest);
+
+// Generate timetables - unified endpoint (supports method selection)
+router.post("/unified/generate", authMiddleware, generateUnifiedTimetable);
+
+// Generate using CSP solver only
+router.post("/unified/generate/csp", authMiddleware, generateCSPTimetable);
+
+// Generate using AI (Gemini) only
+router.post("/unified/generate/ai", authMiddleware, generateAITimetable);
+
+// Generate using hybrid approach (CSP + AI)
+router.post("/unified/generate/hybrid", authMiddleware, generateHybridTimetable);
+
+// Compare multiple solutions
+router.post("/unified/compare", authMiddleware, compareSolutions);
+
+// Test endpoint without auth for development
+router.post("/unified/generate-test", async (req: Request, res: Response) => {
+  try {
+    console.log("\n🧪 Unified Generation Test (No Auth)");
+    
+    const { UnifiedTimetableService } = await import("../services/timetable");
+    const service = new UnifiedTimetableService();
+    
+    const method = req.body.method || "auto";
+    const result = await service.generate(req.body, { method });
+    
+    // Transform to frontend format
+    const transformedSolutions = result.solutions.map(solution => ({
+      id: solution.id,
+      name: solution.name,
+      optimization: solution.optimization_goal,
+      score: solution.quality.overall_score,
+      quality: {
+        overall: solution.quality.overall_score,
+        feasibility: solution.quality.feasibility_score,
+        teacherSatisfaction: solution.quality.teacher_satisfaction,
+        studentSatisfaction: solution.quality.student_satisfaction,
+        roomUtilization: solution.quality.resource_utilization,
+        gapScore: solution.quality.optimization_score,
+      },
+      conflicts: solution.issues.filter(i => i.type === 'hard_violation').length,
+      timetable_entries: solution.timetable_entries.map(entry => ({
+        day: entry.day,
+        timeSlot: entry.time_slot,
+        courseId: entry.course_code,
+        courseName: entry.course_name,
+        courseCode: entry.course_code,
+        teacherId: entry.teacher_id,
+        teacherName: entry.teacher_name,
+        roomId: entry.room_number,
+        roomName: entry.room_number,
+        sectionId: entry.section_id,
+        sectionName: entry.section_name,
+        departmentId: entry.department_id,
+        departmentName: entry.department_name,
+        sessionType: entry.session_type,
+        batchId: entry.batch_id,
+        batchName: entry.batch_id ? `Batch ${entry.batch_id}` : undefined,
+      })),
+      metadata: {
+        generated_at: solution.generation_info.timestamp,
+        method: solution.method,
+        statistics: solution.statistics,
+      },
+    }));
+    
+    res.json({
+      success: result.success,
+      message: result.success 
+        ? `Generated ${result.solutions.length} solution(s) using ${result.method}`
+        : "Generation failed",
+      solutions: transformedSolutions,
+      recommendations: result.recommendations,
+      summary: result.generation_summary,
+      method: result.method,
+      ai_available: service.isAIAvailable(),
+      timestamp: new Date().toISOString(),
+    });
+    
+  } catch (error) {
+    console.error("❌ Unified Test Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Test generation failed",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
 
 export default router;

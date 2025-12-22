@@ -11,6 +11,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Zap,
+  Brain,
+  Cpu,
 } from "lucide-react";
 import {
   fetchAllDepartments,
@@ -19,6 +21,10 @@ import {
 import CourseAssignmentMatrix from "../components/coordinator/CourseAssignmentMatrix";
 import ManualTimeConfiguration from "../components/coordinator/ManualTimeConfiguration";
 import smartTimetableService from "../services/smartTimetableService";
+import GenerationMethodSelector from "../components/coordinator/GenerationMethodSelector";
+import GenerationProgress from "../components/coordinator/GenerationProgress";
+
+type GenerationMethod = 'csp' | 'ai' | 'hybrid' | 'auto';
 
 interface TimeConfig {
   startTime: string;
@@ -108,6 +114,23 @@ const SmartTimetableGenerator: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // New state for generation method selection
+  const [generationMethod, setGenerationMethod] = useState<GenerationMethod>('auto');
+  const [generationProgress, setGenerationProgress] = useState<{
+    stage: 'preparing' | 'validating' | 'generating' | 'merging' | 'completed' | 'error';
+    method: GenerationMethod;
+    currentChunk?: number;
+    totalChunks?: number;
+    currentSection?: string;
+    totalSections?: number;
+    processedSections?: number;
+    estimatedTimeRemaining?: number;
+    message?: string;
+  }>({
+    stage: 'preparing',
+    method: 'auto',
+  });
 
   const steps = [
     {
@@ -299,14 +322,27 @@ const SmartTimetableGenerator: React.FC = () => {
 
     setGenerating(true);
     setError(null);
+    setGenerationProgress({
+      stage: 'preparing',
+      method: generationMethod,
+      totalSections: selectedSections.length,
+      processedSections: 0,
+    });
 
     try {
-      console.log("🚀 Preparing AI timetable generation request...");
-      console.log(
-        `📚 Selected Departments: ${selectedDepartments
-          .map((d) => d.name)
-          .join(", ")}`
-      );
+      console.log("🚀 Preparing timetable generation request...");
+      console.log(`📚 Selected Departments: ${selectedDepartments.map((d) => d.name).join(", ")}`);
+      console.log(`🎯 Generation Method: ${generationMethod}`);
+      console.log(`📋 Sections: ${selectedSections.length}`);
+
+      // Determine if we should use large-scale mode
+      const useLargeScale = selectedSections.length > 10;
+      if (useLargeScale) {
+        console.log("📦 Using large-scale mode with chunked processing");
+      }
+
+      // Update progress to validating
+      setGenerationProgress(prev => ({ ...prev, stage: 'validating' }));
 
       // Group course assignments by course to match backend expected format
       const courseGroupMap = new Map<number, any>();
@@ -317,28 +353,13 @@ const SmartTimetableGenerator: React.FC = () => {
             course_id: assignment.course_id,
             course_code: assignment.course_code || "",
             course_name: assignment.course_name || "",
-            department_id: assignment.department_id, // Use the course's actual department
+            department_id: assignment.department_id,
             semester: assignment.semester || selectedSemesters[0],
             sections: selectedSections,
             sessions: {
-              theory: {
-                teacher_id: 0,
-                teacher_name: "",
-                classes_per_week: 0,
-                duration_minutes: 60,
-              },
-              lab: {
-                teacher_id: 0,
-                teacher_name: "",
-                classes_per_week: 0,
-                duration_minutes: 60,
-              },
-              tutorial: {
-                teacher_id: 0,
-                teacher_name: "",
-                classes_per_week: 0,
-                duration_minutes: 60,
-              },
+              theory: { teacher_id: 0, teacher_name: "", classes_per_week: 0, duration_minutes: 60 },
+              lab: { teacher_id: 0, teacher_name: "", classes_per_week: 0, duration_minutes: 60 },
+              tutorial: { teacher_id: 0, teacher_name: "", classes_per_week: 0, duration_minutes: 60 },
             },
           });
         }
@@ -356,26 +377,36 @@ const SmartTimetableGenerator: React.FC = () => {
 
       const courseAssignmentsArray = Array.from(courseGroupMap.values());
 
-      // Prepare AI generation input matching backend types
-      const aiGenerationInput = {
+      // Build unified request using the service helper
+      const unifiedRequest = smartTimetableService.buildUnifiedRequest({
+        departments: selectedDepartments.map(d => ({
+          department_id: d.department_id.toString(),
+          name: d.name,
+          code: d.code,
+          sections: availableSections
+            .filter(s => s.department_id === d.department_id && selectedSections.includes(s.section_name))
+            .map(s => ({
+              section_id: s.section_id.toString(),
+              name: s.section_name,
+              semester: selectedSemesters[0],
+              strength: 60,
+            })),
+        })),
         courseAssignments: courseAssignmentsArray,
         timeConfiguration: {
           start_time: timeConfig?.startTime || "08:00",
           end_time: timeConfig?.endTime || "17:00",
           class_duration: timeConfig?.classDuration || 60,
+          break_duration: 10,
           lunch_break: {
+            enabled: timeConfig?.lunchBreak?.enabled || true,
             start: timeConfig?.lunchBreak?.startTime || "12:00",
             end: timeConfig?.lunchBreak?.endTime || "13:00",
           },
-          working_days: timeConfig?.workingDays || [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-          ],
+          working_days: timeConfig?.workingDays || ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
         },
         preferences: {
+          optimization_goal: 'balanced',
           hard_constraints: {
             no_teacher_clash: true,
             no_section_clash: true,
@@ -386,137 +417,128 @@ const SmartTimetableGenerator: React.FC = () => {
           soft_constraints: {
             minimize_student_gaps: { enabled: true, weight: 70 },
             balance_teacher_workload: { enabled: true, weight: 80 },
-            prefer_morning_theory: {
-              enabled: timetableSettings.morning_theory_preference,
-              weight: 60,
-            },
-            avoid_back_to_back_labs: {
-              enabled: timetableSettings.avoid_back_to_back_labs,
-              weight: 90,
-            },
+            prefer_morning_theory: { enabled: timetableSettings.morning_theory_preference, weight: 60 },
+            avoid_back_to_back_labs: { enabled: timetableSettings.avoid_back_to_back_labs, weight: 90 },
             minimize_daily_transitions: { enabled: true, weight: 50 },
           },
         },
+        method: generationMethod,
         metadata: {
-          request_id: Date.now(),
-          department_names: selectedDepartments.map((d) => d.name).join(", "), // Changed to comma-separated list
+          request_id: Date.now().toString(),
+          department_names: selectedDepartments.map((d) => d.name).join(", "),
           semester: selectedSemesters[0],
           academic_year: new Date().getFullYear().toString(),
           created_by: "coordinator",
         },
-      };
+      });
+
+      // Update progress to generating
+      setGenerationProgress(prev => ({
+        ...prev,
+        stage: 'generating',
+        totalChunks: useLargeScale ? Math.ceil(selectedSections.length / 8) : 1,
+        currentChunk: 1,
+      }));
 
       console.log("📊 Generation Input:", {
-        courses: aiGenerationInput.courseAssignments.length,
+        courses: courseAssignmentsArray.length,
         sections: selectedSections.length,
         semesters: selectedSemesters.length,
-        workingDays: aiGenerationInput.timeConfiguration.working_days.length,
+        workingDays: unifiedRequest.time_configuration?.working_days?.length || 5,
+        method: generationMethod,
       });
 
-      // Call backend API for AI generation
-      console.log("🤖 Calling backend AI timetable generator...");
-      const response = await fetch(
-        "http://localhost:5000/api/timetable/generator/generate-ai",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify(aiGenerationInput),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Backend error: ${response.status} ${response.statusText}`
-        );
+      // Call the unified service
+      let result;
+      if (generationMethod === 'csp') {
+        result = await smartTimetableService.generateCSPTimetable(unifiedRequest);
+      } else if (generationMethod === 'ai') {
+        result = await smartTimetableService.generateAITimetable(unifiedRequest);
+      } else if (generationMethod === 'hybrid') {
+        result = await smartTimetableService.generateHybridTimetable(unifiedRequest);
+      } else {
+        result = await smartTimetableService.generateUnifiedTimetable(unifiedRequest);
       }
 
-      const result = await response.json();
+      // Update progress to merging/completing
+      setGenerationProgress(prev => ({ ...prev, stage: 'merging' }));
 
-      console.log("✅ Backend AI generation completed:", {
+      console.log("✅ Generation completed:", {
         success: result.success,
         solutions: result.solutions?.length || 0,
-        time: result.generation_summary?.total_generation_time_ms + "ms",
       });
 
-      if (
-        !result.success ||
-        !result.solutions ||
-        result.solutions.length === 0
-      ) {
-        throw new Error("No solutions generated by AI");
+      if (!result.success || !result.solutions || result.solutions.length === 0) {
+        throw new Error(result.error || "No solutions generated");
       }
 
       // Transform backend format to frontend format
       const transformedSolutions = result.solutions.map((solution: any) => ({
-        id: solution.id,
+        id: solution.solution_id || solution.id,
         name: solution.name,
-        score: solution.quality.overall_score,
-        optimization: solution.name.toLowerCase().includes("teacher")
+        score: solution.quality_metrics?.overall_score || solution.quality?.overall_score || 85,
+        optimization: solution.name?.toLowerCase().includes("teacher")
           ? "teacher-focused"
-          : solution.name.toLowerCase().includes("student")
+          : solution.name?.toLowerCase().includes("student")
           ? "student-focused"
           : "balanced",
-        conflicts: solution.quality.hard_constraint_violations || 0,
+        conflicts: solution.issues?.length || 0,
         quality: {
-          overall_score: solution.quality.overall_score,
-          teacher_satisfaction: solution.quality.teacher_workload_score || 90,
-          student_satisfaction: solution.quality.student_gap_score || 90,
-          resource_utilization:
-            solution.quality.resource_utilization_score || 95,
+          overall_score: solution.quality_metrics?.overall_score || solution.quality?.overall_score || 85,
+          teacher_satisfaction: solution.quality_metrics?.teacher_workload_score || 90,
+          student_satisfaction: solution.quality_metrics?.student_gap_score || 90,
+          resource_utilization: solution.quality_metrics?.resource_utilization_score || 95,
         },
-        timetable_entries: solution.schedule.map((entry: any) => ({
-          day: entry.time_slot_id.split("_")[0],
-          timeSlot: entry.time_slot_id.split("_")[1],
-          courseCode: entry.session_id.split("_")[0],
-          courseName: entry.session_id.split("_")[1] || "Course",
-          teacherName: entry.session_id.split("_")[2] || "Teacher",
-          roomNumber: entry.room_id || "TBD",
-          sessionType: entry.session_id.includes("Lab")
-            ? "lab"
-            : entry.session_id.includes("Tutorial")
-            ? "tutorial"
-            : "theory",
-          section: entry.session_id.split("_")[3] || "A",
-          semester: parseInt(entry.session_id.split("_")[4]) || 1,
+        timetable_entries: (solution.timetable_entries || solution.schedule || []).map((entry: any) => ({
+          day: entry.day_of_week || entry.day || entry.time_slot_id?.split("_")[0],
+          timeSlot: entry.time_slot || entry.timeSlot || entry.time_slot_id?.split("_")[1],
+          courseCode: entry.course_code || entry.courseCode,
+          courseName: entry.course_name || entry.courseName,
+          teacherName: entry.teacher_name || entry.teacherName,
+          roomNumber: entry.room_id || entry.roomNumber || "TBD",
+          sessionType: entry.session_type || entry.sessionType || "theory",
+          section: entry.section_name || entry.section,
+          semester: entry.semester || selectedSemesters[0],
         })),
-        generation_time:
-          (result.generation_summary.total_generation_time_ms / 1000).toFixed(
-            1
-          ) + "s",
+        generation_time: result.generation_info?.generation_time || "N/A",
         metadata: {
-          total_classes: solution.schedule.length,
+          total_classes: solution.timetable_entries?.length || solution.schedule?.length || 0,
           teachers_involved: new Set(
-            solution.schedule.map((s: any) => s.session_id.split("_")[2])
+            (solution.timetable_entries || solution.schedule || []).map((s: any) => s.teacher_name || s.teacherName)
           ).size,
-          rooms_used: 6,
-          conflicts_resolved: solution.quality.hard_constraint_violations || 0,
+          rooms_used: new Set(
+            (solution.timetable_entries || solution.schedule || []).map((s: any) => s.room_id || s.roomNumber)
+          ).size,
+          conflicts_resolved: 0,
+          method_used: result.generation_info?.method || generationMethod,
         },
       }));
+
+      // Update progress to completed
+      setGenerationProgress(prev => ({ ...prev, stage: 'completed' }));
 
       console.log("🎉 Solutions transformed:", transformedSolutions.length);
 
       // Navigate to results page
       history.push("/timetable/results", {
         solutions: transformedSolutions,
-        inputData: aiGenerationInput,
-        generatedBy: "backend-ai-algorithms",
+        inputData: unifiedRequest,
+        generatedBy: `unified-${generationMethod}`,
         generationSummary: {
-          total_generation_time_ms:
-            result.generation_summary.total_generation_time_ms,
+          total_generation_time_ms: result.generation_info?.generation_time || "N/A",
           solutions_generated: transformedSolutions.length,
-          best_score: Math.max(
-            ...transformedSolutions.map((s: any) => s.score)
-          ),
+          best_score: Math.max(...transformedSolutions.map((s: any) => s.score)),
+          method_used: result.generation_info?.method || generationMethod,
         },
       });
     } catch (error: any) {
-      console.error("❌ AI Timetable generation error:", error);
-      setError(
-        error.message || "Timetable generation failed. Please try again."
-      );
+      console.error("❌ Timetable generation error:", error);
+      setGenerationProgress(prev => ({ 
+        ...prev, 
+        stage: 'error',
+        message: error.message 
+      }));
+      setError(error.message || "Timetable generation failed. Please try again.");
 
       // Fallback to client-side if backend fails
       console.log("⚠️ Falling back to client-side generation...");
@@ -1499,6 +1521,22 @@ const SmartTimetableGenerator: React.FC = () => {
       case 5:
         return (
           <div className="space-y-6">
+            {/* Generation Method Selector */}
+            <GenerationMethodSelector
+              selectedMethod={generationMethod}
+              onMethodChange={setGenerationMethod}
+              sectionCount={selectedSections.length}
+              isGenerating={generating}
+            />
+
+            {/* Generation Progress */}
+            {generating && (
+              <GenerationProgress
+                isGenerating={generating}
+                progress={generationProgress}
+              />
+            )}
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <h3 className="text-lg font-medium text-blue-900 mb-4">
                 📊 Generation Summary & Configuration
@@ -1637,6 +1675,22 @@ const SmartTimetableGenerator: React.FC = () => {
                 </div>
               </div>
 
+              {/* Large Scale Info */}
+              {selectedSections.length > 10 && (
+                <div className="mt-4 p-3 bg-purple-100 border border-purple-300 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-900">
+                      Large-Scale Mode Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-purple-700 mt-1">
+                    With {selectedSections.length} sections, processing will be chunked for optimal performance.
+                    {selectedSections.length > 20 && " Multi-key API processing enabled for faster generation."}
+                  </p>
+                </div>
+              )}
+
               {/* Preferences Summary */}
               <div className="mt-4 p-3 bg-blue-100 rounded-md">
                 <h5 className="text-sm font-medium text-blue-900 mb-2">
@@ -1658,8 +1712,16 @@ const SmartTimetableGenerator: React.FC = () => {
                       Morning Theory
                     </span>
                   )}
-                  <span className="px-2 py-1 bg-green-200 text-green-800 text-xs rounded">
-                    AI-Powered Generation
+                  <span className={`px-2 py-1 text-xs rounded ${
+                    generationMethod === 'ai' ? 'bg-green-200 text-green-800' :
+                    generationMethod === 'csp' ? 'bg-blue-200 text-blue-800' :
+                    generationMethod === 'hybrid' ? 'bg-orange-200 text-orange-800' :
+                    'bg-purple-200 text-purple-800'
+                  }`}>
+                    {generationMethod === 'ai' ? '🤖 AI Generation' :
+                     generationMethod === 'csp' ? '🔧 CSP Solver' :
+                     generationMethod === 'hybrid' ? '⚡ Hybrid Mode' :
+                     '🎯 Auto Select'}
                   </span>
                 </div>
               </div>
@@ -1674,88 +1736,56 @@ const SmartTimetableGenerator: React.FC = () => {
               </div>
             )}
 
-            {/* AI Test Button - No Auth Required */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">
-                🤖 Test AI Generation
-              </h4>
-              <p className="text-sm text-blue-700 mb-3">
-                Test the AI timetable generation system without authentication
-              </p>
-              <button
-                onClick={async () => {
-                  try {
-                    console.log("🧪 Testing AI endpoint...");
-                    setError(null);
-
-                    const response = await fetch(
-                      `${
-                        process.env.REACT_APP_API_URL ||
-                        "http://localhost:5000/api"
-                      }/ai-generate-test`,
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          test: true,
-                          courses: courseAssignments.length,
-                          sections: selectedSections.length,
-                          departments: selectedDepartments
-                            .map((d) => d.name)
-                            .join(", "),
-                        }),
-                      }
-                    );
-
-                    const result = await response.json();
-                    console.log("✅ AI Test Result:", result);
-
-                    if (result.success) {
-                      alert(
-                        `🎉 AI Test Successful!\n\nGenerated ${
-                          result.data.solutions.length
-                        } solutions:\n${result.data.solutions
-                          .map(
-                            (s: any) =>
-                              `• ${s.name}: ${s.quality.overall_score}% score`
-                          )
-                          .join("\n")}\n\nGeneration time: ${
-                          result.data.generation_summary
-                            .total_generation_time_ms
-                        }ms`
-                      );
-                    } else {
-                      alert("❌ AI Test Failed: " + result.message);
-                    }
-                  } catch (error) {
-                    console.error("❌ Test Error:", error);
-                    setError("Connection Error: " + (error as Error).message);
-                  }
-                }}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                🧪 Test AI Generation (No Auth)
-              </button>
-            </div>
-
+            {/* Main Generate Button */}
             <button
               onClick={generateTimetable}
               disabled={generating || !canProceedToNext()}
-              className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
+              className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
                 generating || !canProceedToNext()
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+                  : generationMethod === 'ai'
+                  ? "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl"
+                  : generationMethod === 'csp'
+                  ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl"
+                  : generationMethod === 'hybrid'
+                  ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl"
+                  : "bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl"
               }`}
             >
               {generating ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Generating AI Timetable...
-                </div>
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Generating Timetable...</span>
+                </>
               ) : (
-                "🤖 Generate AI Timetable"
+                <>
+                  {generationMethod === 'ai' ? <Brain className="w-5 h-5" /> :
+                   generationMethod === 'csp' ? <Cpu className="w-5 h-5" /> :
+                   generationMethod === 'hybrid' ? <Zap className="w-5 h-5" /> :
+                   <Zap className="w-5 h-5" />}
+                  <span>
+                    Generate Timetable
+                    {selectedSections.length > 10 && ` (${selectedSections.length} sections)`}
+                  </span>
+                </>
               )}
             </button>
+
+            {/* Method Info */}
+            <div className="text-center text-sm text-gray-500">
+              {generationMethod === 'auto' && (
+                <p>System will automatically select the best method based on your data</p>
+              )}
+              {generationMethod === 'csp' && (
+                <p>Using CSP solver with AC-3 arc consistency and MRV/LCV heuristics</p>
+              )}
+              {generationMethod === 'ai' && (
+                <p>Using Google Gemini AI with {selectedSections.length > 20 ? 'multi-key parallel' : 'single-key'} processing</p>
+              )}
+              {generationMethod === 'hybrid' && (
+                <p>Combining CSP constraints with AI optimization for best results</p>
+              )}
+            </div>
           </div>
         );
 
