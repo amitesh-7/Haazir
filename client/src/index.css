@@ -614,3 +614,121 @@ code {
 .animate-scaleIn {
   animation: scaleIn 0.4s ease-out;
 }
+
+/* Html5Qrcode Scanner Mobile Optimization */
+#qr-reader {
+  border: none !important;
+  width: 100% !important;
+}
+
+#qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+#qr-reader__scan_region {
+  min-height: 250px !important;
+}
+
+#qr-reader__dashboard {
+  background: transparent !important;
+}
+
+#qr-reader__dashboard_section_csr button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: white !important;
+  border: none !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  margin: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39) !important;
+}
+
+#qr-reader__dashboard_section_csr button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.5) !important;
+}
+
+#qr-reader__dashboard_section_csr select {
+  background: white !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+}
+
+#qr-reader__dashboard_section_csr span {
+  color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+/* Mobile touch improvements */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Camera container styles */
+.camera-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #000;
+}
+
+.camera-container video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Face guide overlay */
+.face-guide-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.face-guide-oval {
+  width: 180px;
+  height: 240px;
+  border: 3px dashed rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    border-color: rgba(59, 130, 246, 0.8);
+  }
+}
+
+/* Mobile responsive QR scanner */
+@media (max-width: 640px) {
+  #qr-reader__scan_region {
+    min-height: 200px !important;
+  }
+  
+  #qr-reader__dashboard_section_csr button {
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+  }
+  
+  .face-guide-oval {
+    width: 150px;
+    height: 200px;
+  }
+}

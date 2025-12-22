@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
@@ -136,6 +136,7 @@ const CleanNavbar: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const user = useMemo((): User | null => {
     try {
@@ -150,6 +151,38 @@ const CleanNavbar: React.FC = () => {
     if (!user) return [];
     return navigationConfig[user.role] || [];
   }, [user]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
+  }, [location.pathname]);
+
+  // Toggle mobile menu with animation
+  const toggleMobileMenu = useCallback(() => {
+    console.log('Toggle mobile menu called, current state:', isMobileMenuOpen);
+    if (isMobileMenuOpen) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsMobileMenuOpen(false);
+        setIsAnimating(false);
+      }, 300);
+    } else {
+      setIsMobileMenuOpen(true);
+    }
+  }, [isMobileMenuOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -168,9 +201,19 @@ const CleanNavbar: React.FC = () => {
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-mobile-menu-button]') || target.closest('[data-mobile-menu]')) {
+        return;
+      }
       setIsProfileDropdownOpen(false);
-      setIsMobileMenuOpen(false);
+      if (isMobileMenuOpen) {
+        setIsAnimating(true);
+        setTimeout(() => {
+          setIsMobileMenuOpen(false);
+          setIsAnimating(false);
+        }, 300);
+      }
     };
 
     if (isProfileDropdownOpen || isMobileMenuOpen) {
@@ -283,40 +326,143 @@ const CleanNavbar: React.FC = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden">
+            <div className="md:hidden relative z-50">
               <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMobileMenu();
+                }}
+                data-mobile-menu-button="true"
+                className="relative inline-flex items-center justify-center p-3 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 active:bg-gray-200 touch-manipulation select-none"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                aria-expanded={isMobileMenuOpen}
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
               >
-                {isMobileMenuOpen ? icons.close : icons.menu}
+                <span className="sr-only">{isMobileMenuOpen ? 'Close menu' : 'Open menu'}</span>
+                {/* Animated hamburger icon */}
+                <div className="w-6 h-6 flex flex-col justify-center items-center pointer-events-none">
+                  <span 
+                    className={`block w-5 h-0.5 bg-current transform transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-1'
+                    }`} 
+                  />
+                  <span 
+                    className={`block w-5 h-0.5 bg-current transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
+                    }`} 
+                  />
+                  <span 
+                    className={`block w-5 h-0.5 bg-current transform transition-all duration-300 ease-in-out ${
+                      isMobileMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-1'
+                    }`} 
+                  />
+                </div>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200">
-          <div className="px-2 pt-2 pb-3 space-y-1 bg-white">
-            {navigation.map((item: any) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                exact={item.path === `/${user.role}`}
-                className="flex items-center space-x-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 relative"
-                activeClassName="bg-blue-100 text-blue-700"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className="ml-auto px-2 py-0.5 text-xs font-bold bg-purple-600 text-white rounded-full">
-                    {item.badge}
+      {/* Mobile Menu Overlay */}
+      {(isMobileMenuOpen || isAnimating) && (
+        <div 
+          className={`fixed inset-0 bg-black z-40 md:hidden transition-opacity duration-300 ${
+            isMobileMenuOpen && !isAnimating ? 'opacity-50' : 'opacity-0'
+          }`}
+          style={{ top: '64px' }}
+          onClick={toggleMobileMenu}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Menu Slide-out Panel */}
+      {(isMobileMenuOpen || isAnimating) && (
+        <div 
+          data-mobile-menu
+          className={`fixed top-16 right-0 w-full sm:w-80 h-[calc(100vh-64px)] bg-white shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out ${
+            isMobileMenuOpen && !isAnimating ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            {/* User Info Section */}
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <span className="text-xl font-bold">
+                    {user?.email.charAt(0).toUpperCase()}
                   </span>
-                )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{user?.name || user?.email.split('@')[0]}</p>
+                  <p className="text-sm text-blue-100 truncate">{user?.email}</p>
+                  <span className="inline-block text-xs px-2 py-0.5 bg-white/20 rounded-full mt-1">
+                    {getRoleDisplayName(user?.role || '')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="flex-1 overflow-y-auto px-4 py-4">
+              <div className="space-y-1">
+                {navigation.map((item: any, index: number) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    exact={item.path === `/${user?.role}`}
+                    className="flex items-center space-x-3 px-4 py-4 rounded-xl text-gray-700 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 touch-manipulation"
+                    activeClassName="bg-blue-50 text-blue-700 font-semibold"
+                    onClick={toggleMobileMenu}
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <span className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                      {item.icon}
+                    </span>
+                    <span className="text-base flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className="px-2 py-0.5 text-xs font-bold bg-purple-600 text-white rounded-full">
+                        {item.badge}
+                      </span>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </nav>
+
+            {/* Bottom Actions */}
+            <div className="border-t border-gray-200 px-4 py-4 space-y-2">
+              <NavLink
+                to="/profile"
+                className="flex items-center space-x-3 px-4 py-4 rounded-xl text-gray-700 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 touch-manipulation"
+                onClick={toggleMobileMenu}
+              >
+                <span className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  {icons.profile}
+                </span>
+                <span className="text-base">Profile Settings</span>
               </NavLink>
-            ))}
+              
+              <button
+                onClick={() => { toggleTheme(); toggleMobileMenu(); }}
+                className="flex items-center space-x-3 w-full px-4 py-4 rounded-xl text-gray-700 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-all duration-200 touch-manipulation"
+              >
+                <span className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                  {theme === 'dark' ? icons.sun : icons.moon}
+                </span>
+                <span className="text-base">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+              </button>
+              
+              <button
+                onClick={() => { handleLogout(); toggleMobileMenu(); }}
+                className="flex items-center space-x-3 w-full px-4 py-4 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 active:bg-red-100 transition-all duration-200 touch-manipulation"
+              >
+                <span className="flex-shrink-0 w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                  {icons.logout}
+                </span>
+                <span className="text-base font-medium">Sign Out</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -565,56 +565,65 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">
-          Smart Attendance Scanner
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
+          📱 Smart Attendance Scanner
         </h2>
 
-        {/* Step Indicator */}
+        {/* Step Indicator - Mobile Optimized */}
         <div className="flex justify-center mb-8">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <div
-              className={`flex items-center justify-center w-10 h-10 rounded-full ${
+              className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full font-bold text-lg transition-all ${
                 step === "qr"
-                  ? "bg-blue-500 text-white"
+                  ? "bg-blue-500 text-white ring-4 ring-blue-200"
                   : "bg-green-500 text-white"
               }`}
             >
-              1
+              {step === "qr" ? "1" : "✓"}
             </div>
-            <div className="text-sm font-semibold">Scan QR</div>
-            <div className="w-12 h-1 bg-gray-300"></div>
+            <div className="text-xs sm:text-sm font-semibold text-gray-700">Scan QR</div>
+            <div className={`w-8 sm:w-12 h-1 rounded ${step !== "qr" ? "bg-green-500" : "bg-gray-300"}`}></div>
             <div
-              className={`flex items-center justify-center w-10 h-10 rounded-full ${
+              className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full font-bold text-lg transition-all ${
                 step === "face"
-                  ? "bg-blue-500 text-white"
+                  ? "bg-blue-500 text-white ring-4 ring-blue-200"
                   : step === "waiting"
                   ? "bg-green-500 text-white"
                   : "bg-gray-300 text-gray-600"
               }`}
             >
-              2
+              {step === "waiting" ? "✓" : "2"}
             </div>
-            <div className="text-sm font-semibold">Verify Face</div>
+            <div className="text-xs sm:text-sm font-semibold text-gray-700">Verify Face</div>
           </div>
         </div>
 
         {/* QR Scanning Step */}
         {step === "qr" && (
           <div>
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-              <p className="text-blue-800 font-semibold">
-                Step 1: Scan the QR code displayed by your teacher
-              </p>
-              <p className="text-blue-600 text-sm mt-2">
-                Make sure you're in the classroom and have location enabled
-              </p>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-xl">
+              <div className="flex items-start gap-3">
+                <div className="bg-blue-500 text-white p-2 rounded-lg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-blue-800 font-semibold">
+                    Step 1: Scan the QR code displayed by your teacher
+                  </p>
+                  <p className="text-blue-600 text-sm mt-1">
+                    📍 Using {facingMode === "environment" ? "back" : "front"} camera • Make sure you're in the classroom
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Camera Permission Warning */}
             {cameraPermission === "denied" && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl">
                 <p className="text-red-800 font-semibold mb-2">
                   ⚠️ Camera Access Denied
                 </p>
@@ -622,7 +631,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                   Please enable camera access in your browser settings to use
                   the QR scanner.
                 </p>
-                <div className="bg-white border border-red-200 rounded p-3 text-sm text-gray-700">
+                <div className="bg-white border border-red-200 rounded-lg p-3 text-sm text-gray-700">
                   <p className="font-semibold mb-2">How to enable camera:</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Click the camera icon in your browser's address bar</li>
@@ -660,9 +669,9 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
             {/* Scanner Initializing */}
             {scannerInitializing && (
-              <div className="flex flex-col items-center justify-center py-12 mb-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
-                <p className="text-gray-600 font-medium">
+              <div className="flex flex-col items-center justify-center py-12 mb-4 bg-gray-50 rounded-2xl">
+                <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-500 border-t-transparent mb-4"></div>
+                <p className="text-gray-700 font-semibold text-lg">
                   Initializing QR scanner...
                 </p>
                 <p className="text-gray-500 text-sm mt-2">
@@ -671,36 +680,48 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
               </div>
             )}
 
-            <div id="qr-reader" className="w-full max-w-2xl mx-auto mb-4"></div>
+            {/* QR Scanner Container */}
+            <div className="relative mb-4">
+              <div id="qr-reader" className="w-full max-w-lg mx-auto rounded-2xl overflow-hidden shadow-lg"></div>
+              
+              {/* Camera indicator badge */}
+              {html5QrcodeRef.current && !scannerInitializing && (
+                <div className="absolute top-3 left-3 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg z-10">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  {facingMode === "environment" ? "📷 Back Camera" : "🤳 Front Camera"}
+                </div>
+              )}
+            </div>
 
-            {/* Camera Switch Button */}
+            {/* Camera Switch Button - Enhanced for Mobile */}
             {availableCameras.length > 1 &&
               !scannerInitializing &&
               html5QrcodeRef.current && (
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center mb-6">
                   <button
                     onClick={switchCamera}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 shadow-md"
+                    className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center gap-3 shadow-lg font-semibold text-base transform hover:scale-105 active:scale-95"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M4 5a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    🔄 Switch to {facingMode === "user" ? "Back" : "Front"}{" "}
-                    Camera
+                    Switch to {facingMode === "user" ? "Back" : "Front"} Camera
                   </button>
                 </div>
               )}
 
-            {/* Help Text */}
-            {!scannerInitializing && (
-              <div className="text-center mt-4 text-gray-600 text-sm">
-                <p>📱 Point your camera at the teacher's QR code</p>
-                <p className="mt-1">
+            {/* Help Text - Enhanced */}
+            {!scannerInitializing && html5QrcodeRef.current && (
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 text-center">
+                <div className="flex justify-center mb-2">
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-gray-700 font-medium">Point your camera at the teacher's QR code</p>
+                <p className="text-gray-500 text-sm mt-1">
                   The scanner will automatically detect and scan the code
                 </p>
               </div>
@@ -748,44 +769,93 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                 Step 2: Face Verification - Time remaining: {countdown}s
               </p>
               <p className="text-orange-600 text-sm mt-2">
-                Position your face in the frame and click "Verify Face"
+                📷 Using front camera. Position your face in the frame and click "Verify Face"
               </p>
             </div>
 
             <div className="flex justify-center mb-6">
-              <div className="relative">
+              <div className="relative w-full max-w-md">
                 <Webcam
                   ref={webcamRef}
                   audio={false}
                   screenshotFormat="image/jpeg"
-                  className="rounded-lg border-4 border-gray-300"
-                  width={640}
-                  height={480}
+                  className="rounded-2xl border-4 border-blue-300 shadow-xl w-full"
+                  videoConstraints={{
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: "user", // Always use front camera for face verification
+                  }}
+                  mirrored={true} // Mirror for selfie view
                 />
+                
+                {/* Face guide overlay */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-48 h-64 sm:w-56 sm:h-72 border-4 border-dashed border-blue-400 rounded-full opacity-60"></div>
+                </div>
+                
                 {isProcessing && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
-                    <div className="text-white text-xl">Verifying...</div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-2xl">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mx-auto mb-3"></div>
+                      <div className="text-white text-xl font-semibold">Verifying...</div>
+                    </div>
                   </div>
                 )}
 
                 {/* Countdown overlay */}
-                <div className="absolute top-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-lg font-bold text-2xl">
+                <div className={`absolute top-4 right-4 px-4 py-2 rounded-xl font-bold text-xl shadow-lg ${
+                  countdown <= 10 ? 'bg-red-500 animate-pulse' : 'bg-orange-500'
+                } text-white`}>
                   {countdown}s
                 </div>
+                
+                {/* Camera indicator */}
+                <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Front Camera
+                </div>
               </div>
+            </div>
+
+            {/* Tips for better face capture */}
+            <div className="bg-blue-50 rounded-xl p-4 mb-6 max-w-md mx-auto">
+              <p className="text-blue-800 font-semibold text-sm mb-2">📌 Tips for better verification:</p>
+              <ul className="text-blue-700 text-sm space-y-1">
+                <li>• Keep your face inside the oval guide</li>
+                <li>• Ensure good lighting on your face</li>
+                <li>• Remove sunglasses or face coverings</li>
+                <li>• Look directly at the camera</li>
+              </ul>
             </div>
 
             <div className="flex justify-center">
               <button
                 onClick={captureFaceAndVerify}
                 disabled={isProcessing}
-                className={`px-8 py-3 rounded-lg font-semibold text-white transition ${
+                className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-105 ${
                   isProcessing
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
                 }`}
               >
-                {isProcessing ? "Verifying..." : "Verify Face"}
+                {isProcessing ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Verifying...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Verify My Face
+                  </span>
+                )}
               </button>
             </div>
           </div>
