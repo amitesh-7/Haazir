@@ -226,18 +226,18 @@ const StudentAttendanceView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Message Alert */}
       {message && (
         <div
-          className={`p-4 rounded-lg border ${
+          className={`p-3 sm:p-4 rounded-lg border ${
             message.type === "success"
               ? "bg-green-50 text-green-800 border-green-200"
               : "bg-red-50 text-red-800 border-red-200"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span>{message.text}</span>
+            <span className="text-sm sm:text-base">{message.text}</span>
             <button
               onClick={() => setMessage(null)}
               className="ml-4 text-gray-500 hover:text-gray-700"
@@ -248,11 +248,11 @@ const StudentAttendanceView: React.FC = () => {
         </div>
       )}
 
-      {/* Info Banner */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
+      {/* Info Banner - Mobile Optimized */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+        <div className="flex items-start gap-2 sm:gap-3">
           <svg
-            className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5"
+            className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0 mt-0.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -265,30 +265,30 @@ const StudentAttendanceView: React.FC = () => {
             />
           </svg>
           <div>
-            <h3 className="text-sm font-semibold text-blue-900 mb-1">
+            <h3 className="text-xs sm:text-sm font-semibold text-blue-900 mb-1">
               Real-Time Attendance Updates
             </h3>
-            <p className="text-sm text-blue-800">
+            <p className="text-xs sm:text-sm text-blue-800">
               Your attendance is automatically updated when your teachers mark
               it in their dashboard.
               {autoRefresh
-                ? " Auto-refresh is enabled - new attendance will appear within 30 seconds."
-                : " Enable auto-refresh to see updates in real-time."}
+                ? " Auto-refresh enabled."
+                : " Enable auto-refresh to see updates."}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Header and Date Range */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">My Attendance</h1>
+      {/* Header and Date Range - Mobile Optimized */}
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">My Attendance</h1>
 
-          {/* Last Updated and Auto-refresh */}
-          <div className="flex items-center gap-4">
+          {/* Controls - Stacked on Mobile */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
             {lastUpdated && (
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Last updated:</span>{" "}
+              <div className="text-xs sm:text-sm text-gray-600">
+                <span className="font-medium">Updated:</span>{" "}
                 {lastUpdated.toLocaleTimeString()}
               </div>
             )}
@@ -301,20 +301,20 @@ const StudentAttendanceView: React.FC = () => {
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-sm text-gray-700">Auto-refresh</span>
+              <span className="text-xs sm:text-sm text-gray-700">Auto</span>
             </label>
 
             {/* Manual Refresh Button */}
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className={`px-4 py-2 rounded-md text-white font-medium transition-all ${
+              className={`px-3 py-2 rounded-md text-white font-medium transition-all text-sm ${
                 refreshing
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700 active:scale-95"
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <svg
                   className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
                   fill="none"
@@ -328,45 +328,46 @@ const StudentAttendanceView: React.FC = () => {
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                {refreshing ? "Refreshing..." : "Refresh"}
+                <span className="hidden sm:inline">{refreshing ? "Refreshing..." : "Refresh"}</span>
               </div>
             </button>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+        {/* Date Range - Mobile Grid */}
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-4 mb-4">
+          <div className="col-span-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Start Date
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="col-span-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               End Date
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
 
-          <div className="flex items-end">
+          <div className="col-span-2 sm:col-span-1 flex items-end">
             <button
               onClick={handleDateRangeChange}
               disabled={loading}
-              className={`px-4 py-2 rounded-md font-medium ${
+              className={`w-full sm:w-auto px-4 py-2 rounded-md font-medium text-sm ${
                 loading
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
               }`}
             >
               {loading ? "Loading..." : "Update"}
@@ -377,43 +378,43 @@ const StudentAttendanceView: React.FC = () => {
 
       {attendanceData && (
         <>
-          {/* Overall Summary */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          {/* Overall Summary - Mobile Optimized */}
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">
               Overall Attendance Summary
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-600">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+              <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+                <div className="text-xl sm:text-2xl font-bold text-blue-600">
                   {attendanceData.summary.total_classes}
                 </div>
-                <div className="text-sm text-gray-600">Total Classes</div>
+                <div className="text-xs sm:text-sm text-gray-600">Total Classes</div>
               </div>
 
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-600">
+              <div className="bg-green-50 rounded-lg p-3 sm:p-4">
+                <div className="text-xl sm:text-2xl font-bold text-green-600">
                   {attendanceData.summary.present}
                 </div>
-                <div className="text-sm text-gray-600">Present</div>
+                <div className="text-xs sm:text-sm text-gray-600">Present</div>
               </div>
 
-              <div className="bg-red-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-red-600">
+              <div className="bg-red-50 rounded-lg p-3 sm:p-4">
+                <div className="text-xl sm:text-2xl font-bold text-red-600">
                   {attendanceData.summary.absent}
                 </div>
-                <div className="text-sm text-gray-600">Absent</div>
+                <div className="text-xs sm:text-sm text-gray-600">Absent</div>
               </div>
 
               <div
-                className={`rounded-lg p-4 ${getAttendanceStatusColor(
+                className={`rounded-lg p-3 sm:p-4 ${getAttendanceStatusColor(
                   attendanceData.summary.attendance_percentage
                 )}`}
               >
-                <div className="text-2xl font-bold">
+                <div className="text-xl sm:text-2xl font-bold">
                   {attendanceData.summary.attendance_percentage.toFixed(1)}%
                 </div>
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   {getAttendanceStatusText(
                     attendanceData.summary.attendance_percentage
                   )}
@@ -422,25 +423,25 @@ const StudentAttendanceView: React.FC = () => {
             </div>
           </div>
 
-          {/* Course-wise Attendance */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          {/* Course-wise Attendance - Mobile Optimized */}
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">
               Course-wise Attendance
             </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {Object.entries(attendanceData.course_wise_attendance).map(
                 ([courseId, course]) => (
                   <div
                     key={courseId}
-                    className="border border-gray-200 rounded-lg p-4"
+                    className="border border-gray-200 rounded-lg p-3 sm:p-4"
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium text-gray-800">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+                      <h3 className="font-medium text-gray-800 text-sm sm:text-base">
                         {course.course_name}
                       </h3>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getAttendanceStatusColor(
+                        className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto ${getAttendanceStatusColor(
                           course.percentage
                         )}`}
                       >
@@ -448,7 +449,7 @@ const StudentAttendanceView: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm">
                       <div>
                         <span className="text-gray-600">Total: </span>
                         <span className="font-medium">
@@ -470,7 +471,7 @@ const StudentAttendanceView: React.FC = () => {
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="mt-3">
+                    <div className="mt-2 sm:mt-3">
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
@@ -484,8 +485,8 @@ const StudentAttendanceView: React.FC = () => {
 
               {Object.keys(attendanceData.course_wise_attendance).length ===
                 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
+                <div className="text-center py-6 sm:py-8">
+                  <p className="text-gray-500 text-sm sm:text-base">
                     No attendance records found for the selected date range
                   </p>
                 </div>
@@ -493,77 +494,122 @@ const StudentAttendanceView: React.FC = () => {
             </div>
           </div>
 
-          {/* Recent Attendance */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          {/* Recent Attendance - Mobile Card Layout */}
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4">
               Recent Attendance
             </h2>
 
             {attendanceData.recent_attendance.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Course
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Teacher
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Time
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {attendanceData.recent_attendance.map((record, index) => {
-                      const recordDate = new Date(record.date);
-                      const today = new Date();
-                      const isToday =
-                        recordDate.toDateString() === today.toDateString();
+              <>
+                {/* Mobile Card View */}
+                <div className="block sm:hidden space-y-3">
+                  {attendanceData.recent_attendance.map((record, index) => {
+                    const recordDate = new Date(record.date);
+                    const today = new Date();
+                    const isToday = recordDate.toDateString() === today.toDateString();
 
-                      return (
-                        <tr
-                          key={index}
-                          className={`hover:bg-gray-50 ${
-                            isToday ? "bg-blue-50" : ""
-                          }`}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-900">
-                                {recordDate.toLocaleDateString()}
+                    return (
+                      <div
+                        key={index}
+                        className={`border rounded-lg p-3 ${isToday ? "bg-blue-50 border-blue-200" : "border-gray-200"}`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <span className="font-medium text-gray-900 text-sm">
+                              {record.timetable?.course?.course_name || "N/A"}
+                            </span>
+                            {isToday && (
+                              <span className="ml-2 inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                Today
                               </span>
-                              {isToday && (
-                                <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                  Today
+                            )}
+                          </div>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full font-medium ${
+                              record.status === "present"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {record.status === "present" ? "✓ Present" : "✗ Absent"}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                          <span>{recordDate.toLocaleDateString()}</span>
+                          <span>{record.timetable?.teacher?.name || "N/A"}</span>
+                          {record.timetable && <span>{record.timetable.start_time} - {record.timetable.end_time}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Course
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Teacher
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Time
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {attendanceData.recent_attendance.map((record, index) => {
+                        const recordDate = new Date(record.date);
+                        const today = new Date();
+                        const isToday =
+                          recordDate.toDateString() === today.toDateString();
+
+                        return (
+                          <tr
+                            key={index}
+                            className={`hover:bg-gray-50 ${
+                              isToday ? "bg-blue-50" : ""
+                            }`}
+                          >
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-900">
+                                  {recordDate.toLocaleDateString()}
                                 </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                                {isToday && (
+                                  <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    Today
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
                               {record.timetable?.course?.course_name || "N/A"}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs text-gray-500">
                               {record.timetable?.course?.course_code || ""}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900">
                             {record.timetable?.teacher?.name || "N/A"}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900">
                             {record.timetable
                               ? `${record.timetable.start_time} - ${record.timetable.end_time}`
                               : "N/A"}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                             <span
                               className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                 record.status === "present"
@@ -580,10 +626,11 @@ const StudentAttendanceView: React.FC = () => {
                     })}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
+              <div className="text-center py-6 sm:py-8">
+                <p className="text-gray-500 text-sm sm:text-base">
                   No recent attendance records found
                 </p>
               </div>
@@ -592,12 +639,12 @@ const StudentAttendanceView: React.FC = () => {
         </>
       )}
 
-      {/* Attendance Guidelines */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+      {/* Attendance Guidelines - Mobile Optimized */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-yellow-800 mb-2">
           Attendance Guidelines
         </h3>
-        <ul className="text-sm text-yellow-700 space-y-1">
+        <ul className="text-xs sm:text-sm text-yellow-700 space-y-1">
           <li>
             • Minimum 80% attendance is required to be eligible for examinations
           </li>

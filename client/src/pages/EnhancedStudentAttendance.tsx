@@ -409,33 +409,33 @@ const EnhancedStudentAttendance: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+        {/* Header - Mobile Optimized */}
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 sm:mb-4">
             My Attendance 📊
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-sm sm:text-lg">
             Track your class attendance and analyze patterns
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-xl p-6">
+        {/* Stats Cards - Mobile Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-8">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">
+                <p className="text-gray-500 text-xs sm:text-sm font-medium">
                   Total Classes
                 </p>
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-xl sm:text-3xl font-bold text-gray-900">
                   {stats.totalClasses}
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
                 <svg
-                  className="w-8 h-8 text-blue-600"
+                  className="w-5 h-5 sm:w-8 sm:h-8 text-blue-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -451,17 +451,17 @@ const EnhancedStudentAttendance: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Present</p>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-gray-500 text-xs sm:text-sm font-medium">Present</p>
+                <p className="text-xl sm:text-3xl font-bold text-green-600">
                   {stats.presentCount}
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-full">
+              <div className="p-2 sm:p-3 bg-green-100 rounded-full">
                 <svg
-                  className="w-8 h-8 text-green-600"
+                  className="w-5 h-5 sm:w-8 sm:h-8 text-green-600"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -475,17 +475,17 @@ const EnhancedStudentAttendance: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">Absent</p>
-                <p className="text-3xl font-bold text-red-600">
+                <p className="text-gray-500 text-xs sm:text-sm font-medium">Absent</p>
+                <p className="text-xl sm:text-3xl font-bold text-red-600">
                   {stats.absentCount}
                 </p>
               </div>
-              <div className="p-3 bg-red-100 rounded-full">
+              <div className="p-2 sm:p-3 bg-red-100 rounded-full">
                 <svg
-                  className="w-8 h-8 text-red-600"
+                  className="w-5 h-5 sm:w-8 sm:h-8 text-red-600"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -499,19 +499,19 @@ const EnhancedStudentAttendance: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 col-span-2 lg:col-span-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm font-medium">
+                <p className="text-gray-500 text-xs sm:text-sm font-medium">
                   Attendance Rate
                 </p>
-                <p className="text-3xl font-bold text-indigo-600">
+                <p className="text-xl sm:text-3xl font-bold text-indigo-600">
                   {stats.attendanceRate}%
                 </p>
               </div>
-              <div className="p-3 bg-indigo-100 rounded-full">
+              <div className="p-2 sm:p-3 bg-indigo-100 rounded-full">
                 <svg
-                  className="w-8 h-8 text-indigo-600"
+                  className="w-5 h-5 sm:w-8 sm:h-8 text-indigo-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -528,18 +528,18 @@ const EnhancedStudentAttendance: React.FC = () => {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Controls - Mobile Optimized */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 mb-4 sm:mb-8">
+          <div className="flex flex-col gap-4">
             {/* View Mode Toggle */}
-            <div className="flex items-center space-x-4">
-              <div className="bg-gray-100 rounded-xl p-1">
-                <div className="flex space-x-1">
+            <div className="flex items-center justify-center sm:justify-start">
+              <div className="bg-gray-100 rounded-xl p-1 w-full sm:w-auto">
+                <div className="flex">
                   {["list", "calendar", "analytics"].map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setViewMode(mode as any)}
-                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 capitalize ${
+                      className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 capitalize ${
                         viewMode === mode
                           ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md"
                           : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -552,12 +552,12 @@ const EnhancedStudentAttendance: React.FC = () => {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap items-center gap-4">
+            {/* Filters - Mobile Stacked */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4">
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Courses</option>
                 {getUniqueValues("course_name").map((course) => (
@@ -570,7 +570,7 @@ const EnhancedStudentAttendance: React.FC = () => {
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Months</option>
                 {[
@@ -596,7 +596,7 @@ const EnhancedStudentAttendance: React.FC = () => {
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 <option value="all">All Status</option>
                 <option value="present">Present</option>
@@ -610,9 +610,9 @@ const EnhancedStudentAttendance: React.FC = () => {
                   setSelectedMonth("all");
                   setSelectedStatus("all");
                 }}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors text-sm"
               >
-                Clear Filters
+                Clear
               </button>
             </div>
           </div>
