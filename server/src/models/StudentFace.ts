@@ -9,6 +9,7 @@ interface StudentFaceAttributes {
   image_url?: string;
   registered_at?: Date;
   is_active: boolean;
+  embedding_version?: number; // 128 for face-api.js, 512 for RetinaFace
   updated_at?: Date;
 }
 
@@ -28,6 +29,7 @@ class StudentFace
   public image_url?: string;
   public registered_at?: Date;
   public is_active!: boolean;
+  public embedding_version?: number;
   public updated_at?: Date;
 }
 
@@ -57,6 +59,11 @@ StudentFace.init(
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+    },
+    embedding_version: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 512, // Default to RetinaFace embeddings
     },
     updated_at: {
       type: DataTypes.DATE,

@@ -1,7 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
-import * as faceapi from "@vladmandic/face-api";
-import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-backend-webgl";
+import React, { useState, useRef } from "react";
 import Webcam from "react-webcam";
 import {
   Camera,
@@ -22,12 +19,11 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
   onPhotoProcessed,
   onBack,
 }) => {
-  const [modelsLoaded, setModelsLoaded] = useState(false);
   const [captureMode, setCaptureMode] = useState<"webcam" | "upload" | null>(
     null
   );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [detectedFaces, setDetectedFaces] = useState<any[]>([]);
+  const [detectedFacesCount, setDetectedFacesCount] = useState<number>(0);
   const [capturedImage, setCapturedImage] = useState<string>("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -36,57 +32,9 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
   const webcamRef = useRef<Webcam>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load face-api.js models
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        // Initialize TensorFlow.js backend first
-        await tf.ready();
-        console.log("TensorFlow.js backend initialized");
-
-        // Load face-api models
-        const MODEL_URL = `${window.location.origin}/models`; // resolve models relative to current origin for dev + prod
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        ]);
-
-        setModelsLoaded(true);
-        console.log("@vladmandic/face-api models loaded successfully");
-      } catch (err) {
-        console.error("Error loading face-api models:", err);
-        setError(
-          "Failed to load face detection models. Please refresh the page."
-        );
-      }
-    };
-    loadModels();
-  }, []);
-
-  const detectFacesInImage = async (imageElement: HTMLImageElement) => {
-    try {
-      const detections = await faceapi
-        .detectAllFaces(
-          imageElement,
-          new faceapi.TinyFaceDetectorOptions({
-            inputSize: 416,
-            scoreThreshold: 0.5,
-          })
-        )
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-
-      return detections;
-    } catch (err) {
-      console.error("Error detecting faces:", err);
-      throw err;
-    }
-  };
-
   const handleCaptureFromWebcam = async () => {
-    if (!webcamRef.current || !modelsLoaded) {
-      setError("Camera not ready or models not loaded");
+    if (!webcamRef.current) {
+      setError("Camera not ready");
       return;
     }
 
@@ -134,38 +82,7 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
 
   const processImage = async (imageSrc: string) => {
     try {
-      // Create image element
-      const img = new Image();
-      img.src = imageSrc;
-
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-      });
-
-      // Detect all faces
-      const detections = await detectFacesInImage(img);
-
-      if (detections.length === 0) {
-        throw new Error(
-          "No faces detected in the photo. Please ensure students are clearly visible."
-        );
-      }
-
-      setDetectedFaces(detections);
-
-      // Prepare data for backend
-      const detectedFacesData = detections.map((detection) => ({
-        descriptor: Array.from(detection.descriptor),
-        bbox: {
-          x: detection.detection.box.x,
-          y: detection.detection.box.y,
-          width: detection.detection.box.width,
-          height: detection.detection.box.height,
-        },
-      }));
-
-      // Send to backend for matching
+      // Send image directly to backend for RetinaFace processing
       const token = localStorage.getItem("token");
       const response = await fetch(
         `${
@@ -180,7 +97,6 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
           body: JSON.stringify({
             sessionId: sessionId,
             imageBase64: imageSrc,
-            detectedFaces: detectedFacesData,
           }),
         }
       );
@@ -191,9 +107,10 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
         throw new Error(data.error || "Failed to process class photo");
       }
 
+      setDetectedFacesCount(data.capture.detectedFacesCount || 0);
       setMatchedStudentIds(data.matchedStudentIds || []);
       setSuccess(
-        `Successfully detected ${detections.length} faces and matched ${data.matchedStudentIds.length} students!`
+        `Successfully detected ${data.capture.detectedFacesCount} faces and matched ${data.matchedStudentIds.length} students!`
       );
 
       // Wait 2 seconds then notify parent
@@ -210,22 +127,11 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
 
   const handleRetake = () => {
     setCapturedImage("");
-    setDetectedFaces([]);
+    setDetectedFacesCount(0);
     setError("");
     setSuccess("");
     setMatchedStudentIds([]);
   };
-
-  if (!modelsLoaded) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading face detection models...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!captureMode) {
     return (
@@ -375,7 +281,7 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
               />
             </div>
 
-            {detectedFaces.length > 0 && (
+            {detectedFacesCount > 0 && (
               <div className="bg-blue-50 rounded-lg p-6 mb-6">
                 <h3 className="font-bold text-xl text-blue-800 mb-3">
                   Detection Results
@@ -383,7 +289,7 @@ const ClassPhotoCapture: React.FC<ClassPhotoCaptureProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-blue-600">
-                      {detectedFaces.length}
+                      {detectedFacesCount}
                     </p>
                     <p className="text-sm text-gray-600">Faces Detected</p>
                   </div>

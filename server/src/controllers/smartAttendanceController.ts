@@ -20,6 +20,10 @@ import {
 import { Op, QueryTypes } from "sequelize";
 import sequelize from "../config/database";
 import NotificationService from "../services/NotificationService";
+import {
+  retinaFaceService,
+  RetinaFaceService,
+} from "../services/RetinaFaceService";
 
 // JWT Secret for QR encryption (use env variable in production)
 const JWT_SECRET =
@@ -423,31 +427,24 @@ export const validateQR = async (req: Request, res: Response) => {
 /**
  * Verify student face and create scan record
  * POST /api/smart-attendance/verify-face
- * Body: { sessionId: string, studentId: number, faceDescriptor: number[], faceImageBase64: string, locationLat: number, locationLng: number }
+ * Body: { sessionId: string, studentId: number, faceImageBase64: string, locationLat: number, locationLng: number }
  */
 export const verifyFace = async (req: Request, res: Response) => {
   try {
-    const {
-      sessionId,
-      studentId,
-      faceDescriptor,
-      faceImageBase64,
-      locationLat,
-      locationLng,
-    } = req.body;
+    const { sessionId, studentId, faceImageBase64, locationLat, locationLng } =
+      req.body;
 
     // Validate input
     if (
       !sessionId ||
       !studentId ||
-      !faceDescriptor ||
       !faceImageBase64 ||
       locationLat === undefined ||
       locationLng === undefined
     ) {
       return res.status(400).json({
         error:
-          "sessionId, studentId, faceDescriptor, faceImageBase64, locationLat, and locationLng are required",
+          "sessionId, studentId, faceImageBase64, locationLat, and locationLng are required",
       });
     }
 
@@ -536,13 +533,39 @@ export const verifyFace = async (req: Request, res: Response) => {
       });
     }
 
+    // Detect face using RetinaFace API
+    console.log("📸 Detecting face using RetinaFace API...");
+    const detectionResult = await retinaFaceService.detectSingleFace(
+      faceImageBase64
+    );
+
+    if (!detectionResult.success) {
+      return res.status(400).json({
+        error: detectionResult.error || "No face detected in image",
+      });
+    }
+
+    const detectedFace = detectionResult.face;
+    if (!detectedFace) {
+      return res.status(400).json({
+        error: "No face detected. Please ensure your face is clearly visible.",
+      });
+    }
+
+    console.log(`✅ Face detected with confidence: ${detectedFace.confidence}`);
+
     // Compare face with registered faces
     let maxConfidence = 0;
     let matchedFaceId: number | null = null;
 
     for (const registeredFace of registeredFaces) {
       const registeredDescriptor = JSON.parse(registeredFace.face_descriptor);
-      const similarity = cosineSimilarity(faceDescriptor, registeredDescriptor);
+      const capturedDescriptor = detectedFace.embedding;
+
+      const similarity = cosineSimilarity(
+        capturedDescriptor,
+        registeredDescriptor
+      );
 
       if (similarity > maxConfidence) {
         maxConfidence = similarity;
@@ -557,7 +580,7 @@ export const verifyFace = async (req: Request, res: Response) => {
         session_id: sessionId,
         student_id: studentId,
         face_image_url: undefined, // Don't save rejected face
-        face_descriptor: JSON.stringify(faceDescriptor),
+        face_descriptor: JSON.stringify(detectedFace.embedding),
         location_lat: locationLat,
         location_lng: locationLng,
         distance_from_class: distance,
@@ -583,7 +606,7 @@ export const verifyFace = async (req: Request, res: Response) => {
       session_id: sessionId,
       student_id: studentId,
       face_image_url: faceImageUrl,
-      face_descriptor: JSON.stringify(faceDescriptor),
+      face_descriptor: JSON.stringify(detectedFace.embedding),
       location_lat: locationLat,
       location_lng: locationLng,
       distance_from_class: distance,
@@ -614,17 +637,12 @@ export const verifyFace = async (req: Request, res: Response) => {
  */
 export const processClassPhoto = async (req: Request, res: Response) => {
   try {
-    const { sessionId, imageBase64, detectedFaces } = req.body;
+    const { sessionId, imageBase64 } = req.body;
 
     // Validate input
-    if (
-      !sessionId ||
-      !imageBase64 ||
-      !detectedFaces ||
-      !Array.isArray(detectedFaces)
-    ) {
+    if (!sessionId || !imageBase64) {
       return res.status(400).json({
-        error: "sessionId, imageBase64, and detectedFaces array are required",
+        error: "sessionId and imageBase64 are required",
       });
     }
 
@@ -642,6 +660,19 @@ export const processClassPhoto = async (req: Request, res: Response) => {
       return res.status(403).json({ error: "Session is not active" });
     }
 
+    // Use RetinaFace API to detect all faces in the class photo
+    console.log("Detecting faces in class photo using RetinaFace API...");
+    const detectionResult = await retinaFaceService.detectMultipleFaces(
+      imageBase64
+    );
+
+    if (detectionResult.faces.length === 0) {
+      return res.status(400).json({
+        error:
+          "No faces detected in the photo. Please ensure students are clearly visible.",
+      });
+    }
+
     // Save class photo (TODO: Upload to Supabase Storage in production)
     const imageUrl = `storage/attendance-images/${sessionId}/class_photo_${Date.now()}.jpg`;
 
@@ -649,31 +680,36 @@ export const processClassPhoto = async (req: Request, res: Response) => {
     const capture = await TeacherClassCapture.create({
       session_id: sessionId,
       image_url: imageUrl,
-      detected_faces_count: detectedFaces.length,
+      detected_faces_count: detectionResult.faces.length,
       processed: false,
     });
 
-    // Get all registered student faces for this class
-    // TODO: Filter by students enrolled in the course
+    // Get all registered student faces for this class (only active faces)
+    // Note: Old 128D embeddings have been deactivated, only active 512D RetinaFace embeddings remain
     const registeredFaces = await StudentFace.findAll({
-      where: { is_active: true },
-      // Removed Student include - association not defined
+      where: {
+        is_active: true,
+      },
     });
+
+    console.log(
+      `Found ${registeredFaces.length} registered student faces with 512D embeddings`
+    );
 
     // Match each detected face with registered faces
     const detectedFaceRecords: DetectedClassFace[] = [];
     const matchedStudentIds = new Set<number>();
 
-    for (const detectedFace of detectedFaces) {
-      const { descriptor, bbox } = detectedFace;
+    for (const detectedFace of detectionResult.faces) {
+      const { embedding, bbox } = detectedFace;
 
       let maxConfidence = 0;
       let matchedStudentId: number | undefined = undefined;
 
-      // Compare with all registered faces
+      // Compare with all registered faces using cosine similarity
       for (const registeredFace of registeredFaces) {
         const registeredDescriptor = JSON.parse(registeredFace.face_descriptor);
-        const similarity = cosineSimilarity(descriptor, registeredDescriptor);
+        const similarity = cosineSimilarity(embedding, registeredDescriptor);
 
         if (similarity > maxConfidence && similarity >= FACE_MATCH_THRESHOLD) {
           maxConfidence = similarity;
@@ -684,7 +720,7 @@ export const processClassPhoto = async (req: Request, res: Response) => {
       // Save detected face record
       const detectedFaceRecord = await DetectedClassFace.create({
         capture_id: capture.capture_id,
-        face_descriptor: JSON.stringify(descriptor),
+        face_descriptor: JSON.stringify(embedding),
         face_bbox: bbox as any,
         matched_student_id: matchedStudentId,
         confidence: maxConfidence,
@@ -700,11 +736,15 @@ export const processClassPhoto = async (req: Request, res: Response) => {
     // Update capture as processed
     await capture.update({ processed: true });
 
+    console.log(
+      `Processed class photo: ${detectionResult.faces.length} faces detected, ${matchedStudentIds.size} students matched`
+    );
+
     return res.status(201).json({
       message: "Class photo processed successfully",
       capture: {
         captureId: capture.capture_id,
-        detectedFacesCount: detectedFaces.length,
+        detectedFacesCount: detectionResult.faces.length,
         matchedStudentsCount: matchedStudentIds.size,
       },
       matchedStudentIds: Array.from(matchedStudentIds),
@@ -983,11 +1023,13 @@ export const finalizeAttendance = async (req: Request, res: Response) => {
             timeSlot: timetableSlot.time_slot,
             attendanceId: record.record_id,
           });
-          
+
           // Update notification_sent flag
           await record.update({ notification_sent: true });
-          
-          console.log(`📧 Notification sent to student ${studentId} for absence`);
+
+          console.log(
+            `📧 Notification sent to student ${studentId} for absence`
+          );
         } catch (notificationError) {
           console.error(
             `❌ Failed to send notification to student ${studentId}:`,
@@ -1264,17 +1306,26 @@ export const getSessionStatus = async (req: Request, res: Response) => {
 };
 
 /**
- * Register student's face
+ * Register student's face using RetinaFace API
  * POST /api/smart-attendance/register-face
- * Body: { studentId: number, faceDescriptor: number[], imageBase64: string }
+ * Body: { studentId: number, imageBase64: string }
+ *
+ * Uses RetinaFace API to detect face and extract 512D embedding.
+ * Stores the embedding for later comparison during attendance verification.
  */
 export const registerStudentFace = async (req: Request, res: Response) => {
   try {
-    const { studentId, faceDescriptor, imageBase64 } = req.body;
+    const { studentId, imageBase64, faceDescriptor } = req.body;
 
-    if (!studentId || !faceDescriptor || !imageBase64) {
+    console.log(`📝 Face registration request for student ${studentId}`);
+    console.log(`   - Has imageBase64: ${!!imageBase64}`);
+    console.log(`   - Image size: ${imageBase64?.length || 0} chars`);
+    console.log(`   - Has faceDescriptor: ${!!faceDescriptor}`);
+
+    if (!studentId || !imageBase64) {
+      console.log(`❌ Missing required fields`);
       return res.status(400).json({
-        error: "studentId, faceDescriptor, and imageBase64 are required",
+        error: "studentId and imageBase64 are required",
       });
     }
 
@@ -1283,9 +1334,6 @@ export const registerStudentFace = async (req: Request, res: Response) => {
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
-
-    // Save image (TODO: Upload to Supabase Storage in production)
-    const imageUrl = `storage/student-faces/${studentId}_${Date.now()}.jpg`;
 
     // Check if student already has 5 or more registered faces
     const existingFaces = await StudentFace.findAll({
@@ -1299,26 +1347,86 @@ export const registerStudentFace = async (req: Request, res: Response) => {
       });
     }
 
-    // Create face record
+    let descriptor: number[];
+    let confidence: number = 1.0;
+
+    // If faceDescriptor is provided (legacy face-api.js), use it directly
+    // Otherwise, use RetinaFace API to extract embedding
+    if (
+      faceDescriptor &&
+      Array.isArray(faceDescriptor) &&
+      faceDescriptor.length > 0
+    ) {
+      // Legacy support for face-api.js descriptors (128D)
+      descriptor = faceDescriptor;
+      console.log(
+        `📸 Using provided face descriptor (${descriptor.length}D) for student ${studentId}`
+      );
+    } else {
+      // Use RetinaFace API to detect face and get 512D embedding
+      console.log(
+        `📸 Calling RetinaFace API to register face for student ${studentId}`
+      );
+
+      try {
+        const detection = await retinaFaceService.detectSingleFace(imageBase64);
+
+        console.log(`📊 RetinaFace API response:`, {
+          success: detection.success,
+          hasFace: !!detection.face,
+          error: detection.error,
+        });
+
+        if (!detection.success || !detection.face) {
+          console.log(`❌ Face detection failed: ${detection.error}`);
+          return res.status(400).json({
+            error:
+              detection.error ||
+              "No face detected. Please ensure your face is clearly visible.",
+          });
+        }
+
+        descriptor = detection.face.embedding;
+        confidence = detection.face.confidence;
+
+        console.log(
+          `✅ RetinaFace detected face with confidence: ${confidence}`
+        );
+      } catch (apiError: any) {
+        console.error(`❌ RetinaFace API call failed:`, apiError.message);
+        return res.status(400).json({
+          error: `Face detection service error: ${apiError.message}`,
+        });
+      }
+    }
+
+    // Save image reference (TODO: Upload to Supabase Storage in production)
+    const imageUrl = `storage/student-faces/${studentId}_${Date.now()}.jpg`;
+
+    // Create face record with RetinaFace embedding
     const faceRecord = await StudentFace.create({
       student_id: studentId,
-      face_descriptor: JSON.stringify(faceDescriptor),
+      face_descriptor: JSON.stringify(descriptor),
       image_url: imageUrl,
       is_active: true,
     });
 
     return res.status(201).json({
-      message: "Face registered successfully",
+      message: "Face registered successfully using RetinaFace",
       face: {
         faceId: faceRecord.face_id,
         studentId: faceRecord.student_id,
         registeredAt: faceRecord.registered_at,
+        embeddingDimension: descriptor.length,
+        confidence: confidence,
       },
       totalRegisteredFaces: existingFaces.length + 1,
     });
   } catch (error: any) {
     console.error("Error registering face:", error);
-    return res.status(500).json({ error: "Failed to register face" });
+    return res
+      .status(500)
+      .json({ error: "Failed to register face: " + error.message });
   }
 };
 

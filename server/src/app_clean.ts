@@ -26,6 +26,7 @@ import studentRoutes from "./routes/students_new";
 import teacherRoutes from "./routes/teachers_new";
 import timetableRoutes from "./routes/timetable";
 import uploadRoutes from "./routes/upload";
+import dualVerificationRoutes from "./routes/dualVerification";
 
 dotenv.config();
 
@@ -106,6 +107,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/saved-timetables", savedTimetableRoutes);
 app.use("/api/sections", sectionRoutes);
 app.use("/api/smart-attendance", smartAttendanceRoutes);
+app.use("/api/smart-attendance/dual-verify", dualVerificationRoutes);
 app.use("/api/smart-timetable", smartTimetableRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/student-enrollment", studentEnrollmentRoutes);

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { api } from "../../services/api";
 
-interface FaceRegistrationProps {
+interface FaceRegistrationRetinaFaceProps {
   studentId: number;
   onComplete: () => void;
 }
@@ -19,8 +19,7 @@ interface FaceRegistrationProps {
  * Face Registration Component using RetinaFace API
  *
  * This component captures student face images and sends them to the backend
- * which uses the RetinaFace API (deployed on Hugging Face) to extract
- * 512-dimensional face embeddings.
+ * which uses the RetinaFace API to extract 512-dimensional face embeddings.
  *
  * Benefits over face-api.js:
  * - No need to load 50MB+ of models in the browser
@@ -28,7 +27,7 @@ interface FaceRegistrationProps {
  * - Higher quality 512D embeddings vs 128D from face-api.js
  * - Consistent processing across all devices
  */
-const FaceRegistration: React.FC<FaceRegistrationProps> = ({
+const FaceRegistrationRetinaFace: React.FC<FaceRegistrationRetinaFaceProps> = ({
   studentId,
   onComplete,
 }) => {
@@ -55,14 +54,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
     const checkHealth = async () => {
       try {
         const response = await api.get("/smart-attendance/dual-verify/health");
-        const apiStatus = response.data.retinaFaceApi;
-        setApiHealthy(apiStatus?.available || false);
-
-        if (!apiStatus?.available) {
-          console.error("RetinaFace API not available:", apiStatus);
-        } else {
-          console.log("✅ RetinaFace API is healthy");
-        }
+        setApiHealthy(response.data.retinaFaceApi?.available || false);
       } catch (err) {
         console.error("Error checking RetinaFace API health:", err);
         setApiHealthy(false);
@@ -115,7 +107,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
 
     try {
       // Remove data URI prefix and send to backend
-      // Backend will call RetinaFace API (Hugging Face) to extract embeddings
+      // Backend will call RetinaFace API to extract embeddings
       const imageBase64 = capturedImage.split(",")[1];
 
       const response = await api.post("/smart-attendance/register-face", {
@@ -146,11 +138,8 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
       }
     } catch (err: any) {
       console.error("Error registering face:", err);
-      console.error("Error response:", err.response?.data);
       const errorMsg =
         err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
         "Failed to register face. Please try again.";
       setError(errorMsg);
     } finally {
@@ -165,7 +154,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">
-            Connecting to RetinaFace API (Hugging Face)...
+            Connecting to face recognition service...
           </p>
         </div>
       </div>
@@ -182,8 +171,8 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
             Face Recognition Service Unavailable
           </h2>
           <p className="text-red-600 mb-4">
-            The RetinaFace API (Hugging Face) is currently not responding.
-            Please try again later.
+            The RetinaFace API is currently not responding. Please try again
+            later.
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -210,7 +199,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
         <div className="flex items-center mb-6">
           <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm flex items-center">
             <CheckCircle className="h-4 w-4 mr-1" />
-            RetinaFace API (Hugging Face) Connected
+            RetinaFace API Connected
           </div>
           <span className="ml-4 text-gray-600">
             Registered: {registeredFaces}/5
@@ -219,8 +208,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
 
         <p className="text-gray-600 mb-6">
           Register 5 different angles of your face for better recognition
-          accuracy. The system uses RetinaFace AI (deployed on Hugging Face) to
-          extract facial features.
+          accuracy. The system uses advanced AI to extract facial features.
         </p>
 
         {/* Progress Bar */}
@@ -369,4 +357,4 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
   );
 };
 
-export default FaceRegistration;
+export default FaceRegistrationRetinaFace;

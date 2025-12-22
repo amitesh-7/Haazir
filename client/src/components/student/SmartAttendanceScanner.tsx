@@ -1,7 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import * as faceapi from "@vladmandic/face-api";
-import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-backend-webgl";
 import {
   Html5Qrcode,
   Html5QrcodeScanner,
@@ -18,7 +15,6 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
   studentId,
   onSuccess,
 }) => {
-  const [modelsLoaded, setModelsLoaded] = useState(false);
   const [faceEnrolled, setFaceEnrolled] = useState<boolean | null>(null);
   const [step, setStep] = useState<"qr" | "face" | "waiting">("qr");
   const [sessionData, setSessionData] = useState<any>(null);
@@ -102,32 +98,6 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
     checkCameraPermission();
   }, []);
 
-  // Load face-api.js models
-  useEffect(() => {
-    const loadModels = async () => {
-      try {
-        // Initialize TensorFlow.js backend first
-        await tf.ready();
-        console.log("TensorFlow.js backend initialized");
-
-        // Load face-api models
-        const MODEL_URL = `${window.location.origin}/models`; // absolute URL keeps local dev and production in sync
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        ]);
-
-        setModelsLoaded(true);
-        console.log("@vladmandic/face-api models loaded successfully");
-      } catch (err) {
-        console.error("Error loading face-api models:", err);
-        setError("Failed to load face detection models");
-      }
-    };
-    loadModels();
-  }, []);
-
   // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
@@ -155,149 +125,155 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
   // Initialize QR scanner using Html5Qrcode (more reliable than Html5QrcodeScanner)
   useEffect(() => {
-    // Only initialize if we're on QR step and scanner not already initialized
-    // Html5Qrcode will request camera permission automatically
-    if (step === "qr" && !html5QrcodeRef.current) {
-      setScannerInitializing(true);
-      console.log("🎬 Starting QR Scanner Initialization Process...");
-
-      const initScanner = async () => {
-        try {
-          // CRITICAL: Wait for DOM element to be available
-          let retries = 0;
-          const maxRetries = 20; // 20 retries = 2 seconds (20 * 100ms)
-
-          while (retries < maxRetries) {
-            const element = document.getElementById("qr-reader");
-            if (element) {
-              console.log(
-                "✅ Found qr-reader element after",
-                retries,
-                "retries"
-              );
-              break;
-            }
-            console.log(
-              `⏳ Waiting for qr-reader element (attempt ${
-                retries + 1
-              }/${maxRetries})...`
-            );
-            await new Promise((resolve) => setTimeout(resolve, 100));
-            retries++;
-          }
-
-          const element = document.getElementById("qr-reader");
-          if (!element) {
-            throw new Error(
-              "HTML Element with id=qr-reader not found after waiting 2 seconds. Please refresh the page."
-            );
-          }
-
-          // Clear any existing scanner
-          if (html5QrcodeRef.current) {
-            console.log("⚠️ Clearing existing scanner...");
-            try {
-              await html5QrcodeRef.current.stop();
-            } catch (e) {
-              console.log("Scanner already stopped or not running");
-            }
-            html5QrcodeRef.current = null;
-          }
-
-          console.log("🚀 Creating Html5Qrcode instance...");
-          const html5QrCode = new Html5Qrcode("qr-reader");
-          html5QrcodeRef.current = html5QrCode;
-
-          // Get available cameras
-          console.log("📷 Checking available cameras...");
-          const cameras = await Html5Qrcode.getCameras();
-          console.log(`✅ Found ${cameras.length} camera(s):`, cameras);
-
-          if (cameras.length === 0) {
-            throw new Error("No cameras found on this device");
-          }
-
-          // Use the back camera if available (usually better for QR scanning)
-          const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
-          console.log(`� Using camera: ${cameraId}`);
-
-          // Start scanning
-          console.log("▶️ Starting camera and QR detection...");
-          await html5QrCode.start(
-            cameraId,
-            {
-              fps: 30, // High FPS for fast detection
-              qrbox: { width: 350, height: 350 },
-              aspectRatio: 1.0,
-            },
-            async (decodedText, decodedResult) => {
-              // SUCCESS! QR Code detected
-              console.log("🎉🎉🎉 QR CODE SUCCESSFULLY SCANNED!");
-              console.log("✅ Decoded Text:", decodedText);
-              console.log("✅ Text Length:", decodedText.length);
-              console.log("✅ Result:", decodedResult);
-
-              // Stop the scanner immediately
-              try {
-                await html5QrCode.stop();
-                html5QrcodeRef.current = null;
-                console.log("✅ Scanner stopped successfully");
-              } catch (err) {
-                console.error("Error stopping scanner:", err);
-              }
-
-              // Process the QR code
-              handleQRScanned(decodedText);
-            },
-            (errorMessage) => {
-              // This is called for every frame where no QR is detected
-              // Silently ignore common errors
-              if (
-                !errorMessage.includes("NotFoundException") &&
-                !errorMessage.includes("No MultiFormat Readers")
-              ) {
-                // Only log unexpected errors
-                console.warn("⚠️ Scanner error:", errorMessage);
-              }
-            }
-          );
-
-          console.log("✅✅✅ QR Scanner started successfully!");
-          console.log("📱 Point your camera at the QR code now");
-          setScannerInitializing(false);
-          setCameraPermission("granted"); // Ensure state reflects camera is active
-        } catch (err: any) {
-          console.error("❌ Error initializing QR scanner:", err);
-          setError(
-            `Failed to initialize QR scanner: ${err.message || "Unknown error"}`
-          );
-          setScannerInitializing(false);
-        }
-      };
-
-      // Delay to ensure DOM is fully rendered
-      const timer = setTimeout(initScanner, 500); // Increased from 300ms to 500ms
-
-      return () => clearTimeout(timer);
+    // Only initialize if we're on QR step
+    if (step !== "qr") {
+      return;
     }
+
+    // Prevent double initialization
+    if (html5QrcodeRef.current) {
+      console.log("⚠️ Scanner already initialized, skipping...");
+      return;
+    }
+
+    if (scannerInitializing) {
+      console.log("⚠️ Scanner already initializing, skipping...");
+      return;
+    }
+
+    setScannerInitializing(true);
+    console.log("🎬 Starting QR Scanner Initialization Process...");
+
+    const initScanner = async () => {
+      try {
+        // CRITICAL: Wait for DOM element to be available
+        let retries = 0;
+        const maxRetries = 20; // 20 retries = 2 seconds (20 * 100ms)
+
+        while (retries < maxRetries) {
+          const element = document.getElementById("qr-reader");
+          if (element) {
+            console.log("✅ Found qr-reader element after", retries, "retries");
+            break;
+          }
+          console.log(
+            `⏳ Waiting for qr-reader element (attempt ${
+              retries + 1
+            }/${maxRetries})...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          retries++;
+        }
+
+        const element = document.getElementById("qr-reader");
+        if (!element) {
+          throw new Error(
+            "HTML Element with id=qr-reader not found after waiting 2 seconds. Please refresh the page."
+          );
+        }
+
+        // Double-check no scanner exists
+        if (html5QrcodeRef.current) {
+          console.log("⚠️ Scanner already exists, aborting new initialization");
+          setScannerInitializing(false);
+          return;
+        }
+
+        console.log("🚀 Creating Html5Qrcode instance...");
+        const html5QrCode = new Html5Qrcode("qr-reader");
+        html5QrcodeRef.current = html5QrCode;
+
+        // Get available cameras
+        console.log("📷 Checking available cameras...");
+        const cameras = await Html5Qrcode.getCameras();
+        console.log(`✅ Found ${cameras.length} camera(s):`, cameras);
+
+        if (cameras.length === 0) {
+          throw new Error("No cameras found on this device");
+        }
+
+        // Use the back camera if available (usually better for QR scanning)
+        const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
+        console.log(`📹 Using camera: ${cameraId}`);
+
+        // Start scanning
+        console.log("▶️ Starting camera and QR detection...");
+        await html5QrCode.start(
+          cameraId,
+          {
+            fps: 30, // High FPS for fast detection
+            qrbox: { width: 350, height: 350 },
+            aspectRatio: 1.0,
+          },
+          async (decodedText, decodedResult) => {
+            // SUCCESS! QR Code detected
+            console.log("🎉🎉🎉 QR CODE SUCCESSFULLY SCANNED!");
+            console.log("✅ Decoded Text:", decodedText);
+            console.log("✅ Text Length:", decodedText.length);
+            console.log("✅ Result:", decodedResult);
+
+            // Stop the scanner immediately
+            try {
+              await html5QrCode.stop();
+              html5QrcodeRef.current = null;
+              console.log("✅ Scanner stopped successfully");
+            } catch (err) {
+              console.error("Error stopping scanner:", err);
+            }
+
+            // Process the QR code
+            handleQRScanned(decodedText);
+          },
+          (errorMessage) => {
+            // This is called for every frame where no QR is detected
+            // Silently ignore common errors
+            if (
+              !errorMessage.includes("NotFoundException") &&
+              !errorMessage.includes("No MultiFormat Readers")
+            ) {
+              // Only log unexpected errors
+              console.warn("⚠️ Scanner error:", errorMessage);
+            }
+          }
+        );
+
+        console.log("✅✅✅ QR Scanner started successfully!");
+        console.log("📱 Point your camera at the QR code now");
+        setScannerInitializing(false);
+        setCameraPermission("granted"); // Ensure state reflects camera is active
+      } catch (err: any) {
+        console.error("❌ Error initializing QR scanner:", err);
+        setError(
+          `Failed to initialize QR scanner: ${err.message || "Unknown error"}`
+        );
+        setScannerInitializing(false);
+        html5QrcodeRef.current = null;
+      }
+    };
+
+    // Delay to ensure DOM is fully rendered
+    const timer = setTimeout(initScanner, 500);
 
     // Cleanup function
     return () => {
+      clearTimeout(timer);
+
       if (html5QrcodeRef.current) {
         console.log("🧹 Cleaning up QR scanner...");
-        html5QrcodeRef.current
+        const scannerToStop = html5QrcodeRef.current;
+        html5QrcodeRef.current = null; // Clear reference immediately to prevent double-stop
+
+        scannerToStop
           .stop()
           .then(() => {
             console.log("✅ Scanner stopped and cleaned up");
-            html5QrcodeRef.current = null;
           })
           .catch((err) => {
-            console.error("Error stopping scanner:", err);
-            html5QrcodeRef.current = null;
+            console.error("Error stopping scanner during cleanup:", err);
           });
       }
     };
-  }, [step]); // Removed cameraPermission dependency - Html5Qrcode handles permission
+  }, [step]); // Only depend on step
 
   // Countdown timer for face verification
   useEffect(() => {
@@ -426,8 +402,8 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
   };
 
   const captureFaceAndVerify = async () => {
-    if (!webcamRef.current || !modelsLoaded || !location) {
-      setError("Camera not ready, models not loaded, or location unavailable");
+    if (!webcamRef.current || !location) {
+      setError("Camera not ready or location unavailable");
       return;
     }
 
@@ -442,35 +418,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         return;
       }
 
-      // Convert base64 to image
-      const img = new Image();
-      img.src = imageSrc;
-
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
-
-      // Detect face and get descriptor
-      const detection = await faceapi
-        .detectSingleFace(
-          img,
-          new faceapi.TinyFaceDetectorOptions({
-            inputSize: 416,
-            scoreThreshold: 0.5,
-          })
-        )
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (!detection) {
-        setError(
-          "No face detected. Please ensure your face is clearly visible."
-        );
-        setIsProcessing(false);
-        return;
-      }
-
-      // Send to backend for verification
+      // Send to backend for verification (backend will call RetinaFace API)
       const token = localStorage.getItem("token");
       const API_URL =
         process.env.REACT_APP_API_URL || "http://localhost:5000/api";
@@ -483,7 +431,6 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         body: JSON.stringify({
           sessionId: sessionData.sessionId,
           studentId: studentId,
-          faceDescriptor: Array.from(detection.descriptor),
           faceImageBase64: imageSrc,
           locationLat: location.lat,
           locationLng: location.lng,
@@ -515,16 +462,12 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
   };
 
   // Check if face enrollment status is still loading
-  if (faceEnrolled === null || !modelsLoaded) {
+  if (faceEnrolled === null) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {faceEnrolled === null
-              ? "Checking enrollment status..."
-              : "Loading face detection models..."}
-          </p>
+          <p className="text-gray-600">Checking enrollment status...</p>
         </div>
       </div>
     );

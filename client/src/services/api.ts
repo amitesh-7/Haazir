@@ -1404,4 +1404,165 @@ export const clearReadNotifications = async (): Promise<number> => {
   return response.data.count;
 };
 
+// ==================== DUAL VERIFICATION API ====================
+
+/**
+ * Register student face using RetinaFace API
+ * Sends image to backend which calls RetinaFace to extract 512D embedding
+ */
+export const registerFaceWithRetinaFace = async (
+  studentId: number,
+  imageBase64: string
+): Promise<{
+  faceId: number;
+  studentId: number;
+  registeredAt: string;
+  embeddingDimension: number;
+  confidence: number;
+  totalRegisteredFaces: number;
+}> => {
+  const response = await api.post("/smart-attendance/register-face", {
+    studentId,
+    imageBase64,
+  });
+  return {
+    ...response.data.face,
+    totalRegisteredFaces: response.data.totalRegisteredFaces,
+  };
+};
+
+export interface DualVerificationResult {
+  classPhotoId: string;
+  totalFacesDetected: number;
+  verifiedStudents: number;
+  suspiciousStudents: number;
+  unknownFaces: number;
+  processingTimeMs: number;
+  verified: Array<{
+    studentId: number;
+    studentName: string;
+    similarity: string;
+  }>;
+  suspicious: Array<{
+    studentId: number;
+    studentName: string;
+    reason: string;
+  }>;
+  outputImage?: string;
+}
+
+export interface SelfVerificationResult {
+  scanId: string;
+  status: string;
+  similarity: string;
+  studentName: string;
+  confidence: number;
+}
+
+export interface VerificationStatusResult {
+  session: {
+    sessionId: string;
+    status: string;
+    verificationStatus: string;
+  };
+  stats: {
+    total: number;
+    pending: number;
+    selfVerified: number;
+    verified: number;
+    suspicious: number;
+  };
+  classPhoto: {
+    id: string;
+    totalFacesDetected: number;
+    matchedFaces: number;
+    unmatchedFaces: number;
+    processingTimeMs: number;
+  } | null;
+  records: Array<{
+    studentId: number;
+    studentName: string;
+    rollNumber: string;
+    status: string;
+    faceMatchScore: number;
+    scannedAt: string;
+  }>;
+}
+
+/**
+ * Check RetinaFace API health
+ */
+export const checkRetinaFaceHealth = async (): Promise<{
+  available: boolean;
+  latency?: string;
+  error?: string;
+}> => {
+  const response = await api.get("/smart-attendance/dual-verify/health");
+  return response.data.retinaFaceApi;
+};
+
+/**
+ * Student self-verification with RetinaFace
+ */
+export const selfVerifyWithRetinaFace = async (
+  sessionId: string,
+  studentId: number,
+  imageBase64: string
+): Promise<SelfVerificationResult> => {
+  const response = await api.post("/smart-attendance/dual-verify/self-verify", {
+    sessionId,
+    studentId,
+    imageBase64,
+  });
+  return response.data.data;
+};
+
+/**
+ * Teacher class photo verification with RetinaFace
+ */
+export const verifyClassPhotoWithRetinaFace = async (
+  sessionId: string,
+  imageBase64: string
+): Promise<DualVerificationResult> => {
+  const response = await api.post("/smart-attendance/dual-verify/class-photo", {
+    sessionId,
+    imageBase64,
+  });
+  return response.data.data;
+};
+
+/**
+ * Get dual verification status for a session
+ */
+export const getDualVerificationStatus = async (
+  sessionId: string
+): Promise<VerificationStatusResult> => {
+  const response = await api.get(
+    `/smart-attendance/dual-verify/status/${sessionId}`
+  );
+  return response.data.data;
+};
+
+/**
+ * Manual override for suspicious attendance
+ */
+export const overrideAttendanceStatus = async (
+  sessionId: string,
+  studentId: number,
+  status: "verified" | "rejected",
+  reason: string
+): Promise<{
+  studentId: number;
+  oldStatus: string;
+  newStatus: string;
+}> => {
+  const response = await api.post("/smart-attendance/dual-verify/override", {
+    sessionId,
+    studentId,
+    status,
+    reason,
+  });
+  return response.data.data;
+};
+
 export default api;

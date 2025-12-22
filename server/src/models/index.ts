@@ -1,26 +1,30 @@
 // Import database connection
-import { sequelize } from '../config/database';
+import { sequelize } from "../config/database";
 
 // Import all models
-import User from './User';
-import Department from './Department';
-import Student from './Student';
-import Teacher from './Teacher';
-import Course from './Course';
-import Section from './Section';
-import Batch from './Batch';
-import Timetable from './Timetable';
-import Attendance from './Attendance';
-import Notification from './Notification';
-import SavedTimetable from './SavedTimetable';
-import TeacherCourse from './TeacherCourse';
-import AttendanceSession from './AttendanceSession';
-import StudentFace from './StudentFace';
-import StudentScanRecord from './StudentScanRecord';
-import TeacherClassCapture from './TeacherClassCapture';
-import DetectedClassFace from './DetectedClassFace';
-import SmartAttendanceRecord from './SmartAttendanceRecord';
-import SmartTimetableSolution from './SmartTimetableSolution';
+import User from "./User";
+import Department from "./Department";
+import Student from "./Student";
+import Teacher from "./Teacher";
+import Course from "./Course";
+import Section from "./Section";
+import Batch from "./Batch";
+import Timetable from "./Timetable";
+import Attendance from "./Attendance";
+import Notification from "./Notification";
+import SavedTimetable from "./SavedTimetable";
+import TeacherCourse from "./TeacherCourse";
+import AttendanceSession from "./AttendanceSession";
+import StudentFace from "./StudentFace";
+import StudentScanRecord from "./StudentScanRecord";
+import TeacherClassCapture from "./TeacherClassCapture";
+import DetectedClassFace from "./DetectedClassFace";
+import SmartAttendanceRecord from "./SmartAttendanceRecord";
+import SmartTimetableSolution from "./SmartTimetableSolution";
+// Dual Verification Models
+import ClassPhoto from "./ClassPhoto";
+import ClassPhotoFace from "./ClassPhotoFace";
+import VerificationLog from "./VerificationLog";
 
 // Initialize associations
 const models = {
@@ -43,6 +47,10 @@ const models = {
   DetectedClassFace,
   SmartAttendanceRecord,
   SmartTimetableSolution,
+  // Dual Verification Models
+  ClassPhoto,
+  ClassPhotoFace,
+  VerificationLog,
 };
 
 // Set up associations
@@ -74,6 +82,10 @@ export {
   DetectedClassFace,
   SmartAttendanceRecord,
   SmartTimetableSolution,
+  // Dual Verification Models
+  ClassPhoto,
+  ClassPhotoFace,
+  VerificationLog,
 };
 
 export default models;
