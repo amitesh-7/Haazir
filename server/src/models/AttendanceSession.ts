@@ -9,6 +9,8 @@ interface AttendanceSessionAttributes {
   location_lat?: number;
   location_lng?: number;
   qr_token: string;
+  qr_rotation_count?: number;
+  last_rotation_at?: Date;
   status: "active" | "expired" | "completed";
   expires_at: Date;
   created_at?: Date;
@@ -34,6 +36,8 @@ class AttendanceSession
   public location_lat?: number;
   public location_lng?: number;
   public qr_token!: string;
+  public qr_rotation_count?: number;
+  public last_rotation_at?: Date;
   public status!: "active" | "expired" | "completed";
   public expires_at!: Date;
   public created_at?: Date;
@@ -65,6 +69,15 @@ AttendanceSession.init(
     qr_token: {
       type: DataTypes.TEXT,
       allowNull: false,
+    },
+    qr_rotation_count: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    last_rotation_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
     status: {
       type: DataTypes.STRING(20),

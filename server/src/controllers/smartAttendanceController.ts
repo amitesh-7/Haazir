@@ -221,6 +221,7 @@ export const generateAttendanceQR = async (req: Request, res: Response) => {
         locationLat,
         locationLng,
         expiresAt: expiresAt.toISOString(),
+        rotationCount: 0, // Initial rotation count
       },
       JWT_SECRET,
       { expiresIn: `${QR_EXPIRY_SECONDS + GRACE_PERIOD_SECONDS + 60}s` } // JWT expires after QR + grace + buffer
@@ -234,6 +235,8 @@ export const generateAttendanceQR = async (req: Request, res: Response) => {
       location_lat: locationLat,
       location_lng: locationLng,
       qr_token: qrToken,
+      qr_rotation_count: 0,
+      last_rotation_at: now,
       status: "active",
       expires_at: expiresAt,
     });
@@ -277,6 +280,86 @@ export const generateAttendanceQR = async (req: Request, res: Response) => {
 };
 
 /**
+ * Refresh QR code for existing session (rotate every 10 seconds)
+ * POST /api/smart-attendance/refresh-qr
+ * Body: { sessionId: string }
+ */
+export const refreshAttendanceQR = async (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+
+    // Find existing session
+    const session = await AttendanceSession.findOne({
+      where: {
+        session_id: sessionId,
+        status: "active",
+      },
+    });
+
+    if (!session) {
+      return res.status(404).json({ error: "Active session not found" });
+    }
+
+    // Increment rotation count
+    const newRotationCount = (session.qr_rotation_count || 0) + 1;
+    const now = new Date();
+
+    // Extend session expiry (rolling window - keeps session active as long as QR is being refreshed)
+    // This allows continuous QR rotation without session expiring
+    const newExpiresAt = new Date(now.getTime() + QR_EXPIRY_SECONDS * 1000);
+
+    // Generate new QR token with updated rotation count and extended expiry
+    const newQrToken = jwt.sign(
+      {
+        sessionId: session.session_id,
+        scheduleId: session.schedule_id,
+        teacherId: session.teacher_id,
+        locationLat: session.location_lat,
+        locationLng: session.location_lng,
+        expiresAt: newExpiresAt.toISOString(),
+        rotationCount: newRotationCount,
+      },
+      JWT_SECRET,
+      { expiresIn: `${QR_EXPIRY_SECONDS + GRACE_PERIOD_SECONDS + 60}s` }
+    );
+
+    // Update session with new token, rotation count, and extended expiry
+    await session.update({
+      qr_token: newQrToken,
+      qr_rotation_count: newRotationCount,
+      last_rotation_at: now,
+      expires_at: newExpiresAt,
+    });
+
+    // Generate new QR code image
+    const qrCodeDataUrl = await QRCode.toDataURL(newQrToken);
+
+    console.log(
+      `🔄 QR Refreshed - Session: ${sessionId}, Rotation: ${newRotationCount}, New Expiry: ${newExpiresAt.toISOString()}`
+    );
+
+    return res.status(200).json({
+      message: "QR code refreshed successfully",
+      session: {
+        sessionId: session.session_id,
+        scheduleId: session.schedule_id,
+        expiresAt: newExpiresAt.toISOString(),
+        status: session.status,
+        rotationCount: newRotationCount,
+      },
+      qrCode: qrCodeDataUrl,
+    });
+  } catch (error: any) {
+    console.error("Error refreshing QR code:", error);
+    return res.status(500).json({ error: "Failed to refresh QR code" });
+  }
+};
+
+/**
  * Validate QR code and return session info
  * POST /api/smart-attendance/validate-qr
  * Body: { qrToken: string }
@@ -313,6 +396,7 @@ export const validateQR = async (req: Request, res: Response) => {
       locationLat,
       locationLng,
       expiresAt: jwtExpiresAt,
+      rotationCount: jwtRotationCount,
     } = decoded;
 
     console.log("🔍 Looking for session:", sessionId);
@@ -331,7 +415,22 @@ export const validateQR = async (req: Request, res: Response) => {
       sessionId: session.session_id,
       status: session.status,
       expiresAt: session.expires_at,
+      rotationCount: session.qr_rotation_count,
     });
+
+    // Check rotation count to prevent old QR codes from being used
+    const currentRotationCount = session.qr_rotation_count || 0;
+    if (jwtRotationCount !== currentRotationCount) {
+      console.log(
+        `❌ QR code rotation mismatch - QR: ${jwtRotationCount}, DB: ${currentRotationCount}`
+      );
+      return res.status(403).json({
+        error: "QR code has been rotated. Please scan the latest QR code.",
+        reason: "rotation_mismatch",
+      });
+    }
+
+    console.log(`✅ QR rotation count matches: ${currentRotationCount}`);
 
     // Check if session is expired or completed
     if (session.status !== "active") {
