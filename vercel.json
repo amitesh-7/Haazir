@@ -22,6 +22,24 @@
       "destination": "/server/src/app_clean.ts"
     }
   ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server/src/app_clean.ts"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/client/build/static/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|gif|json))",
+      "dest": "/client/build/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/client/build/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
