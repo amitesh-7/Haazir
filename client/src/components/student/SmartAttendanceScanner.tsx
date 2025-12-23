@@ -1,9 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Html5Qrcode,
-  Html5QrcodeScanner,
-  Html5QrcodeScanType,
-} from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
 import Webcam from "react-webcam";
 
 interface SmartAttendanceScannerProps {
@@ -22,14 +18,10 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [cameraPermission, setCameraPermission] = useState<string>("prompt");
   const [scannerInitializing, setScannerInitializing] = useState(false);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">(
-    "environment"
-  ); // "user" = front, "environment" = back
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment"); // "user" = front, "environment" = back
   const [availableCameras, setAvailableCameras] = useState<any[]>([]);
 
   const webcamRef = useRef<Webcam>(null);
@@ -41,16 +33,12 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
     const checkFaceEnrollment = async () => {
       try {
         const token = localStorage.getItem("token");
-        const API_URL =
-          process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-        const response = await fetch(
-          `${API_URL}/smart-attendance/student/${studentId}/faces`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${API_URL}/smart-attendance/student/${studentId}/faces`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         const data = await response.json();
         setFaceEnrolled((data.totalFaces || 0) >= 3); // Require at least 3 face samples
       } catch (err) {
@@ -114,9 +102,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         },
         (err) => {
           console.error("Error getting location:", err);
-          setError(
-            "Location access denied. Please enable location services to mark attendance."
-          );
+          setError("Location access denied. Please enable location services to mark attendance.");
         }
       );
     } else {
@@ -145,14 +131,15 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
       return;
     }
 
-    setScannerInitializing(true);
     console.log("🎬 Starting QR Scanner Initialization Process...");
 
     const initScanner = async () => {
       try {
-        // CRITICAL: Wait for DOM element to be available
+        setScannerInitializing(true);
+
+        // CRITICAL: Wait for DOM element to be available with longer timeout
         let retries = 0;
-        const maxRetries = 20; // 20 retries = 2 seconds (20 * 100ms)
+        const maxRetries = 30; // 30 retries = 3 seconds (30 * 100ms)
 
         while (retries < maxRetries) {
           const element = document.getElementById("qr-reader");
@@ -160,11 +147,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
             console.log("✅ Found qr-reader element after", retries, "retries");
             break;
           }
-          console.log(
-            `⏳ Waiting for qr-reader element (attempt ${
-              retries + 1
-            }/${maxRetries})...`
-          );
+          console.log(`⏳ Waiting for qr-reader element (attempt ${retries + 1}/${maxRetries})...`);
           await new Promise((resolve) => setTimeout(resolve, 100));
           retries++;
         }
@@ -172,7 +155,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         const element = document.getElementById("qr-reader");
         if (!element) {
           throw new Error(
-            "HTML Element with id=qr-reader not found after waiting 2 seconds. Please refresh the page."
+            "HTML Element with id=qr-reader not found after waiting 3 seconds. Please refresh the page."
           );
         }
 
@@ -255,20 +238,30 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         setCameraPermission("granted"); // Ensure state reflects camera is active
       } catch (err: any) {
         console.error("❌ Error initializing QR scanner:", err);
-        setError(
-          `Failed to initialize QR scanner: ${err.message || "Unknown error"}`
-        );
+        setError(`Failed to initialize QR scanner: ${err.message || "Unknown error"}`);
         setScannerInitializing(false);
         html5QrcodeRef.current = null;
       }
     };
 
-    // Delay to ensure DOM is fully rendered
-    const timer = setTimeout(initScanner, 500);
+    // Use requestAnimationFrame to ensure DOM is painted before initializing scanner
+    // This is more reliable than setTimeout
+    let rafId: number;
+    const startInit = () => {
+      rafId = requestAnimationFrame(() => {
+        // Double RAF to ensure layout is complete
+        requestAnimationFrame(() => {
+          initScanner();
+        });
+      });
+    };
+    startInit();
 
     // Cleanup function
     return () => {
-      clearTimeout(timer);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
 
       if (html5QrcodeRef.current) {
         console.log("🧹 Cleaning up QR scanner...");
@@ -357,8 +350,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         return;
       }
 
-      const API_URL =
-        process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
       console.log("📤 Sending QR validation request...");
       console.log("🔑 Auth token present:", !!token);
@@ -388,8 +380,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         // Check if error is about auth token vs QR token
         if (
           data.message &&
-          (data.message.includes("Invalid token") ||
-            data.message.includes("No token provided"))
+          (data.message.includes("Invalid token") || data.message.includes("No token provided"))
         ) {
           setError("Your session has expired. Please login again.");
           setTimeout(() => {
@@ -413,9 +404,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
       }
 
       // QR is valid, move to face verification
-      console.log(
-        "✅ QR validated successfully! Moving to face verification..."
-      );
+      console.log("✅ QR validated successfully! Moving to face verification...");
       setSessionData(data.session);
       setCountdown(data.session.scanTimeout || 60); // Default to 60 seconds
       setStep("face");
@@ -448,8 +437,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
       // Send to backend for verification (backend will call RetinaFace API)
       const token = localStorage.getItem("token");
-      const API_URL =
-        process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
       const response = await fetch(`${API_URL}/smart-attendance/verify-face`, {
         method: "POST",
         headers: {
@@ -472,11 +460,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
       }
 
       // Success!
-      setSuccess(
-        `Attendance marked! Confidence: ${(data.scan.confidence * 100).toFixed(
-          1
-        )}%`
-      );
+      setSuccess(`Attendance marked! Confidence: ${(data.scan.confidence * 100).toFixed(1)}%`);
       setStep("waiting");
 
       setTimeout(() => {
@@ -522,35 +506,23 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                 />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">
-              Face Enrollment Required
-            </h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">Face Enrollment Required</h2>
             <p className="text-gray-600 mb-6 text-lg">
-              Before you can use the QR code attendance system, you need to
-              register your face.
+              Before you can use the QR code attendance system, you need to register your face.
             </p>
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 text-left">
               <p className="text-blue-800 font-semibold mb-2">
                 📸 Why do I need to enroll my face?
               </p>
               <ul className="text-blue-700 text-sm space-y-1 list-disc list-inside">
-                <li>
-                  Your face is used to verify your identity when marking
-                  attendance
-                </li>
-                <li>
-                  This prevents proxy attendance (someone else scanning for you)
-                </li>
+                <li>Your face is used to verify your identity when marking attendance</li>
+                <li>This prevents proxy attendance (someone else scanning for you)</li>
                 <li>It's a one-time setup that takes less than 2 minutes</li>
-                <li>
-                  We'll capture your face from 5 different angles for accuracy
-                </li>
+                <li>We'll capture your face from 5 different angles for accuracy</li>
               </ul>
             </div>
             <button
-              onClick={() =>
-                (window.location.href = "/student/face-enrollment")
-              }
+              onClick={() => (window.location.href = "/student/face-enrollment")}
               className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition shadow-lg"
             >
               Enroll My Face Now
@@ -584,7 +556,11 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
               {step === "qr" ? "1" : "✓"}
             </div>
             <div className="text-xs sm:text-sm font-semibold text-gray-700">Scan QR</div>
-            <div className={`w-8 sm:w-12 h-1 rounded ${step !== "qr" ? "bg-green-500" : "bg-gray-300"}`}></div>
+            <div
+              className={`w-8 sm:w-12 h-1 rounded ${
+                step !== "qr" ? "bg-green-500" : "bg-gray-300"
+              }`}
+            ></div>
             <div
               className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full font-bold text-lg transition-all ${
                 step === "face"
@@ -607,7 +583,12 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
               <div className="flex items-start gap-3">
                 <div className="bg-blue-500 text-white p-2 rounded-lg">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                    />
                   </svg>
                 </div>
                 <div>
@@ -615,7 +596,8 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                     Step 1: Scan the QR code displayed by your teacher
                   </p>
                   <p className="text-blue-600 text-sm mt-1">
-                    📍 Using {facingMode === "environment" ? "back" : "front"} camera • Make sure you're in the classroom
+                    📍 Using {facingMode === "environment" ? "back" : "front"} camera • Make sure
+                    you're in the classroom
                   </p>
                 </div>
               </div>
@@ -624,12 +606,9 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
             {/* Camera Permission Warning */}
             {cameraPermission === "denied" && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl">
-                <p className="text-red-800 font-semibold mb-2">
-                  ⚠️ Camera Access Denied
-                </p>
+                <p className="text-red-800 font-semibold mb-2">⚠️ Camera Access Denied</p>
                 <p className="text-red-600 text-sm mb-3">
-                  Please enable camera access in your browser settings to use
-                  the QR scanner.
+                  Please enable camera access in your browser settings to use the QR scanner.
                 </p>
                 <div className="bg-white border border-red-200 rounded-lg p-3 text-sm text-gray-700">
                   <p className="font-semibold mb-2">How to enable camera:</p>
@@ -644,9 +623,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
             {cameraPermission === "prompt" && !scannerInitializing && (
               <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
-                <p className="text-yellow-800 font-semibold mb-2">
-                  📷 Camera Permission Required
-                </p>
+                <p className="text-yellow-800 font-semibold mb-2">📷 Camera Permission Required</p>
                 <p className="text-yellow-600 text-sm">
                   Please click "Allow" when your browser asks for camera access.
                 </p>
@@ -654,26 +631,18 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
             )}
 
             {/* Camera Permission Granted but Scanner Not Ready */}
-            {cameraPermission === "granted" &&
-              !html5QrcodeRef.current &&
-              !scannerInitializing && (
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                  <p className="text-blue-800 font-semibold mb-2">
-                    ✅ Camera Access Granted
-                  </p>
-                  <p className="text-blue-600 text-sm">
-                    Scanner will start automatically...
-                  </p>
-                </div>
-              )}
+            {cameraPermission === "granted" && !html5QrcodeRef.current && !scannerInitializing && (
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <p className="text-blue-800 font-semibold mb-2">✅ Camera Access Granted</p>
+                <p className="text-blue-600 text-sm">Scanner will start automatically...</p>
+              </div>
+            )}
 
             {/* Scanner Initializing */}
             {scannerInitializing && (
               <div className="flex flex-col items-center justify-center py-12 mb-4 bg-gray-50 rounded-2xl">
                 <div className="animate-spin rounded-full h-14 w-14 border-4 border-blue-500 border-t-transparent mb-4"></div>
-                <p className="text-gray-700 font-semibold text-lg">
-                  Initializing QR scanner...
-                </p>
+                <p className="text-gray-700 font-semibold text-lg">Initializing QR scanner...</p>
                 <p className="text-gray-500 text-sm mt-2">
                   Please wait while we set up your camera
                 </p>
@@ -682,8 +651,11 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
             {/* QR Scanner Container */}
             <div className="relative mb-4">
-              <div id="qr-reader" className="w-full max-w-lg mx-auto rounded-2xl overflow-hidden shadow-lg"></div>
-              
+              <div
+                id="qr-reader"
+                className="w-full max-w-lg mx-auto rounded-2xl overflow-hidden shadow-lg"
+              ></div>
+
               {/* Camera indicator badge */}
               {html5QrcodeRef.current && !scannerInitializing && (
                 <div className="absolute top-3 left-3 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg z-10">
@@ -694,33 +666,48 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
             </div>
 
             {/* Camera Switch Button - Enhanced for Mobile */}
-            {availableCameras.length > 1 &&
-              !scannerInitializing &&
-              html5QrcodeRef.current && (
-                <div className="flex justify-center mb-6">
-                  <button
-                    onClick={switchCamera}
-                    className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center gap-3 shadow-lg font-semibold text-base transform hover:scale-105 active:scale-95"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Switch to {facingMode === "user" ? "Back" : "Front"} Camera
-                  </button>
-                </div>
-              )}
+            {availableCameras.length > 1 && !scannerInitializing && html5QrcodeRef.current && (
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={switchCamera}
+                  className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center gap-3 shadow-lg font-semibold text-base transform hover:scale-105 active:scale-95"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Switch to {facingMode === "user" ? "Back" : "Front"} Camera
+                </button>
+              </div>
+            )}
 
             {/* Help Text - Enhanced */}
             {!scannerInitializing && html5QrcodeRef.current && (
               <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 text-center">
                 <div className="flex justify-center mb-2">
                   <div className="bg-blue-100 p-3 rounded-full">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    <svg
+                      className="w-8 h-8 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                      />
                     </svg>
                   </div>
                 </div>
-                <p className="text-gray-700 font-medium">Point your camera at the teacher's QR code</p>
+                <p className="text-gray-700 font-medium">
+                  Point your camera at the teacher's QR code
+                </p>
                 <p className="text-gray-500 text-sm mt-1">
                   The scanner will automatically detect and scan the code
                 </p>
@@ -741,9 +728,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                       window.location.reload();
                     } catch (err) {
                       console.error("Camera access error:", err);
-                      setError(
-                        "Unable to access camera. Please check your browser settings."
-                      );
+                      setError("Unable to access camera. Please check your browser settings.");
                     }
                   }}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -787,12 +772,12 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                   }}
                   mirrored={true} // Mirror for selfie view
                 />
-                
+
                 {/* Face guide overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-48 h-64 sm:w-56 sm:h-72 border-4 border-dashed border-blue-400 rounded-full opacity-60"></div>
                 </div>
-                
+
                 {isProcessing && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-2xl">
                     <div className="text-center">
@@ -803,16 +788,23 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                 )}
 
                 {/* Countdown overlay */}
-                <div className={`absolute top-4 right-4 px-4 py-2 rounded-xl font-bold text-xl shadow-lg ${
-                  countdown <= 10 ? 'bg-red-500 animate-pulse' : 'bg-orange-500'
-                } text-white`}>
+                <div
+                  className={`absolute top-4 right-4 px-4 py-2 rounded-xl font-bold text-xl shadow-lg ${
+                    countdown <= 10 ? "bg-red-500 animate-pulse" : "bg-orange-500"
+                  } text-white`}
+                >
                   {countdown}s
                 </div>
-                
+
                 {/* Camera indicator */}
                 <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                   Front Camera
                 </div>
@@ -821,7 +813,9 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
             {/* Tips for better face capture */}
             <div className="bg-blue-50 rounded-xl p-4 mb-6 max-w-md mx-auto">
-              <p className="text-blue-800 font-semibold text-sm mb-2">📌 Tips for better verification:</p>
+              <p className="text-blue-800 font-semibold text-sm mb-2">
+                📌 Tips for better verification:
+              </p>
               <ul className="text-blue-700 text-sm space-y-1">
                 <li>• Keep your face inside the oval guide</li>
                 <li>• Ensure good lighting on your face</li>
@@ -843,15 +837,32 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
                 {isProcessing ? (
                   <span className="flex items-center gap-2">
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     Verifying...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     Verify My Face
                   </span>
@@ -881,8 +892,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
               <div>
                 <p className="text-green-800 font-bold text-xl">{success}</p>
                 <p className="text-green-600 text-sm mt-2">
-                  Your attendance will be finalized once the teacher captures
-                  the class photo.
+                  Your attendance will be finalized once the teacher captures the class photo.
                 </p>
               </div>
             </div>
@@ -912,8 +922,8 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         {!location && (
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
             <p className="text-yellow-800">
-              <strong>Warning:</strong> Location access is required to mark
-              attendance. Please enable location services.
+              <strong>Warning:</strong> Location access is required to mark attendance. Please
+              enable location services.
             </p>
           </div>
         )}
