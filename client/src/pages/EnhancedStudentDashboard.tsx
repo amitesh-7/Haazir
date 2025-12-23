@@ -14,11 +14,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
-import {
-  fetchStudentAttendance,
-  fetchStudentTimetable,
-  getStudentCourses,
-} from "../services/api";
+import { fetchStudentAttendance, fetchStudentTimetable, getStudentCourses } from "../services/api";
 import NotificationBell from "../components/student/NotificationBell";
 
 ChartJS.register(
@@ -73,9 +69,7 @@ const EnhancedStudentDashboard: React.FC = () => {
     upcomingAssignments: 0,
     overallGrade: "A",
   });
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(
-    []
-  );
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,23 +91,17 @@ const EnhancedStudentDashboard: React.FC = () => {
       if (!user) return;
 
       const studentId =
-        user?.profile?.student_id ||
-        user?.student?.student_id ||
-        user?.user_id ||
-        user?.id;
+        user?.profile?.student_id || user?.student?.student_id || user?.user_id || user?.id;
 
       if (!studentId) return;
 
       const token = localStorage.getItem("token");
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(
-        `${API_URL}/smart-attendance/student/${studentId}/faces`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/smart-attendance/student/${studentId}/faces`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -140,11 +128,7 @@ const EnhancedStudentDashboard: React.FC = () => {
       }
 
       const studentId =
-        user?.profile?.student_id ||
-        user?.student?.student_id ||
-        user?.user_id ||
-        user?.id ||
-        "1";
+        user?.profile?.student_id || user?.student?.student_id || user?.user_id || user?.id || "1";
 
       // Load data in parallel
       const [courses, attendance, timetable] = await Promise.allSettled([
@@ -155,15 +139,11 @@ const EnhancedStudentDashboard: React.FC = () => {
 
       // Process courses
       const coursesResult = courses.status === "fulfilled" ? courses.value : [];
-      const attendanceResult =
-        attendance.status === "fulfilled" ? attendance.value : [];
-      const timetableResult =
-        timetable.status === "fulfilled" ? timetable.value : [];
+      const attendanceResult = attendance.status === "fulfilled" ? attendance.value : [];
+      const timetableResult = timetable.status === "fulfilled" ? timetable.value : [];
 
       setCoursesData(Array.isArray(coursesResult) ? coursesResult : []);
-      setAttendanceData(
-        Array.isArray(attendanceResult) ? attendanceResult : []
-      );
+      setAttendanceData(Array.isArray(attendanceResult) ? attendanceResult : []);
       setTimetableData(Array.isArray(timetableResult) ? timetableResult : []);
 
       // Calculate dashboard stats
@@ -178,22 +158,14 @@ const EnhancedStudentDashboard: React.FC = () => {
     }
   };
 
-  const calculateDashboardStats = (
-    courses: any[],
-    attendance: any[],
-    timetable: any[]
-  ) => {
+  const calculateDashboardStats = (courses: any[], attendance: any[], timetable: any[]) => {
     const totalCourses = courses.length;
 
     // Calculate attendance rate
     const totalAttendance = attendance.length;
-    const presentCount = attendance.filter(
-      (record) => record.status === "present"
-    ).length;
+    const presentCount = attendance.filter((record) => record.status === "present").length;
     const attendanceRate =
-      totalAttendance > 0
-        ? Math.round((presentCount / totalAttendance) * 100)
-        : 0;
+      totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
 
     // Calculate today's classes
     const today = new Date().toISOString().split("T")[0];
@@ -217,13 +189,7 @@ const EnhancedStudentDashboard: React.FC = () => {
       todayClasses,
       upcomingAssignments: 5, // Mock data
       overallGrade:
-        attendanceRate >= 90
-          ? "A"
-          : attendanceRate >= 80
-          ? "B"
-          : attendanceRate >= 70
-          ? "C"
-          : "D",
+        attendanceRate >= 90 ? "A" : attendanceRate >= 80 ? "B" : attendanceRate >= 70 ? "C" : "D",
     });
   };
 
@@ -236,9 +202,9 @@ const EnhancedStudentDashboard: React.FC = () => {
         id: `attendance-${index}`,
         type: "attendance",
         title: `Attendance Recorded`,
-        description: `${
-          record.status === "present" ? "Present" : "Absent"
-        } for ${record.course_name || "Class"}`,
+        description: `${record.status === "present" ? "Present" : "Absent"} for ${
+          record.course_name || "Class"
+        }`,
         timestamp: new Date(record.date || Date.now()),
         status: record.status === "present" ? "present" : "absent",
       });
@@ -264,22 +230,12 @@ const EnhancedStudentDashboard: React.FC = () => {
       }
     );
 
-    setRecentActivities(
-      activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-    );
+    setRecentActivities(activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
   };
 
   const generateUpcomingClasses = (timetable: any[]) => {
     const today = new Date();
-    const dayNames = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const todayName = dayNames[today.getDay()];
 
     const todayClasses = timetable
@@ -291,8 +247,7 @@ const EnhancedStudentDashboard: React.FC = () => {
 
         return {
           id: `class-${index}`,
-          courseName:
-            entry.course?.course_name || entry.course_name || "Unknown Course",
+          courseName: entry.course?.course_name || entry.course_name || "Unknown Course",
           courseCode: entry.course?.course_code || entry.course_code || "N/A",
           time: `${entry.start_time} - ${entry.end_time}`,
           room: `Room ${Math.floor(Math.random() * 300) + 100}`, // Mock room data
@@ -325,10 +280,7 @@ const EnhancedStudentDashboard: React.FC = () => {
     labels: ["Attended", "Missed"],
     datasets: [
       {
-        data: [
-          dashboardStats.attendanceRate,
-          100 - dashboardStats.attendanceRate,
-        ],
+        data: [dashboardStats.attendanceRate, 100 - dashboardStats.attendanceRate],
         backgroundColor: ["rgba(34, 197, 94, 0.8)", "rgba(239, 68, 68, 0.8)"],
         borderColor: ["rgba(34, 197, 94, 1)", "rgba(239, 68, 68, 1)"],
         borderWidth: 2,
@@ -341,9 +293,7 @@ const EnhancedStudentDashboard: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-xl text-gray-600">
-            Loading your dashboard...
-          </p>
+          <p className="mt-4 text-xl text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -356,11 +306,7 @@ const EnhancedStudentDashboard: React.FC = () => {
           <div className="bg-red-50 border-l-4 border-red-400 p-6 rounded-lg">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
+                <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -369,9 +315,7 @@ const EnhancedStudentDashboard: React.FC = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  Error loading dashboard
-                </h3>
+                <h3 className="text-sm font-medium text-red-800">Error loading dashboard</h3>
                 <p className="mt-2 text-sm text-red-700">{error}</p>
                 <button
                   onClick={loadDashboardData}
@@ -404,7 +348,7 @@ const EnhancedStudentDashboard: React.FC = () => {
             <div className="flex items-center gap-3 sm:gap-6">
               {/* Notification Bell */}
               <NotificationBell />
-              
+
               <div className="text-right hidden sm:block">
                 <p className="text-sm text-gray-500">
                   {new Date().toLocaleDateString("en-US", {
@@ -450,13 +394,25 @@ const EnhancedStudentDashboard: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <p className="text-lg sm:text-2xl font-bold">📱 Scan QR Code</p>
-                  <p className="text-green-100 text-sm sm:text-base">Mark Attendance with Face Recognition</p>
+                  <p className="text-green-100 text-sm sm:text-base">
+                    Mark Attendance with Face Recognition
+                  </p>
                 </div>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-green-100">
                 <span className="text-sm">Tap to scan</span>
-                <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                <svg
+                  className="w-6 h-6 animate-pulse"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </div>
             </div>
@@ -471,10 +427,22 @@ const EnhancedStudentDashboard: React.FC = () => {
               className="w-full bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 text-white rounded-xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all animate-pulse"
             >
               <div className="flex items-center justify-center gap-2 sm:gap-3">
-                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
-                <span className="font-semibold text-sm sm:text-base">⚠️ Face Not Enrolled - Tap to Register for Attendance</span>
+                <span className="font-semibold text-sm sm:text-base">
+                  ⚠️ Face Not Enrolled - Tap to Register for Attendance
+                </span>
               </div>
             </button>
           </div>
@@ -485,12 +453,8 @@ const EnhancedStudentDashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-xs sm:text-sm font-medium">
-                  Total Courses
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold">
-                  {dashboardStats.totalCourses}
-                </p>
+                <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Courses</p>
+                <p className="text-2xl sm:text-3xl font-bold">{dashboardStats.totalCourses}</p>
               </div>
               <div className="p-2 sm:p-3 bg-white/20 rounded-full">
                 <svg
@@ -515,12 +479,8 @@ const EnhancedStudentDashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-xs sm:text-sm font-medium">
-                  Attendance Rate
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold">
-                  {dashboardStats.attendanceRate}%
-                </p>
+                <p className="text-green-100 text-xs sm:text-sm font-medium">Attendance Rate</p>
+                <p className="text-2xl sm:text-3xl font-bold">{dashboardStats.attendanceRate}%</p>
               </div>
               <div className="p-2 sm:p-3 bg-white/20 rounded-full">
                 <svg
@@ -545,12 +505,8 @@ const EnhancedStudentDashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-xs sm:text-sm font-medium">
-                  Today's Classes
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold">
-                  {dashboardStats.todayClasses}
-                </p>
+                <p className="text-purple-100 text-xs sm:text-sm font-medium">Today's Classes</p>
+                <p className="text-2xl sm:text-3xl font-bold">{dashboardStats.todayClasses}</p>
               </div>
               <div className="p-2 sm:p-3 bg-white/20 rounded-full">
                 <svg
@@ -575,9 +531,7 @@ const EnhancedStudentDashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-xs sm:text-sm font-medium">
-                  Assignments
-                </p>
+                <p className="text-orange-100 text-xs sm:text-sm font-medium">Assignments</p>
                 <p className="text-2xl sm:text-3xl font-bold">
                   {dashboardStats.upcomingAssignments}
                 </p>
@@ -605,12 +559,8 @@ const EnhancedStudentDashboard: React.FC = () => {
           <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white col-span-2 sm:col-span-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-indigo-100 text-xs sm:text-sm font-medium">
-                  Overall Grade
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold">
-                  {dashboardStats.overallGrade}
-                </p>
+                <p className="text-indigo-100 text-xs sm:text-sm font-medium">Overall Grade</p>
+                <p className="text-2xl sm:text-3xl font-bold">{dashboardStats.overallGrade}</p>
               </div>
               <div className="p-2 sm:p-3 bg-white/20 rounded-full">
                 <svg
@@ -633,10 +583,187 @@ const EnhancedStudentDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-8">
+          <button
+            onClick={() => history.push("/student/smart-attendance")}
+            className="flex items-center justify-center p-4 sm:p-5 bg-gradient-to-r from-green-50 to-blue-50 hover:from-green-100 hover:to-blue-100 rounded-xl transition-all group border-2 border-green-400"
+          >
+            <div className="text-center">
+              <svg
+                className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                />
+              </svg>
+              <p className="text-sm sm:text-base font-bold text-green-700">📱 Scan QR Code</p>
+              <p className="text-xs text-gray-600 mt-1 hidden lg:block">Mark Attendance</p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              if (!faceEnrollmentStatus.isEnrolled) {
+                history.push("/student/face-enrollment");
+              }
+            }}
+            disabled={faceEnrollmentStatus.isEnrolled}
+            className={`flex items-center justify-center p-4 sm:p-5 rounded-xl transition-all group border-2 ${
+              faceEnrollmentStatus.isEnrolled
+                ? "bg-gray-100 border-gray-300 cursor-not-allowed opacity-70"
+                : "bg-purple-50 hover:bg-purple-100 border-purple-300 cursor-pointer"
+            }`}
+            title={
+              faceEnrollmentStatus.isEnrolled
+                ? `Face Enrolled (${faceEnrollmentStatus.totalFaces}/5 faces registered)`
+                : "Enroll your face for attendance"
+            }
+          >
+            <div className="text-center">
+              {faceEnrollmentStatus.isEnrolled ? (
+                <svg
+                  className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 mx-auto mb-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-10 h-10 sm:w-12 sm:h-12 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              )}
+              <p
+                className={`text-sm sm:text-base font-bold ${
+                  faceEnrollmentStatus.isEnrolled ? "text-green-800" : "text-purple-800"
+                }`}
+              >
+                {faceEnrollmentStatus.isEnrolled ? "✓ Face Enrolled" : "Face Enrollment"}
+              </p>
+              {faceEnrollmentStatus.isEnrolled && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {faceEnrollmentStatus.totalFaces}/5 faces
+                </p>
+              )}
+            </div>
+          </button>
+
+          <Link
+            to="/student/attendance"
+            className="flex items-center justify-center p-4 sm:p-5 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all group border-2 border-blue-200"
+          >
+            <div className="text-center">
+              <svg
+                className="w-10 h-10 sm:w-12 sm:h-12 text-blue-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="text-sm sm:text-base font-bold text-blue-800">Attendance</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/my-timetable"
+            className="flex items-center justify-center p-4 sm:p-5 bg-green-50 hover:bg-green-100 rounded-xl transition-all group border-2 border-green-200"
+          >
+            <div className="text-center">
+              <svg
+                className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <p className="text-sm sm:text-base font-bold text-green-800">Timetable</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/student/profile"
+            className="flex items-center justify-center p-4 sm:p-5 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all group border-2 border-purple-200"
+          >
+            <div className="text-center">
+              <svg
+                className="w-10 h-10 sm:w-12 sm:h-12 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <p className="text-sm sm:text-base font-bold text-purple-800">Profile</p>
+            </div>
+          </Link>
+
+          <Link
+            to="/student/grades"
+            className="flex items-center justify-center p-4 sm:p-5 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all group border-2 border-orange-200"
+          >
+            <div className="text-center">
+              <svg
+                className="w-10 h-10 sm:w-12 sm:h-12 text-orange-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              <p className="text-sm sm:text-base font-bold text-orange-800">Grades</p>
+            </div>
+          </Link>
+        </div>
+
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8 mt-4 sm:mt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-8">
           {/* Left Column - Charts and Course Overview */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Attendance Trend Chart */}
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
@@ -658,7 +785,7 @@ const EnhancedStudentDashboard: React.FC = () => {
                   </Link>
                 </div>
               </div>
-              <div className="h-80">
+              <div className="h-64 sm:h-80">
                 <Line
                   data={attendanceChartData}
                   options={{
@@ -686,48 +813,42 @@ const EnhancedStudentDashboard: React.FC = () => {
             </div>
 
             {/* My Courses */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                  My Courses
-                </h2>
-                <span className="text-sm text-gray-500">
-                  {coursesData.length} courses enrolled
-                </span>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">My Courses</h2>
+                <span className="text-sm text-gray-500">{coursesData.length} courses enrolled</span>
               </div>
               {coursesData.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
                   {coursesData.map((course: any) => (
                     <div
                       key={course.course_id}
-                      className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-200 hover:border-blue-300"
+                      className="border border-gray-200 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:shadow-lg transition-all duration-200 hover:border-blue-300"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg text-gray-900 line-clamp-2">
                           {course.course_name}
                         </h3>
-                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
-                          {course.credits} Credits
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ml-2">
+                          {course.credits}
                         </span>
                       </div>
-                      <div className="space-y-2 text-sm text-gray-600">
+                      <div className="space-y-1 text-sm text-gray-600">
                         <div className="flex items-center">
-                          <span className="font-medium w-16">Code:</span>
-                          <span className="text-gray-800">
-                            {course.course_code}
-                          </span>
+                          <span className="font-medium w-14 flex-shrink-0">Code:</span>
+                          <span className="text-gray-800">{course.course_code}</span>
                         </div>
                         {course.description && (
-                          <p className="text-gray-500 text-sm line-clamp-2">
+                          <p className="text-gray-500 text-xs sm:text-sm line-clamp-2">
                             {course.description}
                           </p>
                         )}
                       </div>
-                      <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                      <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center">
                         <span className="text-xs text-gray-400">Active</span>
                         <Link
                           to={`/student/course/${course.course_id}`}
-                          className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+                          className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium transition-colors"
                         >
                           View Details →
                         </Link>
@@ -752,9 +873,7 @@ const EnhancedStudentDashboard: React.FC = () => {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-500 text-lg">
-                    No courses enrolled yet
-                  </p>
+                  <p className="text-gray-500 text-lg">No courses enrolled yet</p>
                   <p className="text-sm text-gray-400 mt-1">
                     Contact your coordinator to get enrolled in courses
                   </p>
@@ -764,13 +883,13 @@ const EnhancedStudentDashboard: React.FC = () => {
           </div>
 
           {/* Right Column - Activities and Quick Info */}
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-6">
             {/* Attendance Overview */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
                 Attendance Overview
               </h2>
-              <div className="h-48">
+              <div className="h-40 sm:h-48">
                 <Doughnut
                   data={courseChartData}
                   options={{
@@ -787,11 +906,9 @@ const EnhancedStudentDashboard: React.FC = () => {
             </div>
 
             {/* Today's Schedule */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Today's Classes
-                </h2>
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Today's Classes</h2>
                 <Link
                   to="/student/timetable"
                   className="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
@@ -855,19 +972,17 @@ const EnhancedStudentDashboard: React.FC = () => {
                     </svg>
                   </div>
                   <p className="text-gray-500">No classes today</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Enjoy your free day!
-                  </p>
+                  <p className="text-sm text-gray-400 mt-1">Enjoy your free day!</p>
                 </div>
               )}
             </div>
 
             {/* Recent Activities */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
                 Recent Activities
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentActivities.slice(0, 5).map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-3">
                     <div
@@ -884,9 +999,7 @@ const EnhancedStudentDashboard: React.FC = () => {
                       {activity.type === "attendance" && (
                         <svg
                           className={`w-4 h-4 ${
-                            activity.status === "present"
-                              ? "text-green-600"
-                              : "text-red-600"
+                            activity.status === "present" ? "text-green-600" : "text-red-600"
                           }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
@@ -930,12 +1043,8 @@ const EnhancedStudentDashboard: React.FC = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.title}
-                      </p>
-                      <p className="text-sm text-gray-500 line-clamp-1">
-                        {activity.description}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                      <p className="text-sm text-gray-500 line-clamp-1">{activity.description}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         {activity.timestamp.toLocaleString("en-US", {
                           hour: "2-digit",
@@ -947,199 +1056,6 @@ const EnhancedStudentDashboard: React.FC = () => {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl shadow-xl p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                Quick Actions
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => history.push("/student/smart-attendance")}
-                  className="flex items-center justify-center p-4 bg-gradient-to-r from-green-50 to-blue-50 hover:from-green-100 hover:to-blue-100 rounded-xl transition-all group border-2 border-green-400 col-span-2"
-                >
-                  <div className="text-center">
-                    <svg
-                      className="w-10 h-10 text-green-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-                      />
-                    </svg>
-                    <p className="text-base font-bold text-green-700">
-                      📱 Scan QR Code
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Mark Attendance with Face Recognition
-                    </p>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    if (!faceEnrollmentStatus.isEnrolled) {
-                      history.push("/student/face-enrollment");
-                    }
-                  }}
-                  disabled={faceEnrollmentStatus.isEnrolled}
-                  className={`flex items-center justify-center p-4 rounded-xl transition-colors group border ${
-                    faceEnrollmentStatus.isEnrolled
-                      ? "bg-gray-100 border-gray-300 cursor-not-allowed opacity-60"
-                      : "bg-purple-50 hover:bg-purple-100 border-purple-200 cursor-pointer"
-                  }`}
-                  title={
-                    faceEnrollmentStatus.isEnrolled
-                      ? `Face Enrolled (${faceEnrollmentStatus.totalFaces}/5 faces registered)`
-                      : "Enroll your face for attendance"
-                  }
-                >
-                  <div className="text-center">
-                    {faceEnrollmentStatus.isEnrolled ? (
-                      <svg
-                        className="w-8 h-8 text-green-600 mx-auto mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    ) : (
-                      <svg
-                        className="w-8 h-8 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    )}
-                    <p
-                      className={`text-sm font-medium ${
-                        faceEnrollmentStatus.isEnrolled
-                          ? "text-green-800"
-                          : "text-purple-800"
-                      }`}
-                    >
-                      {faceEnrollmentStatus.isEnrolled
-                        ? "✓ Face Enrolled"
-                        : "Face Enrollment"}
-                    </p>
-                    {faceEnrollmentStatus.isEnrolled && (
-                      <p className="text-xs text-gray-600 mt-1">
-                        {faceEnrollmentStatus.totalFaces}/5 faces
-                      </p>
-                    )}
-                  </div>
-                </button>
-                <Link
-                  to="/student/attendance"
-                  className="flex items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors group"
-                >
-                  <div className="text-center">
-                    <svg
-                      className="w-8 h-8 text-blue-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <p className="text-sm font-medium text-blue-800">
-                      Attendance
-                    </p>
-                  </div>
-                </Link>
-                <Link
-                  to="/my-timetable"
-                  className="flex items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors group"
-                >
-                  <div className="text-center">
-                    <svg
-                      className="w-8 h-8 text-green-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    <p className="text-sm font-medium text-green-800">
-                      Timetable
-                    </p>
-                  </div>
-                </Link>
-                <Link
-                  to="/student/profile"
-                  className="flex items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors group"
-                >
-                  <div className="text-center">
-                    <svg
-                      className="w-8 h-8 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    <p className="text-sm font-medium text-purple-800">
-                      Profile
-                    </p>
-                  </div>
-                </Link>
-                <Link
-                  to="/student/grades"
-                  className="flex items-center justify-center p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors group"
-                >
-                  <div className="text-center">
-                    <svg
-                      className="w-8 h-8 text-orange-600 mx-auto mb-2 group-hover:scale-110 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <p className="text-sm font-medium text-orange-800">
-                      Grades
-                    </p>
-                  </div>
-                </Link>
               </div>
             </div>
           </div>
