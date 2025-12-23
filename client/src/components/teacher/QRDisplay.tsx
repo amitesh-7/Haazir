@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Clock, MapPin, RefreshCw, ArrowRight } from "lucide-react";
+import { API_BASE_URL } from "../../config/api";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_URL = API_BASE_URL;
 
 interface TimetableSlot {
   schedule_id: number;
@@ -32,11 +33,7 @@ interface QRDisplayProps {
   onStartMonitoring: () => void;
 }
 
-const QRDisplay: React.FC<QRDisplayProps> = ({
-  sessionData,
-  selectedSlot,
-  onStartMonitoring,
-}) => {
+const QRDisplay: React.FC<QRDisplayProps> = ({ sessionData, selectedSlot, onStartMonitoring }) => {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isExpired, setIsExpired] = useState(false);
@@ -187,19 +184,13 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
-            QR Code Generated
-          </h2>
-          <p className="text-gray-600">
-            Students can now scan this QR code to mark attendance
-          </p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">QR Code Generated</h2>
+          <p className="text-gray-600">Students can now scan this QR code to mark attendance</p>
         </div>
 
         {/* Class Information */}
         <div className="bg-blue-50 rounded-lg p-6 mb-6">
-          <h3 className="font-bold text-xl text-blue-800 mb-3">
-            {selectedSlot.course_name}
-          </h3>
+          <h3 className="font-bold text-xl text-blue-800 mb-3">{selectedSlot.course_name}</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center text-gray-700">
               <Clock size={16} className="mr-2" />
@@ -232,8 +223,7 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
             ) : (
               <span className="flex items-center">
                 <Clock size={20} className="inline mr-2" />
-                Next Rotation: {nextRotationTime}s
-                {isRefreshing && " (Refreshing...)"}
+                Next Rotation: {nextRotationTime}s{isRefreshing && " (Refreshing...)"}
               </span>
             )}
           </div>
@@ -251,9 +241,7 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
                 ) : (
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-gray-600 text-sm">
-                      Generating QR Code...
-                    </p>
+                    <p className="text-gray-600 text-sm">Generating QR Code...</p>
                   </div>
                 )}
               </div>
@@ -269,9 +257,7 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
           <div className="mt-2 flex items-center justify-center space-x-2">
             <div
               className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                isRefreshing
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-green-100 text-green-700"
+                isRefreshing ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
               }`}
             >
               {isRefreshing ? (
@@ -283,9 +269,7 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
                 <span>🔄 Rotation #{rotationCount}</span>
               )}
             </div>
-            <div className="text-xs text-gray-500">
-              (Auto-refresh every 10s)
-            </div>
+            <div className="text-xs text-gray-500">(Auto-refresh every 10s)</div>
           </div>
         </div>
 
@@ -295,9 +279,7 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
           <ol className="text-sm text-yellow-700 space-y-1 list-decimal list-inside">
             <li>Display this QR code to students (projector/screen)</li>
             <li>Students must be within 100m radius to scan</li>
-            <li>
-              Students will verify their face after scanning (10s timeout)
-            </li>
+            <li>Students will verify their face after scanning (10s timeout)</li>
             <li>Monitor scans in real-time on next page</li>
             <li>Capture class photo for anti-proxy verification</li>
             <li>Finalize attendance after cross-verification</li>
@@ -336,16 +318,12 @@ const QRDisplay: React.FC<QRDisplayProps> = ({
 
         {/* QR Code Info */}
         <div className="mt-6 text-center text-sm text-gray-600 bg-blue-50 rounded-lg p-4">
-          <p className="font-semibold mb-1">
-            ✅ Session stays active with auto-refresh
-          </p>
+          <p className="font-semibold mb-1">✅ Session stays active with auto-refresh</p>
           <p className="font-semibold text-orange-600">
             🔄 QR Code rotates every 10 seconds (prevents sharing)
           </p>
           <p className="mt-1">⏱️ Face verification timeout: 60 seconds</p>
-          <p className="mt-2">
-            📱 Students must have registered their face before scanning
-          </p>
+          <p className="mt-2">📱 Students must have registered their face before scanning</p>
           <p className="mt-2 text-xs text-gray-500">
             🔒 Old QR codes become invalid immediately when rotation occurs
           </p>

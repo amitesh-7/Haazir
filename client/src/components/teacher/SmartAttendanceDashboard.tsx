@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Camera,
-  QrCode,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Users,
-  AlertCircle,
-} from "lucide-react";
+import { Camera, QrCode, CheckCircle, XCircle, Clock, Users, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "../../config/api";
 import QRDisplay from "./QRDisplay";
 import ClassPhotoCapture from "./ClassPhotoCapture";
 import { useAuth } from "../../hooks/useAuth";
@@ -62,9 +55,7 @@ interface SessionData {
 const SmartAttendanceDashboard: React.FC = () => {
   const { user } = useAuth();
   const teacherId =
-    user?.teacherId ||
-    (user as any)?.teacher_id ||
-    (user as any)?.profile?.teacher_id;
+    user?.teacherId || (user as any)?.teacher_id || (user as any)?.profile?.teacher_id;
 
   // Debug logging
   useEffect(() => {
@@ -79,13 +70,11 @@ const SmartAttendanceDashboard: React.FC = () => {
   const [timetableSlots, setTimetableSlots] = useState<TimetableSlot[]>([]);
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingScheduleId, setLoadingScheduleId] = useState<number | null>(
-    null
-  );
+  const [loadingScheduleId, setLoadingScheduleId] = useState<number | null>(null);
   const [error, setError] = useState("");
-  const [manualAdjustments, setManualAdjustments] = useState<
-    Map<number, "present" | "absent">
-  >(new Map());
+  const [manualAdjustments, setManualAdjustments] = useState<Map<number, "present" | "absent">>(
+    new Map()
+  );
   const [matchedStudentIds, setMatchedStudentIds] = useState<number[]>([]);
   const [finalizing, setFinalizing] = useState(false);
   const [attendanceSummary, setAttendanceSummary] = useState<any>(null);
@@ -116,15 +105,12 @@ const SmartAttendanceDashboard: React.FC = () => {
 
       try {
         const token = localStorage.getItem("token");
-        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-        const response = await fetch(
-          `${API_URL}/timetable/teacher/${teacherId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+        const response = await fetch(`${API_URL}/timetable/teacher/${teacherId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         const data = await response.json();
         const rawSlots = Array.isArray(data) ? data : data.timetable || [];
 
@@ -133,8 +119,7 @@ const SmartAttendanceDashboard: React.FC = () => {
         // Transform the API response to match the expected format
         const slots: TimetableSlot[] = rawSlots.map((slot: any) => ({
           schedule_id: slot.schedule_id,
-          course_name:
-            slot.course?.course_name || slot.course_name || "Unknown Course",
+          course_name: slot.course?.course_name || slot.course_name || "Unknown Course",
           day_of_week: slot.day_of_week,
           start_time: slot.start_time,
           end_time: slot.end_time,
@@ -155,8 +140,7 @@ const SmartAttendanceDashboard: React.FC = () => {
 
         // Case-insensitive comparison to handle any format differences
         const todaySlots = slots.filter(
-          (slot: TimetableSlot) =>
-            slot.day_of_week?.toLowerCase() === today.toLowerCase()
+          (slot: TimetableSlot) => slot.day_of_week?.toLowerCase() === today.toLowerCase()
         );
         console.log("📅 Today's slots (filtered):", todaySlots);
         console.log(`📅 Found ${todaySlots.length} classes for ${today}`);
@@ -186,14 +170,11 @@ const SmartAttendanceDashboard: React.FC = () => {
       return;
     }
 
-    console.log(
-      "🔄 fetchSessionStatus called for sessionId:",
-      sessionData.sessionId
-    );
+    console.log("🔄 fetchSessionStatus called for sessionId:", sessionData.sessionId);
 
     try {
       const token = localStorage.getItem("token");
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
       const response = await fetch(
         `${API_URL}/smart-attendance/session/${sessionData.sessionId}/status`,
         {
@@ -228,8 +209,7 @@ const SmartAttendanceDashboard: React.FC = () => {
           expiresAt: data.session.expiresAt || prev.expiresAt,
           isExpired: data.session.isExpired,
           scans: data.scans,
-          eligibleStudents:
-            data.eligibleStudents || prev.eligibleStudents || [],
+          eligibleStudents: data.eligibleStudents || prev.eligibleStudents || [],
           classPhotos: data.classPhotos,
         };
       });
@@ -263,32 +243,26 @@ const SmartAttendanceDashboard: React.FC = () => {
       async (position) => {
         try {
           const token = localStorage.getItem("token");
-          const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-          const response = await fetch(
-            `${API_URL}/smart-attendance/generate-qr`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                scheduleId: slot.schedule_id,
-                teacherId: teacherId,
-                locationLat: position.coords.latitude,
-                locationLng: position.coords.longitude,
-                forceNew: true, // Always create a new session
-              }),
-            }
-          );
+          const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+          const response = await fetch(`${API_URL}/smart-attendance/generate-qr`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              scheduleId: slot.schedule_id,
+              teacherId: teacherId,
+              locationLat: position.coords.latitude,
+              locationLng: position.coords.longitude,
+              forceNew: true, // Always create a new session
+            }),
+          });
 
           const data = await response.json();
 
           console.log("📱 QR Generation Response:", data);
-          console.log(
-            "📱 Expires At (raw):",
-            data.session.expiresAt || data.session.expires_at
-          );
+          console.log("📱 Expires At (raw):", data.session.expiresAt || data.session.expires_at);
           console.log("📱 Current Time:", new Date().toISOString());
 
           if (!response.ok) {
@@ -352,10 +326,7 @@ const SmartAttendanceDashboard: React.FC = () => {
     fetchSessionStatus();
   };
 
-  const handleToggleManualAttendance = (
-    studentId: number,
-    currentStatus: "present" | "absent"
-  ) => {
+  const handleToggleManualAttendance = (studentId: number, currentStatus: "present" | "absent") => {
     const newAdjustments = new Map(manualAdjustments);
     if (currentStatus === "present") {
       newAdjustments.set(studentId, "absent");
@@ -376,9 +347,8 @@ const SmartAttendanceDashboard: React.FC = () => {
 
       // Calculate ALL student statuses (same logic as renderFinalizeStep)
       const scannedIds = new Set(
-        sessionData?.scans.records
-          .filter((s) => s.status === "verified")
-          .map((s) => s.studentId) || []
+        sessionData?.scans.records.filter((s) => s.status === "verified").map((s) => s.studentId) ||
+          []
       );
       const photoIds = new Set(matchedStudentIds);
       const eligibleStudents = sessionData?.eligibleStudents || [];
@@ -431,26 +401,22 @@ const SmartAttendanceDashboard: React.FC = () => {
       console.log("📤 Sending to finalize API:", {
         sessionId: sessionData.sessionId,
         totalStudents: allStudentStatuses.length,
-        presentCount: allStudentStatuses.filter((s) => s.status === "present")
-          .length,
+        presentCount: allStudentStatuses.filter((s) => s.status === "present").length,
         statuses: allStudentStatuses,
       });
 
-      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const response = await fetch(
-        `${API_URL}/smart-attendance/finalize`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            sessionId: sessionData.sessionId,
-            studentStatuses: allStudentStatuses, // Send ALL statuses
-          }),
-        }
-      );
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/smart-attendance/finalize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sessionId: sessionData.sessionId,
+          studentStatuses: allStudentStatuses, // Send ALL statuses
+        }),
+      });
 
       const data = await response.json();
 
@@ -520,9 +486,7 @@ const SmartAttendanceDashboard: React.FC = () => {
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-1 mx-2 ${
-                      isCompleted ? "bg-green-500" : "bg-gray-300"
-                    }`}
+                    className={`flex-1 h-1 mx-2 ${isCompleted ? "bg-green-500" : "bg-gray-300"}`}
                   />
                 )}
               </React.Fragment>
@@ -541,9 +505,7 @@ const SmartAttendanceDashboard: React.FC = () => {
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">
-            Select Class for Smart Attendance
-          </h2>
+          <h2 className="text-2xl font-bold">Select Class for Smart Attendance</h2>
           <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-semibold">
             📅 Today: {today}
           </div>
@@ -551,9 +513,7 @@ const SmartAttendanceDashboard: React.FC = () => {
         {timetableSlots.length === 0 ? (
           <div className="text-center py-12">
             <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 text-lg mb-2">
-              No classes scheduled for {today}
-            </p>
+            <p className="text-gray-600 text-lg mb-2">No classes scheduled for {today}</p>
             <p className="text-gray-500 text-sm">
               Please check back on a day when you have classes scheduled
             </p>
@@ -573,9 +533,7 @@ const SmartAttendanceDashboard: React.FC = () => {
                     ⏰ {slot.start_time} - {slot.end_time}
                   </p>
                   {slot.classroom && (
-                    <p className="text-sm text-gray-600">
-                      📍 Room: {slot.classroom}
-                    </p>
+                    <p className="text-sm text-gray-600">📍 Room: {slot.classroom}</p>
                   )}
                   <button
                     onClick={(e) => {
@@ -617,44 +575,32 @@ const SmartAttendanceDashboard: React.FC = () => {
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Scan Monitoring</h2>
-          <button
-            onClick={fetchSessionStatus}
-            className="text-blue-600 hover:text-blue-800"
-          >
+          <button onClick={fetchSessionStatus} className="text-blue-600 hover:text-blue-800">
             Refresh
           </button>
         </div>
 
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-blue-50 p-4 rounded-lg text-center">
-            <p className="text-3xl font-bold text-blue-600">
-              {sessionData?.scans?.total || 0}
-            </p>
+            <p className="text-3xl font-bold text-blue-600">{sessionData?.scans?.total || 0}</p>
             <p className="text-sm text-gray-600">Total Scans</p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg text-center">
-            <p className="text-3xl font-bold text-green-600">
-              {sessionData?.scans?.verified || 0}
-            </p>
+            <p className="text-3xl font-bold text-green-600">{sessionData?.scans?.verified || 0}</p>
             <p className="text-sm text-gray-600">Verified</p>
           </div>
           <div className="bg-red-50 p-4 rounded-lg text-center">
-            <p className="text-3xl font-bold text-red-600">
-              {sessionData?.scans?.rejected || 0}
-            </p>
+            <p className="text-3xl font-bold text-red-600">{sessionData?.scans?.rejected || 0}</p>
             <p className="text-sm text-gray-600">Rejected</p>
           </div>
           <div className="bg-yellow-50 p-4 rounded-lg text-center">
-            <p className="text-3xl font-bold text-yellow-600">
-              {sessionData?.scans?.pending || 0}
-            </p>
+            <p className="text-3xl font-bold text-yellow-600">{sessionData?.scans?.pending || 0}</p>
             <p className="text-sm text-gray-600">Pending</p>
           </div>
         </div>
 
         <div className="space-y-2 max-h-96 overflow-y-auto">
-          {sessionData?.scans?.records &&
-          sessionData.scans.records.length > 0 ? (
+          {sessionData?.scans?.records && sessionData.scans.records.length > 0 ? (
             sessionData.scans.records.map((scan) => (
               <div
                 key={scan.scanId}
@@ -674,27 +620,21 @@ const SmartAttendanceDashboard: React.FC = () => {
                   )}
                   <div>
                     <p className="font-semibold">{scan.studentName}</p>
-                    <p className="text-sm text-gray-600">
-                      Roll: {scan.rollNumber}
-                    </p>
+                    <p className="text-sm text-gray-600">Roll: {scan.rollNumber}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold">
                     Confidence: {(scan.confidence * 100).toFixed(1)}%
                   </p>
-                  <p className="text-xs text-gray-600">
-                    Distance: {scan.distance}m
-                  </p>
+                  <p className="text-xs text-gray-600">Distance: {scan.distance}m</p>
                 </div>
               </div>
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
               <p className="text-lg font-semibold mb-2">No scans yet</p>
-              <p className="text-sm">
-                Students will appear here after they scan the QR code
-              </p>
+              <p className="text-sm">Students will appear here after they scan the QR code</p>
             </div>
           )}
         </div>
@@ -726,14 +666,11 @@ const SmartAttendanceDashboard: React.FC = () => {
 
   const renderFinalizeStep = () => {
     const scannedIds = new Set(
-      sessionData?.scans.records
-        .filter((s) => s.status === "verified")
-        .map((s) => s.studentId) || []
+      sessionData?.scans.records.filter((s) => s.status === "verified").map((s) => s.studentId) ||
+        []
     );
     const photoIds = new Set(matchedStudentIds);
-    const crossVerifiedIds = new Set(
-      Array.from(scannedIds).filter((id) => photoIds.has(id))
-    );
+    const crossVerifiedIds = new Set(Array.from(scannedIds).filter((id) => photoIds.has(id)));
 
     // Determine final status for each student
     const studentStatuses = new Map<
@@ -793,9 +730,7 @@ const SmartAttendanceDashboard: React.FC = () => {
         const manualStatus = manualAdjustments.get(scan.studentId);
 
         let status: "present" | "absent" = isInPhoto ? "present" : "absent";
-        let reason = isInPhoto
-          ? "Verified in both scan & photo"
-          : "Not detected in class photo";
+        let reason = isInPhoto ? "Verified in both scan & photo" : "Not detected in class photo";
 
         if (manualStatus) {
           status = manualStatus;
@@ -825,32 +760,23 @@ const SmartAttendanceDashboard: React.FC = () => {
 
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <p className="text-3xl font-bold text-blue-600">
-                {scannedIds.size}
-              </p>
+              <p className="text-3xl font-bold text-blue-600">{scannedIds.size}</p>
               <p className="text-sm text-gray-600">Scanned QR</p>
             </div>
             <div className="bg-purple-50 p-4 rounded-lg text-center">
-              <p className="text-3xl font-bold text-purple-600">
-                {photoIds.size}
-              </p>
+              <p className="text-3xl font-bold text-purple-600">{photoIds.size}</p>
               <p className="text-sm text-gray-600">In Class Photo</p>
             </div>
             <div className="bg-green-50 p-4 rounded-lg text-center">
-              <p className="text-3xl font-bold text-green-600">
-                {crossVerifiedIds.size}
-              </p>
+              <p className="text-3xl font-bold text-green-600">{crossVerifiedIds.size}</p>
               <p className="text-sm text-gray-600">Cross-Verified</p>
             </div>
           </div>
 
           <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
-            <p className="font-semibold text-yellow-800">
-              Anti-Proxy Protection Active
-            </p>
+            <p className="font-semibold text-yellow-800">Anti-Proxy Protection Active</p>
             <p className="text-sm text-yellow-700">
-              Only students present in BOTH QR scan AND class photo will be
-              marked present.
+              Only students present in BOTH QR scan AND class photo will be marked present.
             </p>
           </div>
 
@@ -877,9 +803,7 @@ const SmartAttendanceDashboard: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() =>
-                    handleToggleManualAttendance(studentId, data.status)
-                  }
+                  onClick={() => handleToggleManualAttendance(studentId, data.status)}
                   className={`px-4 py-2 rounded ${
                     data.status === "present"
                       ? "bg-red-100 text-red-700 hover:bg-red-200"
@@ -896,9 +820,7 @@ const SmartAttendanceDashboard: React.FC = () => {
             <h3 className="font-bold mb-2">Summary</h3>
             <div className="flex justify-around">
               <div>
-                <p className="text-2xl font-bold text-green-600">
-                  {presentCount}
-                </p>
+                <p className="text-2xl font-bold text-green-600">{presentCount}</p>
                 <p className="text-sm text-gray-600">Present</p>
               </div>
               <div>
@@ -920,9 +842,7 @@ const SmartAttendanceDashboard: React.FC = () => {
             onClick={handleFinalizeAttendance}
             disabled={finalizing}
             className={`px-8 py-3 rounded-lg font-semibold text-white ${
-              finalizing
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+              finalizing ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
             }`}
           >
             {finalizing ? "Finalizing..." : "Finalize Attendance"}
@@ -938,12 +858,9 @@ const SmartAttendanceDashboard: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Smart Attendance System
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Smart Attendance System</h1>
               <p className="text-gray-600">
-                QR-based attendance with face verification and anti-proxy
-                protection
+                QR-based attendance with face verification and anti-proxy protection
               </p>
             </div>
             <div className="text-right">

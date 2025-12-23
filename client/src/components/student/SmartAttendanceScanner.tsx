@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
 import Webcam from "react-webcam";
+import { API_BASE_URL } from "../../config/api";
 
 interface SmartAttendanceScannerProps {
   studentId: number;
@@ -33,7 +34,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
     const checkFaceEnrollment = async () => {
       try {
         const token = localStorage.getItem("token");
-        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+        const API_URL = API_BASE_URL;
         const response = await fetch(`${API_URL}/smart-attendance/student/${studentId}/faces`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -350,7 +351,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
         return;
       }
 
-      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const API_URL = API_BASE_URL;
 
       console.log("📤 Sending QR validation request...");
       console.log("🔑 Auth token present:", !!token);
@@ -437,7 +438,7 @@ const SmartAttendanceScanner: React.FC<SmartAttendanceScannerProps> = ({
 
       // Send to backend for verification (backend will call RetinaFace API)
       const token = localStorage.getItem("token");
-      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const API_URL = API_BASE_URL;
       const response = await fetch(`${API_URL}/smart-attendance/verify-face`, {
         method: "POST",
         headers: {

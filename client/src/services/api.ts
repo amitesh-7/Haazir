@@ -1,7 +1,8 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config/api";
 
 // API URL - defaults to port 5000 (server's default port)
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_URL = API_BASE_URL;
 
 // Create axios instance
 export const api = axios.create({
@@ -117,11 +118,7 @@ export const login = async (email: string, password: string) => {
   return response.data;
 };
 
-export const register = async (
-  email: string,
-  password: string,
-  role: string
-) => {
+export const register = async (email: string, password: string, role: string) => {
   const response = await api.post("/auth/register", { email, password, role });
   return response.data;
 };
@@ -185,10 +182,7 @@ export const submitAttendanceBulk = async (
   return response.data;
 };
 
-export const fetchRosterForSchedule = async (
-  scheduleId: number | string,
-  date?: string
-) => {
+export const fetchRosterForSchedule = async (scheduleId: number | string, date?: string) => {
   const resp = await api.get(`/attendance/timetable/${scheduleId}/students`, {
     params: date ? { date } : {},
   });
@@ -385,9 +379,7 @@ export const removeCourseFromStudent = async (
   studentId: number | string,
   courseId: number | string
 ) => {
-  const response = await api.delete(
-    `/students/${studentId}/courses/${courseId}`
-  );
+  const response = await api.delete(`/students/${studentId}/courses/${courseId}`);
   return response.data;
 };
 
@@ -444,9 +436,7 @@ export const fetchTimetable = async (options?: {
     console.error("Error fetching timetable:", error);
     // Re-throw with more context
     throw new Error(
-      error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch timetable"
+      error?.response?.data?.message || error?.message || "Failed to fetch timetable"
     );
   }
 };
@@ -463,10 +453,7 @@ export const fetchTimetableBySection = async (
     if (options?.signal) axiosConfig.signal = options.signal;
     if (options?.timeoutMs) axiosConfig.timeout = options.timeoutMs;
 
-    const { data } = await api.get(
-      `/timetable/section/${sectionId}`,
-      axiosConfig
-    );
+    const { data } = await api.get(`/timetable/section/${sectionId}`, axiosConfig);
 
     // Handle null, undefined, or non-array responses
     if (!data || !Array.isArray(data)) {
@@ -497,9 +484,7 @@ export const fetchTimetableBySection = async (
   } catch (error: any) {
     console.error("Error fetching timetable by section:", error);
     throw new Error(
-      error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch timetable for section"
+      error?.response?.data?.message || error?.message || "Failed to fetch timetable for section"
     );
   }
 };
@@ -553,17 +538,12 @@ export const updateTimetableEntryApi = async (
 ) => {
   const payload: any = {};
   if (entryData.courseId !== undefined) payload.course_id = entryData.courseId;
-  if (entryData.teacherId !== undefined)
-    payload.teacher_id = entryData.teacherId;
-  if (entryData.dayOfWeek !== undefined)
-    payload.day_of_week = entryData.dayOfWeek;
-  if (entryData.startTime !== undefined)
-    payload.start_time = entryData.startTime;
+  if (entryData.teacherId !== undefined) payload.teacher_id = entryData.teacherId;
+  if (entryData.dayOfWeek !== undefined) payload.day_of_week = entryData.dayOfWeek;
+  if (entryData.startTime !== undefined) payload.start_time = entryData.startTime;
   if (entryData.endTime !== undefined) payload.end_time = entryData.endTime;
-  if (entryData.classroom !== undefined)
-    payload.classroom = entryData.classroom;
-  if (entryData.classType !== undefined)
-    payload.class_type = entryData.classType;
+  if (entryData.classroom !== undefined) payload.classroom = entryData.classroom;
+  if (entryData.classType !== undefined) payload.class_type = entryData.classType;
 
   // Note: target_audience and batch_id are not in database schema yet
   // These will be implemented when batch functionality is added to backend
@@ -596,10 +576,7 @@ export const getProfile = async () => {
   return response.data; // { user: {...} }
 };
 
-export const changePassword = async (
-  currentPassword: string,
-  newPassword: string
-) => {
+export const changePassword = async (currentPassword: string, newPassword: string) => {
   const response = await api.put("/auth/change-password", {
     currentPassword,
     newPassword,
@@ -609,9 +586,7 @@ export const changePassword = async (
 
 // Analytics API
 export const getStudentAnalytics = async (studentId?: string | number) => {
-  const url = studentId
-    ? `/analytics/student/${studentId}`
-    : "/analytics/student";
+  const url = studentId ? `/analytics/student/${studentId}` : "/analytics/student";
   const response = await api.get(url);
   return response.data;
 };
@@ -674,10 +649,7 @@ export const getTeacherCourses = async (teacherId: string | number) => {
   return response.data;
 };
 
-export const assignCoursesToTeacher = async (
-  teacherId: string | number,
-  courseIds: number[]
-) => {
+export const assignCoursesToTeacher = async (teacherId: string | number, courseIds: number[]) => {
   console.log("📡 API: Assigning courses to teacher (relationship only):", {
     teacherId,
     courseIds,
@@ -692,9 +664,7 @@ export const removeCourseFromTeacher = async (
   teacherId: string | number,
   courseId: string | number
 ) => {
-  const response = await api.delete(
-    `/teachers/${teacherId}/courses/${courseId}`
-  );
+  const response = await api.delete(`/teachers/${teacherId}/courses/${courseId}`);
   return response.data;
 };
 
@@ -704,17 +674,13 @@ export const fetchTeachersByCourse = async (courseId: string | number) => {
 };
 
 // Student Course Assignments with Teacher Info
-export const getStudentCourseAssignments = async (
-  studentId: string | number
-) => {
+export const getStudentCourseAssignments = async (studentId: string | number) => {
   const response = await api.get(`/students/${studentId}/course-assignments`);
   return response.data;
 };
 
 // Section Management APIs
-export const fetchSectionsByDepartment = async (
-  departmentId: string | number
-) => {
+export const fetchSectionsByDepartment = async (departmentId: string | number) => {
   const response = await api.get(`/sections/department/${departmentId}`);
   return response.data;
 };
@@ -723,9 +689,7 @@ export const fetchSectionsByDepartmentAndSemester = async (
   departmentId: string | number,
   semester: string | number
 ) => {
-  const response = await api.get(
-    `/sections/department/${departmentId}/semester/${semester}`
-  );
+  const response = await api.get(`/sections/department/${departmentId}/semester/${semester}`);
   return response.data;
 };
 
@@ -795,9 +759,7 @@ export const fetchStudentsBySection = async (sectionId: string | number) => {
   return response.data;
 };
 
-export const fetchUnassignedStudents = async (
-  departmentId?: string | number
-) => {
+export const fetchUnassignedStudents = async (departmentId?: string | number) => {
   const params = departmentId ? { department_id: departmentId } : {};
   const response = await api.get("/students/unassigned", { params });
   return response.data;
@@ -813,9 +775,7 @@ export const enrollStudentInSection = async (
   return response.data;
 };
 
-export const unenrollStudentFromSection = async (
-  studentId: string | number
-) => {
+export const unenrollStudentFromSection = async (studentId: string | number) => {
   const response = await api.put(`/students/${studentId}/unenroll`);
   return response.data;
 };
@@ -866,12 +826,8 @@ export const fetchTimetableViewSettings = async (
   return response.data;
 };
 
-export const fetchTimetableViewSettingsBySection = async (
-  sectionId: string | number
-) => {
-  const response = await api.get(
-    `/timetable/view-settings/section/${sectionId}`
-  );
+export const fetchTimetableViewSettingsBySection = async (sectionId: string | number) => {
+  const response = await api.get(`/timetable/view-settings/section/${sectionId}`);
   return response.data;
 };
 
@@ -929,12 +885,8 @@ export interface CourseWiseAttendance {
 }
 
 // Get students eligible for a timetable slot
-export const getStudentsForTimetableSlot = async (
-  scheduleId: string | number
-) => {
-  const response = await api.get(
-    `/attendance/timetable/${scheduleId}/students`
-  );
+export const getStudentsForTimetableSlot = async (scheduleId: string | number) => {
+  const response = await api.get(`/attendance/timetable/${scheduleId}/students`);
   return response.data as {
     timetableSlot: TimetableSlot;
     eligibleStudents: EligibleStudent[];
@@ -968,9 +920,7 @@ export const getAttendanceReport = async (
   if (sectionId) params.append("section_id", sectionId.toString());
 
   const queryString = params.toString();
-  const url = `/attendance/report/course/${courseId}${
-    queryString ? `?${queryString}` : ""
-  }`;
+  const url = `/attendance/report/course/${courseId}${queryString ? `?${queryString}` : ""}`;
 
   const response = await api.get(url);
   return response.data;
@@ -987,9 +937,7 @@ export const getStudentAttendanceSummary = async (
   if (endDate) params.append("end_date", endDate);
 
   const queryString = params.toString();
-  const url = `/attendance/summary/student/${studentId}${
-    queryString ? `?${queryString}` : ""
-  }`;
+  const url = `/attendance/summary/student/${studentId}${queryString ? `?${queryString}` : ""}`;
 
   const response = await api.get(url);
   return response.data as {
@@ -1013,9 +961,7 @@ export const enrollStudentsInCourse = async (
 };
 
 // Get teacher's timetable with attendance marking capability
-export const getTeacherTimetableForAttendance = async (
-  teacherId: string | number
-) => {
+export const getTeacherTimetableForAttendance = async (teacherId: string | number) => {
   const response = await api.get(`/timetable/teacher/${teacherId}`);
   return response.data;
 };
@@ -1023,20 +969,13 @@ export const getTeacherTimetableForAttendance = async (
 // Get today's classes for a teacher
 export const getTodayClassesForTeacher = async (teacherId: string | number) => {
   const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
-  const response = await api.get(
-    `/timetable/teacher/${teacherId}?date=${today}`
-  );
+  const response = await api.get(`/timetable/teacher/${teacherId}?date=${today}`);
   return response.data;
 };
 
 // Get attendance status for a specific date and schedule
-export const getAttendanceStatus = async (
-  scheduleId: string | number,
-  date: string
-) => {
-  const response = await api.get(
-    `/attendance/class/${scheduleId}?date=${date}`
-  );
+export const getAttendanceStatus = async (scheduleId: string | number, date: string) => {
+  const response = await api.get(`/attendance/class/${scheduleId}?date=${date}`);
   return response.data;
 };
 
@@ -1081,9 +1020,7 @@ export const getAttendanceDatesForTeacher = async (
   }
 
   const queryString = params.toString();
-  const url = `/attendance/dates/teacher/${teacherId}${
-    queryString ? `?${queryString}` : ""
-  }`;
+  const url = `/attendance/dates/teacher/${teacherId}${queryString ? `?${queryString}` : ""}`;
 
   const response = await api.get(url);
   return response.data;
@@ -1143,9 +1080,7 @@ export const getTeacherUnifiedAttendanceHistory = async (
     params.append("course_id", filters.courseId.toString());
   }
 
-  const response = await api.get(
-    `/attendance/unified/teacher?${params.toString()}`
-  );
+  const response = await api.get(`/attendance/unified/teacher?${params.toString()}`);
   return response.data;
 };
 
@@ -1172,9 +1107,7 @@ export const downloadStudentTemplate = async (
   }
 
   const queryString = params.toString();
-  const url = `/data-entry/templates/student${
-    queryString ? `?${queryString}` : ""
-  }`;
+  const url = `/data-entry/templates/student${queryString ? `?${queryString}` : ""}`;
 
   const response = await api.get(url, {
     responseType: "blob",
@@ -1222,18 +1155,12 @@ export const parseUploadedFile = async (
 };
 
 // Enhanced validation functions
-export const validateSingleRecord = async (
-  data: any,
-  type: "student" | "teacher"
-) => {
+export const validateSingleRecord = async (data: any, type: "student" | "teacher") => {
   const response = await api.post("/data-entry/validate", { data, type });
   return response;
 };
 
-export const validateBatchRecords = async (
-  dataArray: any[],
-  type: "student" | "teacher"
-) => {
+export const validateBatchRecords = async (dataArray: any[], type: "student" | "teacher") => {
   const response = await api.post("/data-entry/validate-batch", {
     dataArray,
     type,
@@ -1260,9 +1187,7 @@ export const bulkImportData = async (
 
 // Student Enrollment APIs
 export const getUnassignedStudents = async (departmentId: string | number) => {
-  const response = await api.get(
-    `/student-enrollment/unassigned/${departmentId}`
-  );
+  const response = await api.get(`/student-enrollment/unassigned/${departmentId}`);
   return response.data;
 };
 
@@ -1300,19 +1225,14 @@ export const autoDistributeStudentsToBatches = async (
   sectionId: string | number,
   batchIds: (string | number)[]
 ) => {
-  const response = await api.post(
-    "/student-enrollment/auto-distribute-batches",
-    {
-      sectionId,
-      batchIds,
-    }
-  );
+  const response = await api.post("/student-enrollment/auto-distribute-batches", {
+    sectionId,
+    batchIds,
+  });
   return response.data;
 };
 
-export const removeStudentsFromBatch = async (
-  studentIds: (string | number)[]
-) => {
+export const removeStudentsFromBatch = async (studentIds: (string | number)[]) => {
   const response = await api.post("/student-enrollment/remove-from-batch", {
     studentIds,
   });
@@ -1372,9 +1292,7 @@ export const getAllNotifications = async (
 /**
  * Mark a notification as read
  */
-export const markNotificationAsRead = async (
-  notificationId: number
-): Promise<Notification> => {
+export const markNotificationAsRead = async (notificationId: number): Promise<Notification> => {
   const response = await api.put(`/notifications/${notificationId}/read`);
   return response.data.notification;
 };
@@ -1390,9 +1308,7 @@ export const markAllNotificationsAsRead = async (): Promise<number> => {
 /**
  * Delete a notification
  */
-export const deleteNotification = async (
-  notificationId: number
-): Promise<void> => {
+export const deleteNotification = async (notificationId: number): Promise<void> => {
   await api.delete(`/notifications/${notificationId}`);
 };
 
@@ -1537,9 +1453,7 @@ export const verifyClassPhotoWithRetinaFace = async (
 export const getDualVerificationStatus = async (
   sessionId: string
 ): Promise<VerificationStatusResult> => {
-  const response = await api.get(
-    `/smart-attendance/dual-verify/status/${sessionId}`
-  );
+  const response = await api.get(`/smart-attendance/dual-verify/status/${sessionId}`);
   return response.data.data;
 };
 

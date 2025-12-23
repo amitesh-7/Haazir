@@ -1,7 +1,5 @@
 import axios from "axios";
-
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:5000/api";
+import { API_BASE_URL } from "../config/api";
 
 // Create axios instance with default config
 const api = axios.create({
@@ -96,32 +94,22 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error fetching time slots:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch time slots"
-      );
+      throw new Error(error.response?.data?.error || "Failed to fetch time slots");
     }
   }
 
   /**
    * Update time slot active status
    */
-  async updateTimeSlot(
-    slotId: number,
-    isActive: boolean
-  ): Promise<ApiResponse<TimeSlot>> {
+  async updateTimeSlot(slotId: number, isActive: boolean): Promise<ApiResponse<TimeSlot>> {
     try {
-      const response = await api.put(
-        `/smart-timetable/generator/time-slots/${slotId}`,
-        {
-          is_active: isActive,
-        }
-      );
+      const response = await api.put(`/smart-timetable/generator/time-slots/${slotId}`, {
+        is_active: isActive,
+      });
       return response.data;
     } catch (error: any) {
       console.error("Error updating time slot:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to update time slot"
-      );
+      throw new Error(error.response?.data?.error || "Failed to update time slot");
     }
   }
 
@@ -135,10 +123,7 @@ class SmartTimetableService {
     is_break?: boolean;
   }): Promise<ApiResponse<TimeSlot>> {
     try {
-      const response = await api.post(
-        "/smart-timetable/generator/time-slots",
-        timeSlot
-      );
+      const response = await api.post("/smart-timetable/generator/time-slots", timeSlot);
       return response.data;
     } catch (error: any) {
       console.error("Error adding time slot:", error);
@@ -179,15 +164,11 @@ class SmartTimetableService {
         ...(params.courseId && { courseId: params.courseId.toString() }),
       });
 
-      const response = await api.get(
-        `/smart-timetable/generator/teachers?${queryParams}`
-      );
+      const response = await api.get(`/smart-timetable/generator/teachers?${queryParams}`);
       return response.data;
     } catch (error: any) {
       console.error("Error fetching teachers:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch teachers"
-      );
+      throw new Error(error.response?.data?.error || "Failed to fetch teachers");
     }
   }
 
@@ -197,41 +178,27 @@ class SmartTimetableService {
    * Create new timetable generation request
    */
   async createTimetableRequest(
-    request: Omit<
-      TimetableRequest,
-      "request_id" | "status" | "created_at" | "updated_at"
-    >
+    request: Omit<TimetableRequest, "request_id" | "status" | "created_at" | "updated_at">
   ): Promise<ApiResponse<TimetableRequest>> {
     try {
-      const response = await api.post(
-        "/smart-timetable/generator/requests",
-        request
-      );
+      const response = await api.post("/smart-timetable/generator/requests", request);
       return response.data;
     } catch (error: any) {
       console.error("Error creating timetable request:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to create timetable request"
-      );
+      throw new Error(error.response?.data?.error || "Failed to create timetable request");
     }
   }
 
   /**
    * Get all timetable requests for a department
    */
-  async getTimetableRequests(
-    departmentId: number
-  ): Promise<ApiResponse<TimetableRequest[]>> {
+  async getTimetableRequests(departmentId: number): Promise<ApiResponse<TimetableRequest[]>> {
     try {
-      const response = await api.get(
-        `/smart-timetable/generator/requests/${departmentId}`
-      );
+      const response = await api.get(`/smart-timetable/generator/requests/${departmentId}`);
       return response.data;
     } catch (error: any) {
       console.error("Error fetching timetable requests:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch timetable requests"
-      );
+      throw new Error(error.response?.data?.error || "Failed to fetch timetable requests");
     }
   }
 
@@ -246,15 +213,11 @@ class SmartTimetableService {
     }>
   > {
     try {
-      const response = await api.post(
-        `/smart-timetable/generator/requests/${requestId}/generate`
-      );
+      const response = await api.post(`/smart-timetable/generator/requests/${requestId}/generate`);
       return response.data;
     } catch (error: any) {
       console.error("Error generating timetable:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to start timetable generation"
-      );
+      throw new Error(error.response?.data?.error || "Failed to start timetable generation");
     }
   }
 
@@ -377,30 +340,28 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error fetching capabilities:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to fetch generation capabilities"
-      );
+      throw new Error(error.response?.data?.error || "Failed to fetch generation capabilities");
     }
   }
 
   /**
    * Validate generation request before processing
    */
-  async validateGenerationRequest(request: any): Promise<ApiResponse<{
-    valid: boolean;
-    issues: string[];
-    warnings: string[];
-    complexity: string;
-    recommended_method: string;
-  }>> {
+  async validateGenerationRequest(request: any): Promise<
+    ApiResponse<{
+      valid: boolean;
+      issues: string[];
+      warnings: string[];
+      complexity: string;
+      recommended_method: string;
+    }>
+  > {
     try {
       const response = await api.post("/smart-timetable/unified/validate", request);
       return response.data;
     } catch (error: any) {
       console.error("Error validating request:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to validate request"
-      );
+      throw new Error(error.response?.data?.error || "Failed to validate request");
     }
   }
 
@@ -411,7 +372,7 @@ class SmartTimetableService {
    */
   async generateUnifiedTimetable(
     request: any,
-    method: 'csp' | 'ai' | 'hybrid' | 'auto' = 'auto'
+    method: "csp" | "ai" | "hybrid" | "auto" = "auto"
   ): Promise<ApiResponse<any>> {
     try {
       const response = await api.post("/smart-timetable/unified/generate", {
@@ -421,9 +382,7 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error generating unified timetable:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to generate timetable"
-      );
+      throw new Error(error.response?.data?.error || "Failed to generate timetable");
     }
   }
 
@@ -436,9 +395,7 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error generating CSP timetable:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to generate CSP timetable"
-      );
+      throw new Error(error.response?.data?.error || "Failed to generate CSP timetable");
     }
   }
 
@@ -451,9 +408,7 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error generating AI timetable:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to generate AI timetable"
-      );
+      throw new Error(error.response?.data?.error || "Failed to generate AI timetable");
     }
   }
 
@@ -466,9 +421,7 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error generating hybrid timetable:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to generate hybrid timetable"
-      );
+      throw new Error(error.response?.data?.error || "Failed to generate hybrid timetable");
     }
   }
 
@@ -483,9 +436,7 @@ class SmartTimetableService {
       return response.data;
     } catch (error: any) {
       console.error("Error comparing solutions:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to compare solutions"
-      );
+      throw new Error(error.response?.data?.error || "Failed to compare solutions");
     }
   }
 
@@ -495,15 +446,24 @@ class SmartTimetableService {
    */
   buildUnifiedRequest(
     dataOrDepartments: any,
-    sections?: { section_id: number; department_id: number; section_name: string; semester?: number }[],
+    sections?: {
+      section_id: number;
+      department_id: number;
+      section_name: string;
+      semester?: number;
+    }[],
     courseAssignments?: any[],
     timeConfig?: any,
     preferences?: any
   ): any {
     // Check if called with new object format
-    if (dataOrDepartments && typeof dataOrDepartments === 'object' && 'departments' in dataOrDepartments) {
+    if (
+      dataOrDepartments &&
+      typeof dataOrDepartments === "object" &&
+      "departments" in dataOrDepartments
+    ) {
       const data = dataOrDepartments;
-      
+
       // Direct mapping from the new format
       return {
         departments: data.departments || [],
@@ -512,14 +472,14 @@ class SmartTimetableService {
         rooms: [], // Optional - can be added later
         course_assignments: data.courseAssignments || [],
         time_configuration: data.timeConfiguration || {
-          working_days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-          start_time: '09:00',
-          end_time: '17:00',
+          working_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          start_time: "09:00",
+          end_time: "17:00",
           class_duration: 60,
-          lunch_break: { enabled: true, start: '12:00', end: '13:00' },
+          lunch_break: { enabled: true, start: "12:00", end: "13:00" },
         },
         preferences: data.preferences || {
-          optimization_goal: 'balanced',
+          optimization_goal: "balanced",
           hard_constraints: {
             no_teacher_clash: true,
             no_section_clash: true,
@@ -535,16 +495,20 @@ class SmartTimetableService {
             minimize_daily_transitions: { enabled: true, weight: 50 },
           },
         },
-        method: data.method || 'auto',
+        method: data.method || "auto",
         metadata: data.metadata || {},
       };
     }
 
     // Legacy format - separate arguments
-    const departments = dataOrDepartments as { department_id: number; name: string; code?: string }[];
-    
+    const departments = dataOrDepartments as {
+      department_id: number;
+      name: string;
+      code?: string;
+    }[];
+
     // Transform sections to match backend format
-    const formattedSections = (sections || []).map(s => ({
+    const formattedSections = (sections || []).map((s) => ({
       section_id: s.section_id,
       department_id: s.department_id,
       section_name: s.section_name,
@@ -552,7 +516,7 @@ class SmartTimetableService {
     }));
 
     // Transform departments
-    const formattedDepartments = (departments || []).map(d => ({
+    const formattedDepartments = (departments || []).map((d) => ({
       department_id: d.department_id,
       name: d.name,
       code: d.code || d.name.substring(0, 3).toUpperCase(),
@@ -560,44 +524,68 @@ class SmartTimetableService {
 
     // Group and transform course assignments
     const courseMap = new Map<number, any>();
-    (courseAssignments || []).forEach(assignment => {
+    (courseAssignments || []).forEach((assignment) => {
       if (!courseMap.has(assignment.course_id)) {
         courseMap.set(assignment.course_id, {
           course_id: assignment.course_id,
           course_code: assignment.course_code || `C${assignment.course_id}`,
-          course_name: assignment.course_name || 'Course',
+          course_name: assignment.course_name || "Course",
           department_id: assignment.department_id || departments[0]?.department_id,
           semester: assignment.semester || 1,
           sessions: {
-            theory: { enabled: false, classes_per_week: 0, duration_minutes: 60, teacher_id: null, teacher_name: '' },
-            lab: { enabled: false, classes_per_week: 0, duration_minutes: 120, teacher_id: null, teacher_name: '' },
-            tutorial: { enabled: false, classes_per_week: 0, duration_minutes: 60, teacher_id: null, teacher_name: '' },
+            theory: {
+              enabled: false,
+              classes_per_week: 0,
+              duration_minutes: 60,
+              teacher_id: null,
+              teacher_name: "",
+            },
+            lab: {
+              enabled: false,
+              classes_per_week: 0,
+              duration_minutes: 120,
+              teacher_id: null,
+              teacher_name: "",
+            },
+            tutorial: {
+              enabled: false,
+              classes_per_week: 0,
+              duration_minutes: 60,
+              teacher_id: null,
+              teacher_name: "",
+            },
           },
         });
       }
 
       const course = courseMap.get(assignment.course_id);
-      const sessionType = assignment.session_type as 'theory' | 'lab' | 'tutorial';
-      
+      const sessionType = assignment.session_type as "theory" | "lab" | "tutorial";
+
       course.sessions[sessionType] = {
         enabled: true,
         classes_per_week: assignment.classes_per_week || 1,
-        duration_minutes: sessionType === 'lab' ? 120 : (timeConfig?.classDuration || 60),
+        duration_minutes: sessionType === "lab" ? 120 : timeConfig?.classDuration || 60,
         teacher_id: assignment.teacher_id || null,
-        teacher_name: assignment.teacher_name || '',
+        teacher_name: assignment.teacher_name || "",
       };
     });
 
     // Build time configuration
     const formattedTimeConfig = {
-      working_days: timeConfig?.workingDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      start_time: timeConfig?.startTime || '09:00',
-      end_time: timeConfig?.endTime || '17:00',
+      working_days: timeConfig?.workingDays || [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+      ],
+      start_time: timeConfig?.startTime || "09:00",
+      end_time: timeConfig?.endTime || "17:00",
       class_duration: timeConfig?.classDuration || 60,
       lunch_break: {
         enabled: timeConfig?.lunchBreak?.enabled ?? true,
-        start_time: timeConfig?.lunchBreak?.startTime || '12:00',
-        end_time: timeConfig?.lunchBreak?.endTime || '13:00',
+        start_time: timeConfig?.lunchBreak?.startTime || "12:00",
+        end_time: timeConfig?.lunchBreak?.endTime || "13:00",
       },
     };
 
@@ -622,7 +610,7 @@ class SmartTimetableService {
         same_course_different_days: { enabled: true, weight: 25 },
         teacher_preference_slots: { enabled: false, weight: 10 },
       },
-      optimization_goal: 'balanced',
+      optimization_goal: "balanced",
     };
 
     return {
