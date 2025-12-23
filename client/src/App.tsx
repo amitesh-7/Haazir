@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Switch,
-  Redirect,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch, Redirect } from "react-router-dom";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import { ToastProvider } from "./components/common/Toast";
 import { LenisProvider } from "./contexts/LenisContext";
@@ -91,23 +86,14 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
   <Route
     {...rest}
     render={(props) => {
-      console.log(
-        "🔐 PrivateRoute checking:",
-        props.location.pathname,
-        "Required roles:",
-        roles
-      );
+      console.log("🔐 PrivateRoute checking:", props.location.pathname, "Required roles:", roles);
       const token = getToken();
       const role = getRole();
       console.log("👤 Current role:", role, "Has token:", !!token);
 
       if (!token || !role) {
         console.log("❌ No token/role - redirecting to login");
-        return (
-          <Redirect
-            to={{ pathname: "/login", state: { from: props.location } }}
-          />
-        );
+        return <Redirect to={{ pathname: "/login", state: { from: props.location } }} />;
       }
 
       if (!roles.includes(role)) {
@@ -118,11 +104,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({
           teacher: "/teacher",
           student: "/student",
         };
-        return (
-          <Redirect
-            to={dashboardPaths[role as keyof typeof dashboardPaths] || "/login"}
-          />
-        );
+        return <Redirect to={dashboardPaths[role as keyof typeof dashboardPaths] || "/login"} />;
       }
 
       console.log("✅ Access granted to", props.location.pathname);
@@ -172,7 +154,6 @@ const coordinatorRoutes = [
 const teacherRoutes = [
   { path: "/teacher", component: EnhancedTeacherDashboard, exact: true },
   { path: "/teacher/dashboard", component: TeacherDashboard, exact: true },
-  { path: "/my-timetable", component: EnhancedTeacherTimetable, exact: true },
   {
     path: "/teacher/timetable",
     component: EnhancedTeacherTimetable,
@@ -281,21 +262,19 @@ const App: React.FC = () => {
               <Route path="/login-old" component={Login} />
 
               {/* Coordinator Routes */}
-              {coordinatorRoutes.map(
-                ({ path, component: Component, exact }) => (
-                  <PrivateRoute
-                    key={path}
-                    path={path}
-                    exact={exact}
-                    roles={["coordinator"]}
-                    render={() => (
-                      <Layout>
-                        <Component />
-                      </Layout>
-                    )}
-                  />
-                )
-              )}
+              {coordinatorRoutes.map(({ path, component: Component, exact }) => (
+                <PrivateRoute
+                  key={path}
+                  path={path}
+                  exact={exact}
+                  roles={["coordinator"]}
+                  render={() => (
+                    <Layout>
+                      <Component />
+                    </Layout>
+                  )}
+                />
+              ))}
 
               {/* Teacher Routes */}
               {teacherRoutes.map(({ path, component: Component, exact }) => (
@@ -361,10 +340,7 @@ const App: React.FC = () => {
 
                   return (
                     <Redirect
-                      to={
-                        dashboardPaths[role as keyof typeof dashboardPaths] ||
-                        "/login"
-                      }
+                      to={dashboardPaths[role as keyof typeof dashboardPaths] || "/login"}
                     />
                   );
                 }}
