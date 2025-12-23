@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/((?!static|.*\\..*).*)", "destination": "/index.html" }]
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app",
+  "rewrites": [{ "source": "/((?!static|assets|.*\\..*).*)", "destination": "/index.html" }]
 }
