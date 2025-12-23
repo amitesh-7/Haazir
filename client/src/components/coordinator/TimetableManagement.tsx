@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  fetchTimetable,
   fetchTimetableBySection,
   createTimetableEntry,
   updateTimetableEntryApi,
   deleteTimetableEntry,
   fetchAllDepartments,
-  fetchSectionsByDepartment,
   fetchSectionsByDepartmentAndSemester,
   fetchAllCourses,
   fetchAllTeachers,
@@ -71,9 +69,7 @@ const TimetableManagement: React.FC = () => {
 
   // Batch mode
   const [batchMode, setBatchMode] = useState(false);
-  const [selectedCells, setSelectedCells] = useState<
-    Array<{ day: string; start: string }>
-  >([]);
+  const [selectedCells, setSelectedCells] = useState<Array<{ day: string; start: string }>>([]);
 
   // Auto-save functionality for time slot selections
   const [autoSavedSlots, setAutoSavedSlots] = useState<{
@@ -137,11 +133,10 @@ const TimetableManagement: React.FC = () => {
       createdAt: string;
     }>
   >([]);
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showLoadModal, setShowLoadModal] = useState(false);
-  const [showLoadDBModal, setShowLoadDBModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showLoadModal, setShowLoadModal] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   // Break settings (controlled by view control settings)
@@ -150,9 +145,9 @@ const TimetableManagement: React.FC = () => {
   const [breakEnd, setBreakEnd] = useState("13:00");
 
   // Dynamic data - loaded from API
-  const [departments, setDepartments] = useState<
-    Array<{ department_id: number; name: string }>
-  >([]);
+  const [departments, setDepartments] = useState<Array<{ department_id: number; name: string }>>(
+    []
+  );
   const [courses, setCourses] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [allTeachers, setAllTeachers] = useState<any[]>([]);
@@ -175,10 +170,10 @@ const TimetableManagement: React.FC = () => {
   const [currentSection, setCurrentSection] = useState("");
 
   // Helper function to get department-semester key for view settings
-  const getDeptSemKey = () => {
-    if (!currentDepartment || !currentSemester) return null;
-    return `${currentDepartment}-${currentSemester}`;
-  };
+  // const getDeptSemKey = () => {
+  //   if (!currentDepartment || !currentSemester) return null;
+  //   return `${currentDepartment}-${currentSemester}`;
+  // };
 
   // Save view control settings to database
   const saveViewControlSettings = async () => {
@@ -197,9 +192,7 @@ const TimetableManagement: React.FC = () => {
     // Get section ID if section is selected
     let sectionId = "all";
     if (currentSection) {
-      const selectedSection = sections.find(
-        (s) => s.section_name === currentSection
-      );
+      const selectedSection = sections.find((s) => s.section_name === currentSection);
       if (selectedSection) {
         sectionId = String(selectedSection.section_id);
       }
@@ -223,9 +216,7 @@ const TimetableManagement: React.FC = () => {
         settings
       );
       console.log(
-        `📾 Saved view controls to database for section ${
-          currentSection || "all"
-        }:`,
+        `📾 Saved view controls to database for section ${currentSection || "all"}:`,
         settings
       );
     } catch (error) {
@@ -247,9 +238,7 @@ const TimetableManagement: React.FC = () => {
     // Get section ID if section is selected
     let sectionId = "all";
     if (currentSection) {
-      const selectedSection = sections.find(
-        (s) => s.section_name === currentSection
-      );
+      const selectedSection = sections.find((s) => s.section_name === currentSection);
       if (selectedSection) {
         sectionId = String(selectedSection.section_id);
       }
@@ -324,6 +313,10 @@ const TimetableManagement: React.FC = () => {
           fetchAllCourses(),
           fetchAllTeachers(),
         ]);
+        // Memoized values commented out to avoid unused variable warnings
+        // const memoizedDepartments = departmentsData;
+        // const memoizedCourses = coursesData;
+        // const memoizedTeachers = teachersData;
 
         setDepartments(departmentsData || []);
         setCourses(coursesData || []);
@@ -344,17 +337,11 @@ const TimetableManagement: React.FC = () => {
       } catch (error: any) {
         console.error("Error loading initial data:", error);
         if (error.response?.status === 401) {
-          setError(
-            "Authentication required. Please log in to access the system."
-          );
+          setError("Authentication required. Please log in to access the system.");
         } else if (error.response?.status === 403) {
-          setError(
-            "Access denied. You don't have permission to view this data."
-          );
+          setError("Access denied. You don't have permission to view this data.");
         } else {
-          setError(
-            "Failed to load data. Please check your connection and try again."
-          );
+          setError("Failed to load data. Please check your connection and try again.");
         }
         setInitialLoadComplete(true);
       }
@@ -395,16 +382,9 @@ const TimetableManagement: React.FC = () => {
   // Load sections when department and semester change
   useEffect(() => {
     const loadSections = async () => {
-      if (
-        currentDepartment &&
-        currentSemester &&
-        departments.length > 0 &&
-        initialLoadComplete
-      ) {
+      if (currentDepartment && currentSemester && departments.length > 0 && initialLoadComplete) {
         try {
-          const selectedDept = departments.find(
-            (d) => d.name === currentDepartment
-          );
+          const selectedDept = departments.find((d) => d.name === currentDepartment);
 
           if (selectedDept) {
             const sectionsData = await fetchSectionsByDepartmentAndSemester(
@@ -426,21 +406,15 @@ const TimetableManagement: React.FC = () => {
         } catch (error: any) {
           console.error("Error loading sections:", error);
           if (error.response?.status === 401) {
-            setError(
-              "Authentication required. Please log in to access sections."
-            );
+            setError("Authentication required. Please log in to access sections.");
           } else if (error.response?.status === 403) {
-            setError(
-              "Access denied. You don't have permission to view sections."
-            );
+            setError("Access denied. You don't have permission to view sections.");
           } else if (error.response?.status === 404) {
             // 404 is expected when no sections exist for a department/semester
             setSections([]);
             setCurrentSection("");
           } else {
-            setError(
-              "Failed to load sections for selected department and semester."
-            );
+            setError("Failed to load sections for selected department and semester.");
           }
           setSections([]);
           setCurrentSection("");
@@ -462,21 +436,15 @@ const TimetableManagement: React.FC = () => {
     const loadBatches = async () => {
       if (currentSection && sections.length > 0) {
         try {
-          const selectedSection = sections.find(
-            (s) => s.section_name === currentSection
-          );
+          const selectedSection = sections.find((s) => s.section_name === currentSection);
 
           if (selectedSection) {
-            let batchesData = await fetchBatchesBySection(
-              selectedSection.section_id
-            );
+            const batchesData = await fetchBatchesBySection(selectedSection.section_id);
 
             // If no batches exist, create default batches
             if (!batchesData || batchesData.length === 0) {
               try {
-                console.log(
-                  `Creating default batches for section ${selectedSection.section_name}`
-                );
+                console.log(`Creating default batches for section ${selectedSection.section_name}`);
 
                 // Create default batches: P1, P2 for practicals/labs and T1, T2 for tutorials
                 const defaultBatches = [
@@ -497,10 +465,7 @@ const TimetableManagement: React.FC = () => {
                     });
                     createdBatches.push(newBatch);
                   } catch (createError: any) {
-                    console.warn(
-                      `Failed to create batch ${batch.batch_name}:`,
-                      createError
-                    );
+                    console.warn(`Failed to create batch ${batch.batch_name}:`, createError);
                   }
                 }
 
@@ -515,13 +480,9 @@ const TimetableManagement: React.FC = () => {
             }
 
             // Automatically load timetable for the selected section
-            console.log(
-              `Auto-loading timetable for section: ${selectedSection.section_name}`
-            );
+            console.log(`Auto-loading timetable for section: ${selectedSection.section_name}`);
             try {
-              const timetableData = await fetchTimetableBySection(
-                selectedSection.section_id
-              );
+              const timetableData = await fetchTimetableBySection(selectedSection.section_id);
               console.log("📥 RAW TIMETABLE DATA FROM BACKEND:", timetableData);
               console.log(
                 `📊 Loaded ${timetableData?.length || 0} classes for section ${
@@ -534,9 +495,9 @@ const TimetableManagement: React.FC = () => {
                 console.log("📋 TIMETABLE ENTRIES BREAKDOWN:");
                 timetableData.forEach((entry: any, idx: number) => {
                   console.log(
-                    `  [${idx + 1}] ${
-                      entry.teacherName || "Unknown Teacher"
-                    } - ${entry.day} ${entry.start}-${entry.end}`
+                    `  [${idx + 1}] ${entry.teacherName || "Unknown Teacher"} - ${entry.day} ${
+                      entry.start
+                    }-${entry.end}`
                   );
                 });
               }
@@ -586,9 +547,7 @@ const TimetableManagement: React.FC = () => {
         localStorage.setItem("autoSavedTimeSlots", JSON.stringify(savedSlots));
         setLastAutoSave(new Date());
 
-        console.log(
-          `🔄 Auto-saved ${selectedCells.length} time slots for section: ${sectionKey}`
-        );
+        console.log(`🔄 Auto-saved ${selectedCells.length} time slots for section: ${sectionKey}`);
       }
     }
   }, [selectedCells, currentSection, currentDepartment, currentSemester]);
@@ -607,9 +566,7 @@ const TimetableManagement: React.FC = () => {
         );
       } else {
         setSelectedCells([]);
-        console.log(
-          `🔄 No auto-saved time slots found for section: ${sectionKey}`
-        );
+        console.log(`🔄 No auto-saved time slots found for section: ${sectionKey}`);
       }
     } else {
       // Clear selections when no section is selected
@@ -618,24 +575,8 @@ const TimetableManagement: React.FC = () => {
     }
   }, [currentSection, currentDepartment, currentSemester, autoSavedSlots]);
 
-  const dayOptions = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
-  const dayColumns = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
+  const dayOptions = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const dayColumns = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   // Helper function to add minutes to time
   const addMinutesToTime = (time: string, minutes: number): string => {
@@ -643,9 +584,7 @@ const TimetableManagement: React.FC = () => {
     const totalMinutes = hours * 60 + mins + minutes;
     const newHours = Math.floor(totalMinutes / 60) % 24;
     const newMins = totalMinutes % 60;
-    return `${newHours.toString().padStart(2, "0")}:${newMins
-      .toString()
-      .padStart(2, "0")}`;
+    return `${newHours.toString().padStart(2, "0")}:${newMins.toString().padStart(2, "0")}`;
   };
 
   // Helper function to get class type styling
@@ -706,9 +645,7 @@ const TimetableManagement: React.FC = () => {
 
     const filtered = timetable.filter((entry) => {
       if (filterDept) {
-        const course = courses.find(
-          (c) => String(c.course_id) === String(entry.courseId)
-        );
+        const course = courses.find((c) => String(c.course_id) === String(entry.courseId));
         if (!course) {
           console.log("  ❌ Entry filtered out (course not found):", entry);
           return false;
@@ -742,9 +679,9 @@ const TimetableManagement: React.FC = () => {
       console.log("  📅 Tuesday classes:", tuesdayClasses.length);
       tuesdayClasses.forEach((cls: any, idx: number) => {
         console.log(
-          `    [${idx + 1}] ${cls.teacherName || "Unknown"} - ${cls.start}-${
-            cls.end
-          } (${cls.courseName || cls.courseId})`
+          `    [${idx + 1}] ${cls.teacherName || "Unknown"} - ${cls.start}-${cls.end} (${
+            cls.courseName || cls.courseId
+          })`
         );
       });
     }
@@ -755,23 +692,13 @@ const TimetableManagement: React.FC = () => {
   const gridSlots = useMemo(() => {
     const start = new Date(`1970-01-01T${gridStart}:00`);
     const end = new Date(`1970-01-01T${gridEnd}:00`);
-    if (start >= end || slotMinutes <= 0)
-      return { firstHalf: [], break: [], secondHalf: [] };
+    if (start >= end || slotMinutes <= 0) return { firstHalf: [], break: [], secondHalf: [] };
 
-    const breakStartTime = breakEnabled
-      ? new Date(`1970-01-01T${breakStart}:00`)
-      : null;
-    const breakEndTime = breakEnabled
-      ? new Date(`1970-01-01T${breakEnd}:00`)
-      : null;
+    const breakStartTime = breakEnabled ? new Date(`1970-01-01T${breakStart}:00`) : null;
+    const breakEndTime = breakEnabled ? new Date(`1970-01-01T${breakEnd}:00`) : null;
 
     // Validation: break end must be after break start
-    if (
-      breakEnabled &&
-      breakStartTime &&
-      breakEndTime &&
-      breakEndTime <= breakStartTime
-    ) {
+    if (breakEnabled && breakStartTime && breakEndTime && breakEndTime <= breakStartTime) {
       return { firstHalf: [], break: [], secondHalf: [] };
     }
 
@@ -795,15 +722,11 @@ const TimetableManagement: React.FC = () => {
       }
 
       // Calculate actual duration
-      const actualDuration = Math.round(
-        (slotEndTime.getTime() - current.getTime()) / 60000
-      );
+      const actualDuration = Math.round((slotEndTime.getTime() - current.getTime()) / 60000);
 
       // Skip slots with zero or negative duration
       if (actualDuration <= 0) {
-        current = new Date(
-          current.getTime() + Math.max(slotMinutes * 60000, 60000)
-        );
+        current = new Date(current.getTime() + Math.max(slotMinutes * 60000, 60000));
         continue;
       }
 
@@ -890,10 +813,7 @@ const TimetableManagement: React.FC = () => {
               (slotEnd.getTime() - breakEndTime.getTime()) / 60000
             );
             if (postBreakDuration > 0) {
-              const postBreakSlot = formatTimeSlot(
-                postBreakStart,
-                postBreakDuration
-              );
+              const postBreakSlot = formatTimeSlot(postBreakStart, postBreakDuration);
               secondHalf.push(postBreakSlot);
             }
           } else {
@@ -939,15 +859,11 @@ const TimetableManagement: React.FC = () => {
   // Refresh current section's timetable data from database
   const refreshTimetable = async () => {
     if (currentSection && sections.length > 0) {
-      const selectedSection = sections.find(
-        (s) => s.section_name === currentSection
-      );
+      const selectedSection = sections.find((s) => s.section_name === currentSection);
       if (selectedSection) {
         try {
           console.log(`🔄 Refreshing timetable for section: ${currentSection}`);
-          const timetableData = await fetchTimetableBySection(
-            selectedSection.section_id
-          );
+          const timetableData = await fetchTimetableBySection(selectedSection.section_id);
           setTimetable(timetableData || []);
           console.log(
             `✅ Refreshed ${timetableData?.length || 0} classes for section ${
@@ -974,17 +890,13 @@ const TimetableManagement: React.FC = () => {
       (t) => t.name.toLowerCase() === saveModalName.trim().toLowerCase()
     );
     if (existingName) {
-      setSaveError(
-        "A timetable with this name already exists. Please choose a different name."
-      );
+      setSaveError("A timetable with this name already exists. Please choose a different name.");
       return;
     }
 
     // Ensure we have section context for meaningful save
     if (!currentDepartment || !currentSemester || !currentSection) {
-      setSaveError(
-        "Please select department, semester, and section before saving timetable"
-      );
+      setSaveError("Please select department, semester, and section before saving timetable");
       return;
     }
 
@@ -1039,6 +951,9 @@ const TimetableManagement: React.FC = () => {
       if (savedData.gridSettings) {
         setGridStart(savedData.gridSettings.gridStart);
         setGridEnd(savedData.gridSettings.gridEnd);
+
+        // handleSave is commented out to avoid unused variable warning
+        // const handleSave = () => { /* save logic */ };
         setBreakEnabled(savedData.gridSettings.breakEnabled);
         setBreakStart(savedData.gridSettings.breakStart);
         setBreakEnd(savedData.gridSettings.breakEnd);
@@ -1058,26 +973,26 @@ const TimetableManagement: React.FC = () => {
 
   const handleLoad = loadSavedTimetable;
 
-  const handleDeleteSaved = (timetableId: string) => {
-    if (confirm("Are you sure you want to delete this saved timetable?")) {
-      const updated = savedTimetables.filter((t) => t.id !== timetableId);
-      setSavedTimetables(updated);
-      localStorage.setItem("savedTimetables", JSON.stringify(updated));
-    }
-  };
+  // const handleDeleteSaved = (timetableId: string) => {
+  //   if (window.confirm("Are you sure you want to delete this saved timetable?")) {
+  //     const updated = savedTimetables.filter((t) => t.id !== timetableId);
+  //     setSavedTimetables(updated);
+  //     localStorage.setItem("savedTimetables", JSON.stringify(updated));
+  //   }
+  // };
 
   // Delete saved timetable
-  const deleteSavedTimetable = (slotName: string) => {
-    const newSavedTimetables = { ...savedTimetables };
-    delete newSavedTimetables[slotName];
-    setSavedTimetables(newSavedTimetables);
-    localStorage.setItem("savedTimetables", JSON.stringify(newSavedTimetables));
-  };
+  // const deleteSavedTimetable = (slotName: string) => {
+  //   const newSavedTimetables = { ...savedTimetables };
+  //   delete newSavedTimetables[slotName];
+  //   setSavedTimetables(newSavedTimetables);
+  //   localStorage.setItem("savedTimetables", JSON.stringify(newSavedTimetables));
+  // };
+
+  // const handleLoad = loadSavedTimetable;
 
   // Event handlers
-  const handleChange = async (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewEntry({ ...newEntry, [name]: value });
 
@@ -1108,9 +1023,7 @@ const TimetableManagement: React.FC = () => {
     }
   };
 
-  const handleEditChange = async (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleEditChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (editEntry) {
       const { name, value } = e.target;
       setEditEntry({ ...editEntry, [name]: value });
@@ -1121,9 +1034,7 @@ const TimetableManagement: React.FC = () => {
           // Check cache first
           if (courseTeacherCache[value]) {
             setFilteredTeachers(courseTeacherCache[value]);
-            setEditEntry((prev) =>
-              prev ? { ...prev, courseId: value, teacherId: "" } : null
-            );
+            setEditEntry((prev) => (prev ? { ...prev, courseId: value, teacherId: "" } : null));
           } else {
             // Fetch from API and cache the result
             const courseTeachers = await fetchTeachersByCourse(value);
@@ -1133,9 +1044,7 @@ const TimetableManagement: React.FC = () => {
               [value]: teachersData,
             }));
             setFilteredTeachers(teachersData);
-            setEditEntry((prev) =>
-              prev ? { ...prev, courseId: value, teacherId: "" } : null
-            );
+            setEditEntry((prev) => (prev ? { ...prev, courseId: value, teacherId: "" } : null));
           }
         } catch (error: any) {
           console.error("Error fetching teachers for course:", error);
@@ -1145,106 +1054,96 @@ const TimetableManagement: React.FC = () => {
       } else if (name === "courseId" && !value) {
         // Reset to all teachers when no course is selected
         setFilteredTeachers(allTeachers);
-        setEditEntry((prev) =>
-          prev ? { ...prev, courseId: "", teacherId: "" } : null
-        );
+        setEditEntry((prev) => (prev ? { ...prev, courseId: "", teacherId: "" } : null));
       }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate required fields
-    if (
-      !newEntry.courseId ||
-      !newEntry.teacherId ||
-      !newEntry.dayOfWeek ||
-      !newEntry.startTime ||
-      !newEntry.endTime ||
-      !newEntry.classroom
-    ) {
-      setError("Please fill in all required fields");
-      return;
-    }
-
-    // Validate time range
-    if (newEntry.startTime >= newEntry.endTime) {
-      setError("End time must be after start time");
-      return;
-    }
-
-    // Note: Batch validation removed as batch functionality is not yet implemented in database
-    // Will be added when target_audience and batch_id columns are added to timetable table
-
-    try {
-      setError(""); // Clear any previous errors
-      // Get section ID from currentSection
-      const selectedSection = sections.find(
-        (s) => s.section_name === currentSection
-      );
-      const sectionId = selectedSection
-        ? String(selectedSection.section_id)
-        : "";
-
-      if (!sectionId) {
-        setError("Please select a valid section before adding classes");
-        return;
-      }
-
-      console.log(
-        "Creating timetable entry for section:",
-        currentSection,
-        "with ID:",
-        sectionId
-      );
-      await createTimetableEntry({ ...newEntry, sectionId });
-
-      // Reset form
-      setNewEntry({
-        courseId: "",
-        teacherId: "",
-        dayOfWeek: "",
-        startTime: "",
-        endTime: "",
-        classroom: "",
-        sectionId: "",
-        classType: "",
-        targetAudience: "",
-        batchId: "",
-      });
-
-      console.log("Class created successfully, reloading timetable...");
-      // Reload timetable to show the new entry
-      if (selectedSection) {
-        try {
-          const updatedTimetable = await fetchTimetableBySection(
-            selectedSection.section_id
-          );
-          setTimetable(updatedTimetable || []);
-          console.log(
-            `Reloaded ${updatedTimetable?.length || 0} classes after creation`
-          );
-        } catch (reloadError: any) {
-          console.error(
-            "Error reloading timetable after creation:",
-            reloadError
-          );
-          // Fall back to refresh function
-          await refreshTimetable();
-        }
-      } else {
-        await refreshTimetable();
-      }
-    } catch (err: any) {
-      console.error("Error creating timetable entry:", err);
-      const errorMessage =
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to create timetable entry";
-      setError(errorMessage);
-    }
-  };
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   // Validate required fields
+  //   if (
+  //     !newEntry.courseId ||
+  //     !newEntry.teacherId ||
+  //     !newEntry.dayOfWeek ||
+  //     !newEntry.startTime ||
+  //     !newEntry.endTime ||
+  //     !newEntry.classroom
+  //   ) {
+  //     setError("Please fill in all required fields");
+  //     return;
+  //   }
+  //   // Validate time range
+  //   if (newEntry.startTime >= newEntry.endTime) {
+  //     setError("End time must be after start time");
+  //     return;
+  //   }
+  //   // Note: Batch validation removed as batch functionality is not yet implemented in database
+  //   // Will be added when target_audience and batch_id columns are added to timetable table
+  //   try {
+  //     setError(""); // Clear any previous errors
+  //     // Get section ID from currentSection
+  //     const selectedSection = sections.find(
+  //       (s) => s.section_name === currentSection
+  //     );
+  //     const sectionId = selectedSection
+  //       ? String(selectedSection.section_id)
+  //       : "";
+  //     if (!sectionId) {
+  //       setError("Please select a valid section before adding classes");
+  //       return;
+  //     }
+  //     console.log(
+  //       "Creating timetable entry for section:",
+  //       currentSection,
+  //       "with ID:",
+  //       sectionId
+  //     );
+  //     await createTimetableEntry({ ...newEntry, sectionId });
+  //     // Reset form
+  //     setNewEntry({
+  //       courseId: "",
+  //       teacherId: "",
+  //       dayOfWeek: "",
+  //       startTime: "",
+  //       endTime: "",
+  //       classroom: "",
+  //       sectionId: "",
+  //       classType: "",
+  //       targetAudience: "",
+  //       batchId: "",
+  //     });
+  //     console.log("Class created successfully, reloading timetable...");
+  //     // Reload timetable to show the new entry
+  //     if (selectedSection) {
+  //       try {
+  //         const updatedTimetable = await fetchTimetableBySection(
+  //           selectedSection.section_id
+  //         );
+  //         setTimetable(updatedTimetable || []);
+  //         console.log(
+  //           `Reloaded ${updatedTimetable?.length || 0} classes after creation`
+  //         );
+  //       } catch (reloadError: any) {
+  //         console.error(
+  //           "Error reloading timetable after creation:",
+  //           reloadError
+  //         );
+  //         // Fall back to refresh function
+  //         await refreshTimetable();
+  //       }
+  //     } else {
+  //       await refreshTimetable();
+  //     }
+  //   } catch (err: any) {
+  //     console.error("Error creating timetable entry:", err);
+  //     const errorMessage =
+  //       err?.response?.data?.error ||
+  //       err?.message ||
+  //       "Failed to create timetable entry";
+  //     setError(errorMessage);
+  //   }
+  // };
 
   const openEdit = async (entry: TimetableEntry) => {
     setEditEntry({ ...entry });
@@ -1327,18 +1226,12 @@ const TimetableManagement: React.FC = () => {
       console.log("Entry updated successfully, reloading timetable...");
       // Reload timetable to show the updated entry
       if (currentSection && sections.length > 0) {
-        const selectedSection = sections.find(
-          (s) => s.section_name === currentSection
-        );
+        const selectedSection = sections.find((s) => s.section_name === currentSection);
         if (selectedSection) {
           try {
-            const updatedTimetable = await fetchTimetableBySection(
-              selectedSection.section_id
-            );
+            const updatedTimetable = await fetchTimetableBySection(selectedSection.section_id);
             setTimetable(updatedTimetable || []);
-            console.log(
-              `Reloaded ${updatedTimetable?.length || 0} classes after edit`
-            );
+            console.log(`Reloaded ${updatedTimetable?.length || 0} classes after edit`);
           } catch (reloadError: any) {
             console.error("Error reloading timetable after edit:", reloadError);
             // Fall back to general reload
@@ -1355,15 +1248,13 @@ const TimetableManagement: React.FC = () => {
       const msg =
         e?.response?.status === 409
           ? e.response.data?.message || "Time conflict for teacher"
-          : e?.response?.data?.error ||
-            e?.message ||
-            "Failed to update timetable entry";
+          : e?.response?.data?.error || e?.message || "Failed to update timetable entry";
       setEditError(msg);
     }
   };
 
   const handleDelete = async (id: string | number) => {
-    if (!confirm("Are you sure you want to delete this entry?")) return;
+    if (!window.confirm("Are you sure you want to delete this entry?")) return;
     try {
       setError(""); // Clear any previous errors
       console.log("Deleting timetable entry:", id);
@@ -1372,23 +1263,14 @@ const TimetableManagement: React.FC = () => {
       console.log("Entry deleted successfully, reloading timetable...");
       // Reload timetable to remove the deleted entry
       if (currentSection && sections.length > 0) {
-        const selectedSection = sections.find(
-          (s) => s.section_name === currentSection
-        );
+        const selectedSection = sections.find((s) => s.section_name === currentSection);
         if (selectedSection) {
           try {
-            const updatedTimetable = await fetchTimetableBySection(
-              selectedSection.section_id
-            );
+            const updatedTimetable = await fetchTimetableBySection(selectedSection.section_id);
             setTimetable(updatedTimetable || []);
-            console.log(
-              `Reloaded ${updatedTimetable?.length || 0} classes after deletion`
-            );
+            console.log(`Reloaded ${updatedTimetable?.length || 0} classes after deletion`);
           } catch (reloadError: any) {
-            console.error(
-              "Error reloading timetable after deletion:",
-              reloadError
-            );
+            console.error("Error reloading timetable after deletion:", reloadError);
             // Fall back to general reload
             await refreshTimetable();
           }
@@ -1402,8 +1284,7 @@ const TimetableManagement: React.FC = () => {
       console.log(`Successfully deleted timetable entry with ID: ${id}`);
     } catch (err: any) {
       console.error("Error deleting timetable entry:", err);
-      const errorMessage =
-        err?.response?.data?.error || err?.message || "Failed to delete entry";
+      const errorMessage = err?.response?.data?.error || err?.message || "Failed to delete entry";
       setError(errorMessage);
     }
   };
@@ -1415,8 +1296,7 @@ const TimetableManagement: React.FC = () => {
   const toggleSelectCell = (day: string, start: string) => {
     setSelectedCells((prev) => {
       const exists = prev.some((c) => c.day === day && c.start === start);
-      if (exists)
-        return prev.filter((c) => !(c.day === day && c.start === start));
+      if (exists) return prev.filter((c) => !(c.day === day && c.start === start));
       return [...prev, { day, start }];
     });
   };
@@ -1431,9 +1311,7 @@ const TimetableManagement: React.FC = () => {
       delete updatedSlots[sectionKey];
       setAutoSavedSlots(updatedSlots);
       localStorage.setItem("autoSavedTimeSlots", JSON.stringify(updatedSlots));
-      console.log(
-        `🧹 Cleared auto-saved time slots for section: ${sectionKey}`
-      );
+      console.log(`🧹 Cleared auto-saved time slots for section: ${sectionKey}`);
     }
   };
 
@@ -1467,9 +1345,7 @@ const TimetableManagement: React.FC = () => {
     try {
       setBatchError(""); // Clear any previous errors
 
-      const selectedSection = sections.find(
-        (s) => s.section_name === currentSection
-      );
+      const selectedSection = sections.find((s) => s.section_name === currentSection);
 
       if (!selectedSection) {
         setBatchError("Invalid section selected");
@@ -1493,8 +1369,7 @@ const TimetableManagement: React.FC = () => {
           await createTimetableEntry(entry);
           results.push("Success");
         } catch (err: any) {
-          const errorMsg =
-            err?.response?.data?.error || err?.message || "Unknown error";
+          const errorMsg = err?.response?.data?.error || err?.message || "Unknown error";
           results.push(`Failed: ${errorMsg}`);
         }
       }
@@ -1505,8 +1380,7 @@ const TimetableManagement: React.FC = () => {
       await refreshTimetable();
     } catch (err: any) {
       console.error("Batch operation error:", err);
-      const errorMessage =
-        err?.response?.data?.error || err?.message || "Batch operation failed";
+      const errorMessage = err?.response?.data?.error || err?.message || "Batch operation failed";
       setBatchError(errorMessage);
     }
   };
@@ -1530,9 +1404,7 @@ const TimetableManagement: React.FC = () => {
   const openAddClass = (day: string, start: string) => {
     // Check if department, semester, and section are selected
     if (!currentDepartment || !currentSemester || !currentSection) {
-      setError(
-        "Please select department, semester, and section before adding classes"
-      );
+      setError("Please select department, semester, and section before adding classes");
       return;
     }
 
@@ -1550,74 +1422,72 @@ const TimetableManagement: React.FC = () => {
     setAddOpen(true);
   };
 
-  const openAddLecture = (day: string, start: string) => {
-    // Check if department, semester, and section are selected
-    if (!currentDepartment || !currentSemester || !currentSection) {
-      setError(
-        "Please select department, semester, and section before adding classes"
-      );
-      return;
-    }
+  // const openAddLecture = (day: string, start: string) => {
+  //   // Check if department, semester, and section are selected
+  //   if (!currentDepartment || !currentSemester || !currentSection) {
+  //     setError(
+  //       "Please select department, semester, and section before adding classes"
+  //     );
+  //     return;
+  //   }
+  //   setNewEntry({
+  //     courseId: "",
+  //     teacherId: "",
+  //     dayOfWeek: day,
+  //     startTime: start,
+  //     endTime: addMinutesToTime(start, slotMinutes),
+  //     classroom: "",
+  //     classType: "Lecture",
+  //     targetAudience: "Section", // Lecture is for whole section
+  //     batchId: "",
+  //   });
+  //   setAddOpen(true);
+  // };
 
-    setNewEntry({
-      courseId: "",
-      teacherId: "",
-      dayOfWeek: day,
-      startTime: start,
-      endTime: addMinutesToTime(start, slotMinutes),
-      classroom: "",
-      classType: "Lecture",
-      targetAudience: "Section", // Lecture is for whole section
-      batchId: "",
-    });
-    setAddOpen(true);
-  };
+  // const openAddTutorial = (day: string, start: string) => {
+  //   // Check if department, semester, and section are selected
+  //   if (!currentDepartment || !currentSemester || !currentSection) {
+  //     setError(
+  //       "Please select department, semester, and section before adding classes"
+  //     );
+  //     return;
+  //   }
+  //   setNewEntry({
+  //     courseId: "",
+  //     teacherId: "",
+  //     dayOfWeek: day,
+  //     startTime: start,
+  //     endTime: addMinutesToTime(start, slotMinutes),
+  //     classroom: "",
+  //     classType: "Tutorial",
+  //     targetAudience: "Batch", // Tutorial is for specific batch
+  //     batchId: "",
+  //   });
+  //   setAddOpen(true);
+  // };
 
-  const openAddTutorial = (day: string, start: string) => {
-    // Check if department, semester, and section are selected
-    if (!currentDepartment || !currentSemester || !currentSection) {
-      setError(
-        "Please select department, semester, and section before adding classes"
-      );
-      return;
-    }
+  // const openAddLab = (day: string, start: string) => {
+  //   // Check if department, semester, and section are selected
+  //   if (!currentDepartment || !currentSemester || !currentSection) {
+  //     setError(
+  //       "Please select department, semester, and section before adding classes"
+  //     );
+  //     return;
+  //   }
+  //   setNewEntry({
+  //     courseId: "",
+  //     teacherId: "",
+  //     dayOfWeek: day,
+  //     startTime: start,
+  //     endTime: addMinutesToTime(start, slotMinutes),
+  //     classroom: "",
+  //     classType: "Lab",
+  //     targetAudience: "Batch", // Lab is for specific batch
+  //     batchId: "",
+  //   });
+  //   setAddOpen(true);
+  // };
 
-    setNewEntry({
-      courseId: "",
-      teacherId: "",
-      dayOfWeek: day,
-      startTime: start,
-      endTime: addMinutesToTime(start, slotMinutes),
-      classroom: "",
-      classType: "Tutorial",
-      targetAudience: "Batch", // Tutorial is for specific batch
-      batchId: "",
-    });
-    setAddOpen(true);
-  };
-
-  const openAddLab = (day: string, start: string) => {
-    // Check if department, semester, and section are selected
-    if (!currentDepartment || !currentSemester || !currentSection) {
-      setError(
-        "Please select department, semester, and section before adding classes"
-      );
-      return;
-    }
-
-    setNewEntry({
-      courseId: "",
-      teacherId: "",
-      dayOfWeek: day,
-      startTime: start,
-      endTime: addMinutesToTime(start, slotMinutes),
-      classroom: "",
-      classType: "Lab",
-      targetAudience: "Batch", // Lab is for specific batch
-      batchId: "",
-    });
-    setAddOpen(true);
-  };
   const createFromModal = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -1646,12 +1516,8 @@ const TimetableManagement: React.FC = () => {
     try {
       setError(""); // Clear any previous errors
       // Get section ID from currentSection
-      const selectedSection = sections.find(
-        (s) => s.section_name === currentSection
-      );
-      const sectionId = selectedSection
-        ? String(selectedSection.section_id)
-        : "";
+      const selectedSection = sections.find((s) => s.section_name === currentSection);
+      const sectionId = selectedSection ? String(selectedSection.section_id) : "";
 
       if (!sectionId) {
         setError("Please select a valid section before adding classes");
@@ -1680,26 +1546,15 @@ const TimetableManagement: React.FC = () => {
         batchId: "",
       });
 
-      console.log(
-        "Class created successfully from modal, reloading timetable..."
-      );
+      console.log("Class created successfully from modal, reloading timetable...");
       // Reload timetable to show the new entry
       if (selectedSection) {
         try {
-          const updatedTimetable = await fetchTimetableBySection(
-            selectedSection.section_id
-          );
+          const updatedTimetable = await fetchTimetableBySection(selectedSection.section_id);
           setTimetable(updatedTimetable || []);
-          console.log(
-            `Reloaded ${
-              updatedTimetable?.length || 0
-            } classes after modal creation`
-          );
+          console.log(`Reloaded ${updatedTimetable?.length || 0} classes after modal creation`);
         } catch (reloadError: any) {
-          console.error(
-            "Error reloading timetable after modal creation:",
-            reloadError
-          );
+          console.error("Error reloading timetable after modal creation:", reloadError);
           // Fall back to general reload
           await refreshTimetable();
         }
@@ -1767,15 +1622,10 @@ const TimetableManagement: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center gap-4">
           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-          <h2 className="text-xl font-semibold text-gray-800">
-            Loading Timetable
-          </h2>
-          <p className="text-gray-600">
-            Please wait while we fetch your schedule...
-          </p>
+          <h2 className="text-xl font-semibold text-gray-800">Loading Timetable</h2>
+          <p className="text-gray-600">Please wait while we fetch your schedule...</p>
           <p className="text-gray-500 text-sm">
-            If this takes too long, click "Load from DB" again or check server
-            status.
+            If this takes too long, click "Load from DB" again or check server status.
           </p>
         </div>
       </div>
@@ -1791,9 +1641,7 @@ const TimetableManagement: React.FC = () => {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">⚠️</span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Error Loading Timetable
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Error Loading Timetable</h2>
             <p className="text-red-600 mb-6">{error}</p>
             <button
               onClick={() => window.location.reload()}
@@ -1869,16 +1717,12 @@ const TimetableManagement: React.FC = () => {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
               📅 Timetable Management
             </h1>
-            <p className="text-gray-600 text-lg">
-              Create and manage class schedules with ease
-            </p>
+            <p className="text-gray-600 text-lg">Create and manage class schedules with ease</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="bg-white px-4 py-2 rounded-xl shadow-sm border">
               <span className="text-sm text-gray-500">Total Classes</span>
-              <div className="text-2xl font-bold text-blue-600">
-                {timetable.length}
-              </div>
+              <div className="text-2xl font-bold text-blue-600">{timetable.length}</div>
             </div>
 
             {/* Action Buttons - Standardized Sizing */}
@@ -1922,16 +1766,12 @@ const TimetableManagement: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Department Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Department
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
               {departments.length === 0 ? (
                 <div className="w-full px-4 py-3 border border-amber-300 rounded-lg bg-amber-50 text-amber-800">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⚠️</span>
-                    <span>
-                      No departments found. Please create departments first.
-                    </span>
+                    <span>No departments found. Please create departments first.</span>
                   </div>
                   <div className="mt-2">
                     <span className="text-sm text-amber-600">
@@ -1957,9 +1797,7 @@ const TimetableManagement: React.FC = () => {
 
             {/* Semester Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Semester
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Semester</label>
               {!currentDepartment ? (
                 <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
                   Please select a department first
@@ -1982,9 +1820,7 @@ const TimetableManagement: React.FC = () => {
 
             {/* Section Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Section
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Section</label>
               {!currentDepartment || !currentSemester ? (
                 <div className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
                   Please select department and semester first
@@ -1993,14 +1829,12 @@ const TimetableManagement: React.FC = () => {
                 <div className="w-full px-4 py-3 border border-amber-300 rounded-lg bg-amber-50 text-amber-800">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">⚠️</span>
-                    <span>
-                      No sections found for this department and semester.
-                    </span>
+                    <span>No sections found for this department and semester.</span>
                   </div>
                   <div className="mt-2">
                     <span className="text-sm text-amber-600">
-                      Go to Department Management to create sections for{" "}
-                      {currentDepartment} Semester {currentSemester}.
+                      Go to Department Management to create sections for {currentDepartment}{" "}
+                      Semester {currentSemester}.
                     </span>
                   </div>
                 </div>
@@ -2012,10 +1846,7 @@ const TimetableManagement: React.FC = () => {
                 >
                   <option value="">Select Section</option>
                   {sections.map((section) => (
-                    <option
-                      key={section.section_id}
-                      value={section.section_name}
-                    >
+                    <option key={section.section_id} value={section.section_name}>
                       {section.section_name}
                     </option>
                   ))}
@@ -2030,12 +1861,9 @@ const TimetableManagement: React.FC = () => {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div>
-                  <h3 className="font-semibold text-blue-800 mb-2">
-                    First Time Setup Required
-                  </h3>
+                  <h3 className="font-semibold text-blue-800 mb-2">First Time Setup Required</h3>
                   <p className="text-blue-700 mb-3">
-                    To create timetables, you'll need to set up departments and
-                    sections first.
+                    To create timetables, you'll need to set up departments and sections first.
                   </p>
                   <div className="space-y-2 text-sm text-blue-600">
                     <div className="flex items-center gap-2">
@@ -2043,8 +1871,7 @@ const TimetableManagement: React.FC = () => {
                         1
                       </span>
                       <span>
-                        Go to <strong>Department Management</strong> to create
-                        departments
+                        Go to <strong>Department Management</strong> to create departments
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -2057,9 +1884,7 @@ const TimetableManagement: React.FC = () => {
                       <span className="w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">
                         3
                       </span>
-                      <span>
-                        Return here to create timetables for specific sections
-                      </span>
+                      <span>Return here to create timetables for specific sections</span>
                     </div>
                   </div>
                 </div>
@@ -2073,8 +1898,8 @@ const TimetableManagement: React.FC = () => {
               <div className="flex items-center gap-2 text-blue-800">
                 <span className="text-lg">📚</span>
                 <span className="font-medium">
-                  Managing timetable for: {currentDepartment} - Semester{" "}
-                  {currentSemester} - {currentSection}
+                  Managing timetable for: {currentDepartment} - Semester {currentSemester} -{" "}
+                  {currentSection}
                 </span>
                 {lastAutoSave && (
                   <span className="ml-auto text-sm text-green-600 flex items-center gap-1">
@@ -2096,9 +1921,7 @@ const TimetableManagement: React.FC = () => {
                     </span>
                   </div>
                   {currentSection && (
-                    <div className="text-xs text-gray-500">
-                      Section: {currentSection}
-                    </div>
+                    <div className="text-xs text-gray-500">Section: {currentSection}</div>
                   )}
                 </div>
               )}
@@ -2141,9 +1964,7 @@ const TimetableManagement: React.FC = () => {
           <div className="flex flex-wrap items-center gap-6">
             {/* View Toggle */}
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">
-                View Mode:
-              </span>
+              <span className="text-sm font-medium text-gray-700">View Mode:</span>
               <div className="bg-gray-100 rounded-xl p-1 flex">
                 <button
                   onClick={() => setGridView(true)}
@@ -2172,9 +1993,7 @@ const TimetableManagement: React.FC = () => {
             {gridView && (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    Time Range:
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">Time Range:</span>
                   <div className="flex items-center gap-2">
                     <input
                       type="time"
@@ -2193,16 +2012,12 @@ const TimetableManagement: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    Slot Duration:
-                  </span>
+                  <span className="text-sm font-medium text-gray-700">Slot Duration:</span>
                   <div className="flex items-center gap-1">
                     <input
                       type="number"
                       value={slotMinutes}
-                      onChange={(e) =>
-                        setSlotMinutes(parseInt(e.target.value, 10) || 60)
-                      }
+                      onChange={(e) => setSlotMinutes(parseInt(e.target.value, 10) || 60)}
                       min="1"
                       max="480"
                       placeholder="60"
@@ -2260,10 +2075,7 @@ const TimetableManagement: React.FC = () => {
                     onChange={(e) => setBreakEnabled(e.target.checked)}
                     className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500"
                   />
-                  <label
-                    htmlFor="enableBreak"
-                    className="text-sm font-medium text-orange-800"
-                  >
+                  <label htmlFor="enableBreak" className="text-sm font-medium text-orange-800">
                     ☕ Enable Break Period
                   </label>
                 </div>
@@ -2281,16 +2093,12 @@ const TimetableManagement: React.FC = () => {
                           // Auto-adjust break end if it's now before or equal to start
                           if (breakEnd <= newBreakStart) {
                             // Add 30 minutes to the new start time
-                            const [hours, minutes] = newBreakStart
-                              .split(":")
-                              .map(Number);
+                            const [hours, minutes] = newBreakStart.split(":").map(Number);
                             const newMinutes = minutes + 30;
-                            const newHours =
-                              hours + Math.floor(newMinutes / 60);
-                            const adjustedEnd = `${String(newHours).padStart(
-                              2,
-                              "0"
-                            )}:${String(newMinutes % 60).padStart(2, "0")}`;
+                            const newHours = hours + Math.floor(newMinutes / 60);
+                            const adjustedEnd = `${String(newHours).padStart(2, "0")}:${String(
+                              newMinutes % 60
+                            ).padStart(2, "0")}`;
                             setBreakEnd(adjustedEnd);
                           }
                         }}
@@ -2310,16 +2118,13 @@ const TimetableManagement: React.FC = () => {
                           // Auto-adjust break start if end is now before or equal to start
                           if (newBreakEnd <= breakStart) {
                             // Subtract 30 minutes from the new end time
-                            const [hours, minutes] = newBreakEnd
-                              .split(":")
-                              .map(Number);
+                            const [hours, minutes] = newBreakEnd.split(":").map(Number);
                             const totalMinutes = hours * 60 + minutes - 30;
                             const newHours = Math.floor(totalMinutes / 60);
                             const newMinutes = totalMinutes % 60;
-                            const adjustedStart = `${String(newHours).padStart(
-                              2,
-                              "0"
-                            )}:${String(newMinutes).padStart(2, "0")}`;
+                            const adjustedStart = `${String(newHours).padStart(2, "0")}:${String(
+                              newMinutes
+                            ).padStart(2, "0")}`;
                             setBreakStart(adjustedStart);
                           }
                         }}
@@ -2340,9 +2145,7 @@ const TimetableManagement: React.FC = () => {
           {/* Filters */}
           <div className="mt-6 pt-6 border-t border-gray-100">
             <div className="flex flex-wrap items-center gap-4">
-              <span className="text-sm font-medium text-gray-700">
-                Filters:
-              </span>
+              <span className="text-sm font-medium text-gray-700">Filters:</span>
 
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Department:</span>
@@ -2370,9 +2173,7 @@ const TimetableManagement: React.FC = () => {
                   <option value="">All Courses</option>
                   {courses
                     .filter(
-                      (c: any) =>
-                        !filterDept ||
-                        String(c.department_id) === String(filterDept)
+                      (c: any) => !filterDept || String(c.department_id) === String(filterDept)
                     )
                     .map((c: any) => (
                       <option key={c.course_id} value={c.course_id}>
@@ -2410,12 +2211,9 @@ const TimetableManagement: React.FC = () => {
                       />
                     </svg>
                     <div className="text-sm">
-                      <span className="font-medium text-yellow-800">
-                        Filters Active:{" "}
-                      </span>
+                      <span className="font-medium text-yellow-800">Filters Active: </span>
                       <span className="text-yellow-700">
-                        Showing {filteredTimetable.length} of {timetable.length}{" "}
-                        classes
+                        Showing {filteredTimetable.length} of {timetable.length} classes
                       </span>
                     </div>
                   </div>
@@ -2437,18 +2235,13 @@ const TimetableManagement: React.FC = () => {
           </div>
 
           <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-gray-100 scroll-smooth">
-            <table
-              className="min-w-full table-auto"
-              style={{ minWidth: "max(100%, 1200px)" }}
-            >
+            <table className="min-w-full table-auto" style={{ minWidth: "max(100%, 1200px)" }}>
               <thead>
                 <tr className="bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50">
                   <th className="w-32 sm:w-36 md:w-40 p-4 text-left font-bold text-gray-800 border-b-2 border-blue-200 sticky left-0 bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 z-20 shadow-lg">
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-xs md:text-sm">
-                          📅
-                        </span>
+                        <span className="text-white font-bold text-xs md:text-sm">📅</span>
                       </div>
                       <span className="text-sm md:text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                         Day
@@ -2464,13 +2257,9 @@ const TimetableManagement: React.FC = () => {
                       >
                         <div className="flex items-center justify-center gap-2">
                           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">
-                              📚
-                            </span>
+                            <span className="text-white text-xs font-bold">📚</span>
                           </div>
-                          <span className="text-lg font-bold">
-                            Morning Sessions
-                          </span>
+                          <span className="text-lg font-bold">Morning Sessions</span>
                         </div>
                       </th>
                     </>
@@ -2480,9 +2269,7 @@ const TimetableManagement: React.FC = () => {
                     <th className="p-3 text-center font-bold text-orange-900 border-b-2 border-orange-300 bg-gradient-to-r from-orange-100 to-amber-200">
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            ☕
-                          </span>
+                          <span className="text-white text-xs font-bold">☕</span>
                         </div>
                         <span className="text-lg font-bold">Break Time</span>
                       </div>
@@ -2496,13 +2283,9 @@ const TimetableManagement: React.FC = () => {
                     >
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            📖
-                          </span>
+                          <span className="text-white text-xs font-bold">📖</span>
                         </div>
-                        <span className="text-lg font-bold">
-                          Afternoon Sessions
-                        </span>
+                        <span className="text-lg font-bold">Afternoon Sessions</span>
                       </div>
                     </th>
                   )}
@@ -2512,9 +2295,7 @@ const TimetableManagement: React.FC = () => {
                   <th className="w-32 sm:w-36 md:w-40 p-4 text-left font-bold text-gray-800 border-b-2 border-gray-300 sticky left-0 bg-gradient-to-r from-gray-50 to-gray-100 z-20 shadow-lg">
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className="w-6 h-6 md:w-8 md:h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-xs md:text-sm">
-                          ⏰
-                        </span>
+                        <span className="text-white font-bold text-xs md:text-sm">⏰</span>
                       </div>
                       <span className="text-sm md:text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                         Time
@@ -2579,24 +2360,18 @@ const TimetableManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {gridSlots.firstHalf.length === 0 &&
-                gridSlots.secondHalf.length === 0 ? (
+                {gridSlots.firstHalf.length === 0 && gridSlots.secondHalf.length === 0 ? (
                   <tr>
                     <td
                       className="p-8 text-center text-red-600 bg-red-50 border border-red-200 rounded-lg"
                       colSpan={
-                        [
-                          ...gridSlots.firstHalf,
-                          ...gridSlots.break,
-                          ...gridSlots.secondHalf,
-                        ].length + 1
+                        [...gridSlots.firstHalf, ...gridSlots.break, ...gridSlots.secondHalf]
+                          .length + 1
                       }
                     >
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-2xl">⚠️</span>
-                        <span className="font-medium">
-                          Invalid time range or slot size
-                        </span>
+                        <span className="font-medium">Invalid time range or slot size</span>
                         <span className="text-sm text-red-500">
                           Please adjust the time range and slot duration
                         </span>
@@ -2614,17 +2389,16 @@ const TimetableManagement: React.FC = () => {
                         } border-b border-gray-100`}
                       >
                         {/* Enhanced Day name column */}
-                        <td className="w-32 sm:w-36 md:w-40 p-3 md:p-4 font-medium whitespace-nowrap border-b border-gray-100 sticky left-0 z-10 shadow-[4px_0_6px_-1px_rgba(0,0,0,0.1)]" style={{ backgroundColor: dayIndex % 2 === 0 ? '#FAFAFA' : '#FFFFFF' }}>
+                        <td
+                          className="w-32 sm:w-36 md:w-40 p-3 md:p-4 font-medium whitespace-nowrap border-b border-gray-100 sticky left-0 z-10 shadow-[4px_0_6px_-1px_rgba(0,0,0,0.1)]"
+                          style={{ backgroundColor: dayIndex % 2 === 0 ? "#FAFAFA" : "#FFFFFF" }}
+                        >
                           <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 md:px-4 py-2 md:py-3 rounded-xl text-xs md:text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform group-hover:scale-105">
                             <div className="flex items-center gap-2 md:gap-3">
                               <div className="w-6 h-6 md:w-8 md:h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                                <span className="text-sm md:text-lg font-bold">
-                                  📅
-                                </span>
+                                <span className="text-sm md:text-lg font-bold">📅</span>
                               </div>
-                              <span className="text-xs md:text-base font-bold">
-                                {day}
-                              </span>
+                              <span className="text-xs md:text-base font-bold">{day}</span>
                             </div>
                           </div>
                         </td>
@@ -2632,8 +2406,7 @@ const TimetableManagement: React.FC = () => {
                         {/* Enhanced First Half Time Slots */}
                         {gridSlots.firstHalf.map((slot) => {
                           const slotStartTime = slot.split(" - ")[0];
-                          const cellEntries =
-                            byDayAndSlot[day]?.[slotStartTime] || [];
+                          const cellEntries = byDayAndSlot[day]?.[slotStartTime] || [];
                           const main = cellEntries[0];
                           const isSelected =
                             batchMode &&
@@ -2670,9 +2443,7 @@ const TimetableManagement: React.FC = () => {
                                     className={`font-bold ${classStyle.text} text-sm mb-1 tracking-wide`}
                                   >
                                     {courses.find(
-                                      (c) =>
-                                        String(c.course_id) ===
-                                        String(main.courseId)
+                                      (c) => String(c.course_id) === String(main.courseId)
                                     )?.course_code || main.courseId}
                                   </div>
 
@@ -2682,9 +2453,7 @@ const TimetableManagement: React.FC = () => {
                                   >
                                     {
                                       courses.find(
-                                        (c) =>
-                                          String(c.course_id) ===
-                                          String(main.courseId)
+                                        (c) => String(c.course_id) === String(main.courseId)
                                       )?.course_name
                                     }
                                   </div>
@@ -2696,9 +2465,7 @@ const TimetableManagement: React.FC = () => {
                                     <span>👨‍🏫</span>
                                     {
                                       teachers.find(
-                                        (t) =>
-                                          String(t.teacher_id) ===
-                                          String(main.teacherId)
+                                        (t) => String(t.teacher_id) === String(main.teacherId)
                                       )?.name
                                     }
                                   </div>
@@ -2737,11 +2504,7 @@ const TimetableManagement: React.FC = () => {
                                     }`}
                                   >
                                     <div className="text-2xl mb-1">
-                                      {batchMode
-                                        ? isSelected
-                                          ? "✓"
-                                          : "+"
-                                        : "+"}
+                                      {batchMode ? (isSelected ? "✓" : "+") : "+"}
                                     </div>
                                     <div className="text-xs font-medium">
                                       {batchMode
@@ -2759,8 +2522,7 @@ const TimetableManagement: React.FC = () => {
 
                         {/* Dynamic Break Period Slots */}
                         {gridSlots.break.map((slot) => {
-                          const cellEntries =
-                            byDayAndSlot[day]?.[slot.split(" - ")[0]] || [];
+                          const cellEntries = byDayAndSlot[day]?.[slot.split(" - ")[0]] || [];
                           const main = cellEntries[0];
                           const isSelected =
                             batchMode &&
@@ -2771,9 +2533,7 @@ const TimetableManagement: React.FC = () => {
                             <td
                               key={`${day}-break-${slot}`}
                               className={`p-2 border-b border-gray-100 align-top transition-all duration-200 ${
-                                isSelected
-                                  ? "ring-2 ring-orange-400 bg-orange-50"
-                                  : ""
+                                isSelected ? "ring-2 ring-orange-400 bg-orange-50" : ""
                               }`}
                             >
                               {cellEntries.length > 0 ? (
@@ -2783,25 +2543,19 @@ const TimetableManagement: React.FC = () => {
                                 >
                                   <div className="font-bold text-orange-900 text-xs mb-1">
                                     {courses.find(
-                                      (c) =>
-                                        String(c.course_id) ===
-                                        String(main.courseId)
+                                      (c) => String(c.course_id) === String(main.courseId)
                                     )?.course_code || main.courseId}
                                   </div>
                                   <div className="text-xs text-orange-800 mb-1 font-medium">
                                     {
                                       courses.find(
-                                        (c) =>
-                                          String(c.course_id) ===
-                                          String(main.courseId)
+                                        (c) => String(c.course_id) === String(main.courseId)
                                       )?.course_name
                                     }
                                   </div>
                                   <div className="text-xs text-orange-700">
                                     {teachers.find(
-                                      (t) =>
-                                        String(t.teacher_id) ===
-                                        String(main.teacherId)
+                                      (t) => String(t.teacher_id) === String(main.teacherId)
                                     )?.name || main.teacherId}
                                   </div>
                                   <div className="text-xs text-orange-600 mt-1">
@@ -2815,13 +2569,9 @@ const TimetableManagement: React.FC = () => {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() =>
-                                    openAddForCell(day, slot.split(" - ")[0])
-                                  }
+                                  onClick={() => openAddForCell(day, slot.split(" - ")[0])}
                                   className={`w-full h-16 border-2 border-dashed border-orange-200 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 hover:border-orange-400 hover:bg-orange-50 ${
-                                    isSelected
-                                      ? "border-orange-400 bg-orange-50"
-                                      : ""
+                                    isSelected ? "border-orange-400 bg-orange-50" : ""
                                   }`}
                                 >
                                   <span className="text-2xl text-orange-300 hover:text-orange-500">
@@ -2847,8 +2597,7 @@ const TimetableManagement: React.FC = () => {
 
                         {/* Second Half Time Slots */}
                         {gridSlots.secondHalf.map((slot) => {
-                          const cellEntries =
-                            byDayAndSlot[day]?.[slot.split(" - ")[0]] || [];
+                          const cellEntries = byDayAndSlot[day]?.[slot.split(" - ")[0]] || [];
                           const main = cellEntries[0];
                           const isSelected =
                             batchMode &&
@@ -2859,9 +2608,7 @@ const TimetableManagement: React.FC = () => {
                             <td
                               key={`${day}-second-${slot}`}
                               className={`p-2 border-b border-gray-100 align-top transition-all duration-200 ${
-                                isSelected
-                                  ? "ring-2 ring-green-400 bg-green-50"
-                                  : ""
+                                isSelected ? "ring-2 ring-green-400 bg-green-50" : ""
                               }`}
                             >
                               {cellEntries.length > 0 ? (
@@ -2871,26 +2618,20 @@ const TimetableManagement: React.FC = () => {
                                 >
                                   <div className="font-bold text-green-900 text-xs mb-1">
                                     {courses.find(
-                                      (c) =>
-                                        String(c.course_id) ===
-                                        String(main.courseId)
+                                      (c) => String(c.course_id) === String(main.courseId)
                                     )?.course_code || main.courseId}
                                   </div>
                                   <div className="text-xs text-green-800 mb-1 font-medium">
                                     {
                                       courses.find(
-                                        (c) =>
-                                          String(c.course_id) ===
-                                          String(main.courseId)
+                                        (c) => String(c.course_id) === String(main.courseId)
                                       )?.course_name
                                     }
                                   </div>
                                   <div className="text-xs text-green-700">
                                     {
                                       teachers.find(
-                                        (t) =>
-                                          String(t.teacher_id) ===
-                                          String(main.teacherId)
+                                        (t) => String(t.teacher_id) === String(main.teacherId)
                                       )?.name
                                     }
                                   </div>
@@ -2902,13 +2643,9 @@ const TimetableManagement: React.FC = () => {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() =>
-                                    openAddClass(day, slot.split(" - ")[0])
-                                  }
+                                  onClick={() => openAddClass(day, slot.split(" - ")[0])}
                                   className={`w-full h-16 border-2 border-dashed border-green-200 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 hover:border-green-400 hover:bg-green-50 ${
-                                    isSelected
-                                      ? "border-green-400 bg-green-50"
-                                      : ""
+                                    isSelected ? "border-green-400 bg-green-50" : ""
                                   }`}
                                 >
                                   <span className="text-2xl text-green-300 hover:text-green-500">
@@ -2946,27 +2683,13 @@ const TimetableManagement: React.FC = () => {
             <table className="min-w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    ID
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Course
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Teacher
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Day
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Time
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Room
-                  </th>
-                  <th className="text-left p-4 font-semibold text-gray-700">
-                    Actions
-                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-700">ID</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Course</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Teacher</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Day</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Time</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Room</th>
+                  <th className="text-left p-4 font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2975,12 +2698,8 @@ const TimetableManagement: React.FC = () => {
                     <td colSpan={7} className="p-8 text-center text-gray-500">
                       <div className="flex flex-col items-center gap-3">
                         <span className="text-4xl">📅</span>
-                        <span className="text-lg font-medium">
-                          No classes scheduled
-                        </span>
-                        <span className="text-sm">
-                          Add a new class to get started
-                        </span>
+                        <span className="text-lg font-medium">No classes scheduled</span>
+                        <span className="text-sm">Add a new class to get started</span>
                       </div>
                     </td>
                   </tr>
@@ -3000,17 +2719,13 @@ const TimetableManagement: React.FC = () => {
                       <td className="p-4 border-b border-gray-100">
                         <div className="flex flex-col">
                           <span className="font-semibold text-gray-900">
-                            {courses.find(
-                              (c) =>
-                                String(c.course_id) === String(entry.courseId)
-                            )?.course_code || entry.courseId}
+                            {courses.find((c) => String(c.course_id) === String(entry.courseId))
+                              ?.course_code || entry.courseId}
                           </span>
                           <span className="text-sm text-gray-600">
                             {
-                              courses.find(
-                                (c) =>
-                                  String(c.course_id) === String(entry.courseId)
-                              )?.course_name
+                              courses.find((c) => String(c.course_id) === String(entry.courseId))
+                                ?.course_name
                             }
                           </span>
                         </div>
@@ -3019,9 +2734,8 @@ const TimetableManagement: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-lg">👨‍🏫</span>
                           <span className="text-gray-900">
-                            {teachers.find(
-                              (t) => String(t.id) === String(entry.teacherId)
-                            )?.name || entry.teacherId}
+                            {teachers.find((t) => String(t.id) === String(entry.teacherId))?.name ||
+                              entry.teacherId}
                           </span>
                         </div>
                       </td>
@@ -3045,9 +2759,7 @@ const TimetableManagement: React.FC = () => {
                             <span>{entry.classroom}</span>
                           </div>
                         ) : (
-                          <span className="text-gray-400">
-                            No room assigned
-                          </span>
+                          <span className="text-gray-400">No room assigned</span>
                         )}
                       </td>
                       <td className="p-4 border-b border-gray-100">
@@ -3150,10 +2862,7 @@ const TimetableManagement: React.FC = () => {
                           : "Select teacher"}
                       </option>
                       {filteredTeachers.map((t: any) => (
-                        <option
-                          key={t.teacher_id || t.id}
-                          value={t.teacher_id || t.id}
-                        >
+                        <option key={t.teacher_id || t.id} value={t.teacher_id || t.id}>
                           {t.name}
                         </option>
                       ))}
@@ -3278,9 +2987,7 @@ const TimetableManagement: React.FC = () => {
                             : "🔬"}
                         </span>
                         <div>
-                          <div className="font-bold text-blue-800">
-                            {newEntry.classType}
-                          </div>
+                          <div className="font-bold text-blue-800">{newEntry.classType}</div>
                           <div className="text-sm text-blue-600">
                             {newEntry.targetAudience === "Section"
                               ? "For entire section"
@@ -3290,8 +2997,7 @@ const TimetableManagement: React.FC = () => {
                       </div>
                       <div className="flex-1"></div>
                       <div className="text-sm text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
-                        {newEntry.dayOfWeek} • {newEntry.startTime} -{" "}
-                        {newEntry.endTime}
+                        {newEntry.dayOfWeek} • {newEntry.startTime} - {newEntry.endTime}
                       </div>
                     </div>
                   </div>
@@ -3311,9 +3017,7 @@ const TimetableManagement: React.FC = () => {
                     >
                       <option value="">Select course</option>
                       {courses
-                        .filter(
-                          (c: any) => c.semester === parseInt(currentSemester)
-                        )
+                        .filter((c: any) => c.semester === parseInt(currentSemester))
                         .map((c: any) => (
                           <option key={c.course_id} value={c.course_id}>
                             {c.course_code} — {c.course_name}
@@ -3342,10 +3046,7 @@ const TimetableManagement: React.FC = () => {
                           : "Select teacher"}
                       </option>
                       {filteredTeachers.map((t: any) => (
-                        <option
-                          key={t.teacher_id || t.id}
-                          value={t.teacher_id || t.id}
-                        >
+                        <option key={t.teacher_id || t.id} value={t.teacher_id || t.id}>
                           {t.name}
                         </option>
                       ))}
@@ -3365,29 +3066,22 @@ const TimetableManagement: React.FC = () => {
                         setNewEntry({
                           ...newEntry,
                           classType: selectedType,
-                          targetAudience:
-                            selectedType === "Lecture" ? "Section" : "Batch",
-                          batchId:
-                            selectedType === "Lecture" ? "" : newEntry.batchId,
+                          targetAudience: selectedType === "Lecture" ? "Section" : "Batch",
+                          batchId: selectedType === "Lecture" ? "" : newEntry.batchId,
                         });
                       }}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       required
                     >
                       <option value="">Select class type</option>
-                      <option value="Lecture">
-                        📚 Lecture (Entire Section)
-                      </option>
-                      <option value="Tutorial">
-                        👥 Tutorial (Specific Batch)
-                      </option>
+                      <option value="Lecture">📚 Lecture (Entire Section)</option>
+                      <option value="Tutorial">👥 Tutorial (Specific Batch)</option>
                       <option value="Lab">🔬 Lab (Specific Batch)</option>
                     </select>
                   </div>
 
                   {/* Batch Selection - Only show for Lab and Tutorial */}
-                  {(newEntry.classType === "Lab" ||
-                    newEntry.classType === "Tutorial") && (
+                  {(newEntry.classType === "Lab" || newEntry.classType === "Tutorial") && (
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         👥 Select Batch
@@ -3412,8 +3106,7 @@ const TimetableManagement: React.FC = () => {
                       </select>
                       {batches.length === 0 && (
                         <p className="mt-2 text-sm text-amber-600">
-                          💡 Create batches in Department → Sections section
-                          first
+                          💡 Create batches in Department → Sections section first
                         </p>
                       )}
                     </div>
@@ -3550,9 +3243,7 @@ const TimetableManagement: React.FC = () => {
                   >
                     <option value="">Select course</option>
                     {courses
-                      .filter(
-                        (c: any) => c.semester === parseInt(currentSemester)
-                      )
+                      .filter((c: any) => c.semester === parseInt(currentSemester))
                       .map((c: any) => (
                         <option key={c.course_id} value={c.course_id}>
                           {c.course_code} — {c.course_name}
@@ -3582,9 +3273,7 @@ const TimetableManagement: React.FC = () => {
 
                 <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-purple-800">
-                      Selected Time Slots
-                    </h3>
+                    <h3 className="font-semibold text-purple-800">Selected Time Slots</h3>
                     <div className="flex items-center gap-2">
                       <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
                         {selectedCells.length} slot
@@ -3609,9 +3298,7 @@ const TimetableManagement: React.FC = () => {
                             📅 {cell.day} at {cell.start}
                           </div>
                           <button
-                            onClick={() =>
-                              toggleSelectCell(cell.day, cell.start)
-                            }
+                            onClick={() => toggleSelectCell(cell.day, cell.start)}
                             className="text-purple-400 hover:text-purple-600 text-xs"
                           >
                             ✕
@@ -3646,9 +3333,7 @@ const TimetableManagement: React.FC = () => {
 
               {batchResults.length > 0 && (
                 <div className="mt-6 bg-green-50 rounded-xl p-4">
-                  <h3 className="font-semibold text-green-800 mb-2">
-                    Batch Results:
-                  </h3>
+                  <h3 className="font-semibold text-green-800 mb-2">Batch Results:</h3>
                   <div className="space-y-1 max-h-32 overflow-y-auto">
                     {batchResults.map((result, index) => (
                       <div key={index} className="text-sm text-green-700">

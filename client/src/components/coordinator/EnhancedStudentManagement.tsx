@@ -13,7 +13,7 @@ import {
   ArcElement,
   Filler,
 } from "chart.js";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { Bar, Doughnut } from "react-chartjs-2";
 import {
   fetchAllStudents,
   deleteStudent as apiDeleteStudent,
@@ -24,7 +24,6 @@ import {
   getStudentCourses,
   assignCourseToStudent,
   removeCourseFromStudent,
-  fetchTeachersByCourse,
   getStudentCourseAssignments,
   fetchSectionsByDepartmentAndSemester,
 } from "../../services/api";
@@ -114,9 +113,7 @@ const EnhancedStudentManagement: React.FC = () => {
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"table" | "cards" | "analytics">(
-    "table"
-  );
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "analytics">("table");
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -136,21 +133,14 @@ const EnhancedStudentManagement: React.FC = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showCourseModal, setShowCourseModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [showBulkActions, setShowBulkActions] = useState(false);
-  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(
-    new Set()
-  );
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
 
   // Course assignment states
   const [studentCourses, setStudentCourses] = useState<Course[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [courseLoading, setCourseLoading] = useState(false);
-  const [courseTeachersMap, setCourseTeachersMap] = useState<
-    Map<number, Teacher[]>
-  >(new Map());
-  const [selectedTeachers, setSelectedTeachers] = useState<
-    Map<number, Teacher | null>
-  >(new Map());
+  const [selectedTeachers, setSelectedTeachers] = useState<Map<number, Teacher | null>>(new Map());
+  const [courseTeachersMap, setCourseTeachersMap] = useState<Map<number, Teacher[]>>(new Map());
 
   // Form data
   const [newStudent, setNewStudent] = useState({
@@ -188,12 +178,11 @@ const EnhancedStudentManagement: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [studentsResponse, departmentsResponse, coursesResponse] =
-        await Promise.all([
-          fetchAllStudents(),
-          fetchAllDepartments(),
-          fetchAllCourses(),
-        ]);
+      const [studentsResponse, departmentsResponse, coursesResponse] = await Promise.all([
+        fetchAllStudents(),
+        fetchAllDepartments(),
+        fetchAllCourses(),
+      ]);
       // Ensure we have valid arrays and handle response structure
       const students = Array.isArray(studentsResponse?.data)
         ? studentsResponse.data
@@ -234,7 +223,7 @@ const EnhancedStudentManagement: React.FC = () => {
       return [];
     }
 
-    let filtered = students.filter((student) => {
+    const filtered = students.filter((student) => {
       const matchesSearch =
         searchTerm === "" ||
         student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -242,13 +231,11 @@ const EnhancedStudentManagement: React.FC = () => {
         student.roll_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesDepartment =
-        selectedDepartment === "" ||
-        student.department_id.toString() === selectedDepartment;
+        selectedDepartment === "" || student.department_id.toString() === selectedDepartment;
 
       const matchesSemester =
         selectedSemester === "" ||
-        (student.semester || student.year || "").toString() ===
-          selectedSemester;
+        (student.semester || student.year || "").toString() === selectedSemester;
       return matchesSearch && matchesDepartment && matchesSemester;
     });
 
@@ -266,22 +253,12 @@ const EnhancedStudentManagement: React.FC = () => {
     });
 
     return filtered;
-  }, [
-    students,
-    searchTerm,
-    selectedDepartment,
-    selectedSemester,
-    sortField,
-    sortDirection,
-  ]);
+  }, [students, searchTerm, selectedDepartment, selectedSemester, sortField, sortDirection]);
 
   // Pagination
   const paginatedStudents = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedStudents.slice(
-      startIndex,
-      startIndex + itemsPerPage
-    );
+    return filteredAndSortedStudents.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredAndSortedStudents, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredAndSortedStudents.length / itemsPerPage);
@@ -289,12 +266,7 @@ const EnhancedStudentManagement: React.FC = () => {
   // Analytics data
   const analyticsData = useMemo(() => {
     // Safety checks: ensure arrays exist
-    if (
-      !students ||
-      !Array.isArray(students) ||
-      !departments ||
-      !Array.isArray(departments)
-    ) {
+    if (!students || !Array.isArray(students) || !departments || !Array.isArray(departments)) {
       return {
         departmentCounts: [],
         semesterCounts: [
@@ -312,8 +284,7 @@ const EnhancedStudentManagement: React.FC = () => {
 
     const departmentCounts = departments.map((dept) => ({
       name: dept.name,
-      count: students.filter((s) => s.department_id === dept.department_id)
-        .length,
+      count: students.filter((s) => s.department_id === dept.department_id).length,
     }));
 
     const semesterCounts = [1, 2, 3, 4, 5, 6, 7, 8].map((semester) => ({
@@ -330,14 +301,7 @@ const EnhancedStudentManagement: React.FC = () => {
     datasets: [
       {
         data: analyticsData.departmentCounts.map((d) => d.count),
-        backgroundColor: [
-          "#FF6384",
-          "#36A2EB",
-          "#FFCE56",
-          "#4BC0C0",
-          "#9966FF",
-          "#FF9F40",
-        ],
+        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"],
         borderWidth: 2,
         borderColor: "#fff",
       },
@@ -439,9 +403,7 @@ const EnhancedStudentManagement: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.error("❌ Failed to add student:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to add student"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to add student");
     }
   };
 
@@ -462,20 +424,17 @@ const EnhancedStudentManagement: React.FC = () => {
         selectedStudent.student_id ?? selectedStudent.user_id,
         editFormData
       );
-      await apiUpdateStudent(
-        selectedStudent.student_id ?? selectedStudent.user_id,
-        {
-          name: editFormData.name,
-          roll_number: editFormData.rollNumber,
-          department_id: parseInt(editFormData.departmentId),
-          semester: parseInt(editFormData.semester),
-          section_id: editFormData.sectionId || undefined,
-          contact_number: editFormData.contactNumber,
-          parent_name: editFormData.parentName,
-          parent_contact: editFormData.parentContact,
-          address: editFormData.address,
-        }
-      );
+      await apiUpdateStudent(selectedStudent.student_id ?? selectedStudent.user_id, {
+        name: editFormData.name,
+        roll_number: editFormData.rollNumber,
+        department_id: parseInt(editFormData.departmentId),
+        semester: parseInt(editFormData.semester),
+        section_id: editFormData.sectionId || undefined,
+        contact_number: editFormData.contactNumber,
+        parent_name: editFormData.parentName,
+        parent_contact: editFormData.parentContact,
+        address: editFormData.address,
+      });
 
       console.log("✅ Student updated successfully");
       await loadData();
@@ -496,9 +455,7 @@ const EnhancedStudentManagement: React.FC = () => {
       setError(null);
     } catch (err: any) {
       console.error("❌ Failed to update student:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to update student"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to update student");
     }
   };
 
@@ -506,22 +463,15 @@ const EnhancedStudentManagement: React.FC = () => {
     if (!selectedStudent) return;
 
     try {
-      console.log(
-        "🗑️ Deleting student:",
-        selectedStudent.student_id ?? selectedStudent.user_id
-      );
-      await apiDeleteStudent(
-        String(selectedStudent.student_id ?? selectedStudent.user_id)
-      );
+      console.log("🗑️ Deleting student:", selectedStudent.student_id ?? selectedStudent.user_id);
+      await apiDeleteStudent(String(selectedStudent.student_id ?? selectedStudent.user_id));
       console.log("✅ Student deleted successfully");
       await loadData();
       setShowDeleteModal(false);
       setSelectedStudent(null);
     } catch (err: any) {
       console.error("❌ Failed to delete student:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to delete student"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to delete student");
     }
   };
 
@@ -579,18 +529,14 @@ const EnhancedStudentManagement: React.FC = () => {
         (course) =>
           course.department_id === studentDepartment &&
           (!course.semester || course.semester === studentSemester) &&
-          !currentCourses.some(
-            (enrolled: any) => enrolled.course_id === course.course_id
-          )
+          !currentCourses.some((enrolled: any) => enrolled.course_id === course.course_id)
       );
 
       setAvailableCourses(matchingCourses);
       setShowCourseModal(true);
     } catch (err: any) {
       console.error("❌ Failed to load course data:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to load courses"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to load courses");
     } finally {
       setCourseLoading(false);
     }
@@ -604,15 +550,10 @@ const EnhancedStudentManagement: React.FC = () => {
       await proceedWithCourseAssignment(courseId, selectedTeacher?.teacher_id);
     } catch (err: any) {
       console.error("❌ Failed to assign course:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to assign course"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to assign course");
     }
   };
-  const proceedWithCourseAssignment = async (
-    courseId: number,
-    teacherId?: number
-  ) => {
+  const proceedWithCourseAssignment = async (courseId: number, teacherId?: number) => {
     if (!selectedStudent) return;
 
     try {
@@ -631,9 +572,7 @@ const EnhancedStudentManagement: React.FC = () => {
       // Update available courses
       const course = courses.find((c) => c.course_id === courseId);
       if (course) {
-        setAvailableCourses((prev) =>
-          prev.filter((c) => c.course_id !== courseId)
-        );
+        setAvailableCourses((prev) => prev.filter((c) => c.course_id !== courseId));
       }
 
       // Reset teacher selection for this course
@@ -641,14 +580,10 @@ const EnhancedStudentManagement: React.FC = () => {
       newSelectedTeachers.delete(courseId);
       setSelectedTeachers(newSelectedTeachers);
 
-      console.log(
-        "✅ Course assigned successfully" + (teacherId ? " with teacher" : "")
-      );
+      console.log("✅ Course assigned successfully" + (teacherId ? " with teacher" : ""));
     } catch (err: any) {
       console.error("❌ Failed to assign course:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to assign course"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to assign course");
     }
   };
 
@@ -683,9 +618,7 @@ const EnhancedStudentManagement: React.FC = () => {
       console.log("✅ Course removed successfully");
     } catch (err: any) {
       console.error("❌ Failed to remove course:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to remove course"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to remove course");
     }
   };
 
@@ -768,12 +701,8 @@ const EnhancedStudentManagement: React.FC = () => {
                       {student.name?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {student.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {student.contact_number}
-                      </div>
+                      <div className="text-sm font-semibold text-gray-900">{student.name}</div>
+                      <div className="text-sm text-gray-500">{student.contact_number}</div>
                     </div>
                   </div>
                 </td>
@@ -791,9 +720,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 <td className="px-6 py-4">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(() => {
-                      const sem = (student.semester ?? student.year) as
-                        | number
-                        | undefined;
+                      const sem = (student.semester ?? student.year) as number | undefined;
                       if (!sem) return "bg-gray-100 text-gray-800";
                       if (sem <= 2) return "bg-green-100 text-green-800";
                       if (sem <= 4) return "bg-yellow-100 text-yellow-800";
@@ -921,9 +848,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   {student.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold text-lg">
-                    {student.name}
-                  </h3>
+                  <h3 className="text-white font-semibold text-lg">{student.name}</h3>
                   <p className="text-blue-100 text-sm">{student.roll_number}</p>
                 </div>
               </div>
@@ -979,9 +904,7 @@ const EnhancedStudentManagement: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span
                   className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(() => {
-                    const sem = (student.semester ?? student.year) as
-                      | number
-                      | undefined;
+                    const sem = (student.semester ?? student.year) as number | undefined;
                     if (!sem) return "bg-gray-100 text-gray-800";
                     if (sem <= 2) return "bg-green-100 text-green-800";
                     if (sem <= 4) return "bg-yellow-100 text-yellow-800";
@@ -998,12 +921,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-lg transition-colors duration-200"
                     title="View Profile"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1022,12 +940,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     onClick={() => handleEditClick(student)}
                     className="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 p-2 rounded-lg transition-colors duration-200"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1042,12 +955,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     title="Assign Courses"
                     disabled={courseLoading}
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1063,12 +971,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     }}
                     className="text-red-600 hover:text-red-900 hover:bg-red-50 p-2 rounded-lg transition-colors duration-200"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1090,9 +993,7 @@ const EnhancedStudentManagement: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       {/* Department Distribution */}
       <div className="bg-white rounded-2xl shadow-xl p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6">
-          Students by Department
-        </h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-6">Students by Department</h3>
         <div className="h-80">
           <Doughnut
             data={departmentChartData}
@@ -1111,9 +1012,7 @@ const EnhancedStudentManagement: React.FC = () => {
 
       {/* Year Distribution */}
       <div className="bg-white rounded-2xl shadow-xl p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6">
-          Students by Year
-        </h3>
+        <h3 className="text-xl font-semibold text-gray-900 mb-6">Students by Year</h3>
         <div className="h-80">
           <Bar
             data={semesterChartData}
@@ -1144,18 +1043,11 @@ const EnhancedStudentManagement: React.FC = () => {
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">
-                  Total Students
-                </p>
+                <p className="text-blue-100 text-sm font-medium">Total Students</p>
                 <p className="text-3xl font-bold">{students.length}</p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1170,18 +1062,11 @@ const EnhancedStudentManagement: React.FC = () => {
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">
-                  Departments
-                </p>
+                <p className="text-green-100 text-sm font-medium">Departments</p>
                 <p className="text-3xl font-bold">{departments.length}</p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1196,18 +1081,11 @@ const EnhancedStudentManagement: React.FC = () => {
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">
-                  New This Month
-                </p>
+                <p className="text-purple-100 text-sm font-medium">New This Month</p>
                 <p className="text-3xl font-bold">24</p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1222,18 +1100,11 @@ const EnhancedStudentManagement: React.FC = () => {
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">
-                  Active Today
-                </p>
+                <p className="text-orange-100 text-sm font-medium">Active Today</p>
                 <p className="text-3xl font-bold">156</p>
               </div>
               <div className="p-3 bg-white/20 rounded-full">
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1271,8 +1142,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 Student Management
               </h1>
               <p className="text-gray-600 mt-2">
-                Manage and monitor student information, analytics, and
-                performance
+                Manage and monitor student information, analytics, and performance
               </p>
             </div>
 
@@ -1300,12 +1170,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 to="/smart-data-entry"
                 className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1323,12 +1188,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 onClick={() => setShowReportModal(true)}
                 className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1343,12 +1203,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 onClick={() => setShowAddModal(true)}
                 className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1363,12 +1218,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 onClick={() => history.push("/coordinator/student-enrollment")}
                 className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1489,23 +1339,14 @@ const EnhancedStudentManagement: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
                 Showing{" "}
-                {Math.min(
-                  (currentPage - 1) * itemsPerPage + 1,
-                  filteredAndSortedStudents.length
-                )}{" "}
-                to{" "}
-                {Math.min(
-                  currentPage * itemsPerPage,
-                  filteredAndSortedStudents.length
-                )}{" "}
-                of {filteredAndSortedStudents.length} results
+                {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedStudents.length)}{" "}
+                to {Math.min(currentPage * itemsPerPage, filteredAndSortedStudents.length)} of{" "}
+                {filteredAndSortedStudents.length} results
               </div>
 
               <div className="flex space-x-2">
                 <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                   className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
@@ -1513,8 +1354,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 </button>
 
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const pageNumber =
-                    currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                  const pageNumber = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
                   if (pageNumber > totalPages) return null;
 
                   return (
@@ -1533,9 +1373,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 })}
 
                 <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                   className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 >
@@ -1567,9 +1405,7 @@ const EnhancedStudentManagement: React.FC = () => {
             {/* Modal Header - Fixed */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-t-2xl flex-shrink-0">
               <h2 className="text-xl font-bold text-white">Add New Student</h2>
-              <p className="text-blue-100 mt-1 text-sm">
-                Fill in the student information
-              </p>
+              <p className="text-blue-100 mt-1 text-sm">Fill in the student information</p>
             </div>
 
             {/* Modal Body - Scrollable */}
@@ -1582,9 +1418,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   <input
                     type="text"
                     value={newStudent.name}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, name: e.target.value })
-                    }
+                    onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter full name"
                     required
@@ -1598,9 +1432,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   <input
                     type="email"
                     value={newStudent.email}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, email: e.target.value })
-                    }
+                    onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter email address"
                     required
@@ -1627,15 +1459,11 @@ const EnhancedStudentManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
                   <input
                     type="password"
                     value={newStudent.password}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, password: e.target.value })
-                    }
+                    onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter password (min 6 characters)"
                     required
@@ -1661,14 +1489,11 @@ const EnhancedStudentManagement: React.FC = () => {
                       // Load sections if both department and semester are selected
                       if (departmentId && newStudent.semester) {
                         try {
-                          const sectionsData =
-                            await fetchSectionsByDepartmentAndSemester(
-                              departmentId,
-                              newStudent.semester
-                            );
-                          setSections(
-                            Array.isArray(sectionsData) ? sectionsData : []
+                          const sectionsData = await fetchSectionsByDepartmentAndSemester(
+                            departmentId,
+                            newStudent.semester
                           );
+                          setSections(Array.isArray(sectionsData) ? sectionsData : []);
                         } catch (error) {
                           console.error("Error loading sections:", error);
                           setSections([]);
@@ -1680,10 +1505,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   >
                     <option value="">Select Department</option>
                     {departments.map((dept) => (
-                      <option
-                        key={dept.department_id}
-                        value={dept.department_id}
-                      >
+                      <option key={dept.department_id} value={dept.department_id}>
                         {dept.name}
                       </option>
                     ))}
@@ -1691,9 +1513,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Semester *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester *</label>
                   <select
                     value={newStudent.semester}
                     onChange={async (e) => {
@@ -1708,14 +1528,11 @@ const EnhancedStudentManagement: React.FC = () => {
                       // Load sections if both department and semester are selected
                       if (newStudent.departmentId && semester) {
                         try {
-                          const sectionsData =
-                            await fetchSectionsByDepartmentAndSemester(
-                              newStudent.departmentId,
-                              semester
-                            );
-                          setSections(
-                            Array.isArray(sectionsData) ? sectionsData : []
+                          const sectionsData = await fetchSectionsByDepartmentAndSemester(
+                            newStudent.departmentId,
+                            semester
                           );
+                          setSections(Array.isArray(sectionsData) ? sectionsData : []);
                         } catch (error) {
                           console.error("Error loading sections:", error);
                           setSections([]);
@@ -1751,9 +1568,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     }
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={
-                      !newStudent.departmentId ||
-                      !newStudent.semester ||
-                      sections.length === 0
+                      !newStudent.departmentId || !newStudent.semester || sections.length === 0
                     }
                   >
                     <option value="">
@@ -1764,18 +1579,14 @@ const EnhancedStudentManagement: React.FC = () => {
                         : "Select Section (Optional)"}
                     </option>
                     {sections.map((section: any) => (
-                      <option
-                        key={section.section_id}
-                        value={section.section_id}
-                      >
+                      <option key={section.section_id} value={section.section_id}>
                         {section.section_name}
                       </option>
                     ))}
                   </select>
                   {sections.length > 0 && (
                     <p className="mt-1 text-xs text-gray-500">
-                      {sections.length} section(s) available for this department
-                      & semester
+                      {sections.length} section(s) available for this department & semester
                     </p>
                   )}
                 </div>
@@ -1835,14 +1646,10 @@ const EnhancedStudentManagement: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                   <textarea
                     value={newStudent.address}
-                    onChange={(e) =>
-                      setNewStudent({ ...newStudent, address: e.target.value })
-                    }
+                    onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
                     rows={2}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter address"
@@ -1879,9 +1686,7 @@ const EnhancedStudentManagement: React.FC = () => {
             {/* Modal Header - Fixed */}
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 rounded-t-2xl flex-shrink-0">
               <h2 className="text-xl font-bold text-white">Edit Student</h2>
-              <p className="text-indigo-100 mt-1 text-sm">
-                Update student information
-              </p>
+              <p className="text-indigo-100 mt-1 text-sm">Update student information</p>
             </div>
 
             {/* Modal Body - Scrollable */}
@@ -1894,9 +1699,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   <input
                     type="text"
                     value={editFormData.name}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, name: e.target.value })
-                    }
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     placeholder="Enter full name"
                   />
@@ -1958,14 +1761,11 @@ const EnhancedStudentManagement: React.FC = () => {
                       // Load sections if both department and semester are selected
                       if (departmentId && editFormData.semester) {
                         try {
-                          const sectionsData =
-                            await fetchSectionsByDepartmentAndSemester(
-                              departmentId,
-                              editFormData.semester
-                            );
-                          setSections(
-                            Array.isArray(sectionsData) ? sectionsData : []
+                          const sectionsData = await fetchSectionsByDepartmentAndSemester(
+                            departmentId,
+                            editFormData.semester
                           );
+                          setSections(Array.isArray(sectionsData) ? sectionsData : []);
                         } catch (error) {
                           console.error("Error loading sections:", error);
                           setSections([]);
@@ -1977,10 +1777,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   >
                     <option value="">Select Department</option>
                     {departments.map((dept) => (
-                      <option
-                        key={dept.department_id}
-                        value={dept.department_id}
-                      >
+                      <option key={dept.department_id} value={dept.department_id}>
                         {dept.name}
                       </option>
                     ))}
@@ -1988,9 +1785,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Semester *
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Semester *</label>
                   <select
                     value={editFormData.semester}
                     onChange={async (e) => {
@@ -2005,14 +1800,11 @@ const EnhancedStudentManagement: React.FC = () => {
                       // Load sections if both department and semester are selected
                       if (editFormData.departmentId && semester) {
                         try {
-                          const sectionsData =
-                            await fetchSectionsByDepartmentAndSemester(
-                              editFormData.departmentId,
-                              semester
-                            );
-                          setSections(
-                            Array.isArray(sectionsData) ? sectionsData : []
+                          const sectionsData = await fetchSectionsByDepartmentAndSemester(
+                            editFormData.departmentId,
+                            semester
                           );
+                          setSections(Array.isArray(sectionsData) ? sectionsData : []);
                         } catch (error) {
                           console.error("Error loading sections:", error);
                           setSections([]);
@@ -2048,9 +1840,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     }
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     disabled={
-                      !editFormData.departmentId ||
-                      !editFormData.semester ||
-                      sections.length === 0
+                      !editFormData.departmentId || !editFormData.semester || sections.length === 0
                     }
                   >
                     <option value="">
@@ -2061,18 +1851,14 @@ const EnhancedStudentManagement: React.FC = () => {
                         : "Select Section (Optional)"}
                     </option>
                     {sections.map((section: any) => (
-                      <option
-                        key={section.section_id}
-                        value={section.section_id}
-                      >
+                      <option key={section.section_id} value={section.section_id}>
                         {section.section_name}
                       </option>
                     ))}
                   </select>
                   {sections.length > 0 && (
                     <p className="mt-1 text-xs text-gray-500">
-                      {sections.length} section(s) available for this department
-                      & semester
+                      {sections.length} section(s) available for this department & semester
                     </p>
                   )}
                 </div>
@@ -2132,9 +1918,7 @@ const EnhancedStudentManagement: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                   <textarea
                     value={editFormData.address}
                     onChange={(e) =>
@@ -2208,12 +1992,10 @@ const EnhancedStudentManagement: React.FC = () => {
                 </svg>
               </div>
               <div className="mt-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delete Student
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Student</h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Are you sure you want to delete {selectedStudent.name}? This
-                  action cannot be undone.
+                  Are you sure you want to delete {selectedStudent.name}? This action cannot be
+                  undone.
                 </p>
               </div>
               <div className="mt-6 flex justify-end space-x-4">
@@ -2248,12 +2030,7 @@ const EnhancedStudentManagement: React.FC = () => {
                   onClick={() => setShowCourseModal(false)}
                   className="text-white hover:text-gray-200 transition-colors duration-200"
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -2264,10 +2041,8 @@ const EnhancedStudentManagement: React.FC = () => {
                 </button>
               </div>
               <p className="text-green-100 text-sm mt-1">
-                Semester: {selectedStudent.semester ?? selectedStudent.year} |
-                Department:{" "}
-                {selectedStudent.department?.name ||
-                  selectedStudent.department_name}
+                Semester: {selectedStudent.semester ?? selectedStudent.year} | Department:{" "}
+                {selectedStudent.department?.name || selectedStudent.department_name}
               </p>
             </div>
 
@@ -2298,9 +2073,7 @@ const EnhancedStudentManagement: React.FC = () => {
                     </h3>
                     <div className="space-y-3">
                       {studentCourses.length === 0 ? (
-                        <p className="text-gray-500 text-center py-4">
-                          No courses assigned yet
-                        </p>
+                        <p className="text-gray-500 text-center py-4">No courses assigned yet</p>
                       ) : (
                         studentCourses.map((course: any) => (
                           <div
@@ -2309,45 +2082,34 @@ const EnhancedStudentManagement: React.FC = () => {
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
-                                <h4 className="font-medium text-gray-900">
-                                  {course.course_name}
-                                </h4>
-                                <p className="text-sm text-gray-600">
-                                  {course.course_code}
-                                </p>
+                                <h4 className="font-medium text-gray-900">{course.course_name}</h4>
+                                <p className="text-sm text-gray-600">{course.course_code}</p>
                                 {course.semester && (
                                   <span className="inline-block mt-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
                                     Semester {course.semester}
                                   </span>
                                 )}
-                                {course.teachers &&
-                                  course.teachers.length > 0 && (
-                                    <div className="mt-2">
-                                      <p className="text-xs font-medium text-purple-700">
-                                        Teachers:
-                                      </p>
-                                      {course.teachers.map(
-                                        (teacher: any, idx: number) => (
-                                          <div
-                                            key={idx}
-                                            className="text-xs text-purple-600 bg-purple-50 rounded px-2 py-1 mt-1 inline-block mr-1"
-                                          >
-                                            {teacher.name}
-                                            {teacher.schedule && (
-                                              <span className="ml-1 text-purple-500">
-                                                ({teacher.schedule.day_of_week})
-                                              </span>
-                                            )}
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
+                                {course.teachers && course.teachers.length > 0 && (
+                                  <div className="mt-2">
+                                    <p className="text-xs font-medium text-purple-700">Teachers:</p>
+                                    {course.teachers.map((teacher: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="text-xs text-purple-600 bg-purple-50 rounded px-2 py-1 mt-1 inline-block mr-1"
+                                      >
+                                        {teacher.name}
+                                        {teacher.schedule && (
+                                          <span className="ml-1 text-purple-500">
+                                            ({teacher.schedule.day_of_week})
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                               <button
-                                onClick={() =>
-                                  handleRemoveCourse(course.course_id)
-                                }
+                                onClick={() => handleRemoveCourse(course.course_id)}
                                 className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors duration-200 ml-2"
                                 title="Remove Course"
                               >
@@ -2393,16 +2155,12 @@ const EnhancedStudentManagement: React.FC = () => {
                     <div className="space-y-3">
                       {availableCourses.length === 0 ? (
                         <p className="text-gray-500 text-center py-4">
-                          No matching courses available for this semester and
-                          department
+                          No matching courses available for this semester and department
                         </p>
                       ) : (
                         availableCourses.map((course) => {
-                          const courseTeachers =
-                            courseTeachersMap.get(course.course_id) || [];
-                          const selectedTeacher = selectedTeachers.get(
-                            course.course_id
-                          );
+                          const courseTeachers = courseTeachersMap.get(course.course_id) || [];
+                          const selectedTeacher = selectedTeachers.get(course.course_id);
 
                           return (
                             <div
@@ -2415,9 +2173,7 @@ const EnhancedStudentManagement: React.FC = () => {
                                     <h4 className="font-medium text-gray-900">
                                       {course.course_name}
                                     </h4>
-                                    <p className="text-sm text-gray-600">
-                                      {course.course_code}
-                                    </p>
+                                    <p className="text-sm text-gray-600">{course.course_code}</p>
                                     {course.semester && (
                                       <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                                         Semester {course.semester}
@@ -2425,9 +2181,7 @@ const EnhancedStudentManagement: React.FC = () => {
                                     )}
                                   </div>
                                   <button
-                                    onClick={() =>
-                                      handleAssignCourse(course.course_id)
-                                    }
+                                    onClick={() => handleAssignCourse(course.course_id)}
                                     className="text-green-600 hover:text-green-800 p-2 hover:bg-green-50 rounded-lg transition-colors duration-200"
                                     title="Assign Course"
                                   >
@@ -2461,9 +2215,7 @@ const EnhancedStudentManagement: React.FC = () => {
                                             : "border-gray-200 bg-gray-50 hover:bg-gray-100"
                                         }`}
                                         onClick={() => {
-                                          const newSelected = new Map(
-                                            selectedTeachers
-                                          );
+                                          const newSelected = new Map(selectedTeachers);
                                           newSelected.delete(course.course_id);
                                           setSelectedTeachers(newSelected);
                                         }}
@@ -2474,45 +2226,30 @@ const EnhancedStudentManagement: React.FC = () => {
                                         <div
                                           key={teacher.teacher_id}
                                           className={`p-2 border rounded cursor-pointer text-sm ${
-                                            selectedTeacher?.teacher_id ===
-                                            teacher.teacher_id
+                                            selectedTeacher?.teacher_id === teacher.teacher_id
                                               ? "border-purple-300 bg-purple-100"
                                               : "border-gray-200 bg-white hover:bg-gray-50"
                                           }`}
                                           onClick={() => {
-                                            const newSelected = new Map(
-                                              selectedTeachers
-                                            );
-                                            newSelected.set(
-                                              course.course_id,
-                                              teacher
-                                            );
+                                            const newSelected = new Map(selectedTeachers);
+                                            newSelected.set(course.course_id, teacher);
                                             setSelectedTeachers(newSelected);
                                           }}
                                         >
-                                          <div className="font-medium">
-                                            {teacher.name}
-                                          </div>
+                                          <div className="font-medium">{teacher.name}</div>
                                           {teacher.email && (
                                             <div className="text-xs text-gray-500">
                                               {teacher.email}
                                             </div>
                                           )}
                                           {teacher.schedules &&
-                                            teacher.schedules.map(
-                                              (schedule, idx) => (
-                                                <div
-                                                  key={idx}
-                                                  className="text-xs text-gray-500"
-                                                >
-                                                  {schedule.day_of_week}{" "}
-                                                  {schedule.start_time}-
-                                                  {schedule.end_time}
-                                                  {schedule.classroom &&
-                                                    ` (${schedule.classroom})`}
-                                                </div>
-                                              )
-                                            )}
+                                            teacher.schedules.map((schedule, idx) => (
+                                              <div key={idx} className="text-xs text-gray-500">
+                                                {schedule.day_of_week} {schedule.start_time}-
+                                                {schedule.end_time}
+                                                {schedule.classroom && ` (${schedule.classroom})`}
+                                              </div>
+                                            ))}
                                         </div>
                                       ))}
                                     </div>

@@ -8,7 +8,6 @@ import {
   fetchAllCourses,
   getTeacherCourses,
   assignCoursesToTeacher,
-  removeCourseFromTeacher,
 } from "../../services/api";
 import Lottie from "lottie-react";
 import { Pie, Bar } from "react-chartjs-2";
@@ -37,7 +36,7 @@ const TeacherManagement: React.FC = () => {
   const [assigningCourses, setAssigningCourses] = useState<number | null>(null);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [teacherCourses, setTeacherCourses] = useState<any[]>([]);
-  
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
@@ -62,9 +61,7 @@ const TeacherManagement: React.FC = () => {
         e.response?.data?.message ||
         e.message ||
         "Failed to load teachers, departments, or courses";
-      setError(
-        `Error: ${errorMessage}. Please check if you are logged in and try again.`
-      );
+      setError(`Error: ${errorMessage}. Please check if you are logged in and try again.`);
     } finally {
       setLoading(false);
     }
@@ -87,9 +84,7 @@ const TeacherManagement: React.FC = () => {
     setName(t.name || "");
     setEmail(t.user?.email || ""); // email will be read-only while editing profile
     setPassword("");
-    setDepartmentId(
-      String(t.department_id ?? t.department?.department_id ?? "")
-    );
+    setDepartmentId(String(t.department_id ?? t.department?.department_id ?? ""));
   };
 
   const canSubmit = useMemo(() => {
@@ -119,8 +114,7 @@ const TeacherManagement: React.FC = () => {
   };
 
   const handleDelete = async (teacherId: number) => {
-    if (!window.confirm("Are you sure you want to delete this teacher?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this teacher?")) return;
     try {
       await deleteTeacher(teacherId);
       await loadAll();
@@ -135,9 +129,7 @@ const TeacherManagement: React.FC = () => {
     try {
       const assignedCourses = await getTeacherCourses(teacherId.toString());
       setTeacherCourses(assignedCourses);
-      setSelectedCourses(
-        assignedCourses.map((c: any) => c.course_id.toString())
-      );
+      setSelectedCourses(assignedCourses.map((c: any) => c.course_id.toString()));
     } catch (error) {
       setError("Error loading teacher courses");
     }
@@ -166,23 +158,20 @@ const TeacherManagement: React.FC = () => {
 
   const toggleCourseSelection = (courseId: string) => {
     setSelectedCourses((prev) =>
-      prev.includes(courseId)
-        ? prev.filter((id) => id !== courseId)
-        : [...prev, courseId]
+      prev.includes(courseId) ? prev.filter((id) => id !== courseId) : [...prev, courseId]
     );
   };
 
   // Filtered and sorted teachers
   const filteredAndSortedTeachers = useMemo(() => {
     if (!Array.isArray(teachers)) return [];
-    
-    let filtered = teachers.filter((teacher) => {
+
+    const filtered = teachers.filter((teacher) => {
       const matchesSearch =
         teacher.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teacher.user?.email?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesDepartment =
-        !filterDepartment ||
-        teacher.department_id?.toString() === filterDepartment;
+        !filterDepartment || teacher.department_id?.toString() === filterDepartment;
       return matchesSearch && matchesDepartment;
     });
 
@@ -226,14 +215,7 @@ const TeacherManagement: React.FC = () => {
       datasets: [
         {
           data: Object.values(deptCounts),
-          backgroundColor: [
-            "#8B5CF6",
-            "#EC4899",
-            "#F59E0B",
-            "#10B981",
-            "#3B82F6",
-            "#6366F1",
-          ],
+          backgroundColor: ["#8B5CF6", "#EC4899", "#F59E0B", "#10B981", "#3B82F6", "#6366F1"],
           borderWidth: 0,
         },
       ],
@@ -288,10 +270,11 @@ const TeacherManagement: React.FC = () => {
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-xl p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold mb-2 animate-fadeIn">
-              👨‍🏫 Teacher Management
-            </h1>
-            <p className="text-purple-100 text-lg animate-fadeIn" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-4xl font-bold mb-2 animate-fadeIn">👨‍🏫 Teacher Management</h1>
+            <p
+              className="text-purple-100 text-lg animate-fadeIn"
+              style={{ animationDelay: "0.1s" }}
+            >
               Manage teachers, assign courses, and track performance
             </p>
           </div>
@@ -391,7 +374,7 @@ const TeacherManagement: React.FC = () => {
               <span className="text-2xl mr-2">📊</span>
               Teacher Distribution by Department
             </h3>
-            <div className="relative w-full" style={{ height: '300px' }}>
+            <div className="relative w-full" style={{ height: "300px" }}>
               <Pie
                 data={departmentChartData}
                 options={{
@@ -410,15 +393,18 @@ const TeacherManagement: React.FC = () => {
                     tooltip: {
                       enabled: true,
                       callbacks: {
-                        label: function(context: any) {
-                          const label = context.label || '';
+                        label: function (context: any) {
+                          const label = context.label || "";
                           const value = context.parsed || 0;
-                          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                          const total = context.dataset.data.reduce(
+                            (a: number, b: number) => a + b,
+                            0
+                          );
                           const percentage = ((value / total) * 100).toFixed(1);
                           return `${label}: ${value} (${percentage}%)`;
-                        }
-                      }
-                    }
+                        },
+                      },
+                    },
                   },
                 }}
               />
@@ -431,7 +417,7 @@ const TeacherManagement: React.FC = () => {
               <span className="text-2xl mr-2">📈</span>
               Course Assignments Overview
             </h3>
-            <div className="relative w-full" style={{ height: '300px' }}>
+            <div className="relative w-full" style={{ height: "300px" }}>
               <Bar
                 data={courseAssignmentData}
                 options={{
@@ -441,35 +427,35 @@ const TeacherManagement: React.FC = () => {
                     legend: { display: false },
                     tooltip: {
                       enabled: true,
-                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      backgroundColor: "rgba(0, 0, 0, 0.8)",
                       padding: 12,
-                      titleFont: { size: 13, weight: 'bold' },
+                      titleFont: { size: 13, weight: "bold" },
                       bodyFont: { size: 12 },
-                      borderColor: '#8B5CF6',
+                      borderColor: "#8B5CF6",
                       borderWidth: 1,
-                    }
+                    },
                   },
                   scales: {
                     y: {
                       beginAtZero: true,
-                      ticks: { 
+                      ticks: {
                         stepSize: 1,
-                        font: { size: 11 }
+                        font: { size: 11 },
                       },
                       grid: {
-                        color: 'rgba(0, 0, 0, 0.05)',
-                      }
+                        color: "rgba(0, 0, 0, 0.05)",
+                      },
                     },
                     x: {
                       ticks: {
                         font: { size: 10 },
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
                       },
                       grid: {
-                        display: false
-                      }
-                    }
+                        display: false,
+                      },
+                    },
                   },
                 }}
               />
@@ -516,9 +502,7 @@ const TeacherManagement: React.FC = () => {
 
           {/* Sort By */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              ⬆️ Sort By
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">⬆️ Sort By</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -635,7 +619,9 @@ const TeacherManagement: React.FC = () => {
                 {editingId ? "✏️ Edit Teacher" : "➕ Add New Teacher"}
               </h2>
               <p className="text-purple-100 mt-1">
-                {editingId ? "Update teacher information" : "Fill in the details to add a new teacher"}
+                {editingId
+                  ? "Update teacher information"
+                  : "Fill in the details to add a new teacher"}
               </p>
             </div>
 
@@ -716,7 +702,8 @@ const TeacherManagement: React.FC = () => {
               {editingId && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    <span className="font-semibold">Note:</span> Email cannot be changed while editing. To change email, please delete and create a new teacher account.
+                    <span className="font-semibold">Note:</span> Email cannot be changed while
+                    editing. To change email, please delete and create a new teacher account.
                   </p>
                 </div>
               )}
@@ -752,9 +739,7 @@ const TeacherManagement: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden animate-scaleIn">
             {/* Modal Header */}
             <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6">
-              <h3 className="text-2xl font-bold text-white">
-                📚 Assign Courses to Teacher
-              </h3>
+              <h3 className="text-2xl font-bold text-white">📚 Assign Courses to Teacher</h3>
               <p className="text-purple-100 mt-1">
                 Select courses to assign. Click on any course card to toggle selection.
               </p>
@@ -783,9 +768,7 @@ const TeacherManagement: React.FC = () => {
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 mb-1">
-                            {course.course_name}
-                          </h4>
+                          <h4 className="font-semibold text-gray-900 mb-1">{course.course_name}</h4>
                           <p className="text-sm text-purple-600 font-medium mb-1">
                             {course.course_code}
                           </p>

@@ -1,4 +1,10 @@
 module.exports = {
+  devServer: {
+    setupMiddlewares: (middlewares, devServer) => {
+      // Modern replacement for deprecated onBeforeSetupMiddleware and onAfterSetupMiddleware
+      return middlewares;
+    },
+  },
   webpack: {
     configure: (webpackConfig) => {
       // Find and modify source-map-loader to ignore warnings from @vladmandic/face-api and html5-qrcode
@@ -6,10 +12,7 @@ module.exports = {
         (rule) =>
           rule.enforce === "pre" &&
           rule.use &&
-          rule.use.some(
-            (loader) =>
-              loader.loader && loader.loader.includes("source-map-loader")
-          )
+          rule.use.some((loader) => loader.loader && loader.loader.includes("source-map-loader"))
       );
 
       if (sourceMapLoader) {

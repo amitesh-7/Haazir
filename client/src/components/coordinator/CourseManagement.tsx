@@ -6,18 +6,25 @@ import {
   deleteCourse,
   fetchAllDepartments,
 } from "../../services/api";
-import Lottie from 'lottie-react';
-import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Pie, Bar } from 'react-chartjs-2';
+import Lottie from "lottie-react";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Pie, Bar } from "react-chartjs-2";
+import CourseIcon from "../../assets/lottie/Courses.json";
+import BuildingIcon from "../../assets/lottie/building-icon.json";
+import StudentIcon from "../../assets/lottie/STUDENT.json";
+import AnalyticsIcon from "../../assets/lottie/analytics-icon.json";
 
 // Register Chart.js components
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-// Import Lottie animations
-import CourseIcon from '../../assets/lottie/Courses.json';
-import BuildingIcon from '../../assets/lottie/building-icon.json';
-import StudentIcon from '../../assets/lottie/STUDENT.json';
-import AnalyticsIcon from '../../assets/lottie/analytics-icon.json';
 
 const CourseManagement: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -65,12 +72,7 @@ const CourseManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !courseName.trim() ||
-      !courseCode.trim() ||
-      !semester.trim() ||
-      !departmentId.trim()
-    ) {
+    if (!courseName.trim() || !courseCode.trim() || !semester.trim() || !departmentId.trim()) {
       setError("Please fill in all fields including semester and department");
       return;
     }
@@ -119,11 +121,7 @@ const CourseManagement: React.FC = () => {
       } else if (error?.response?.status === 404) {
         setError("Course not found. Please refresh and try again.");
       } else {
-        setError(
-          `Failed to save course: ${
-            error?.response?.data?.message || error.message
-          }`
-        );
+        setError(`Failed to save course: ${error?.response?.data?.message || error.message}`);
       }
     } finally {
       setLoading(false);
@@ -135,9 +133,7 @@ const CourseManagement: React.FC = () => {
     setCourseName(course.course_name);
     setCourseCode(course.course_code);
     setSemester(course.semester ? course.semester.toString() : "");
-    setDepartmentId(
-      course.department_id ? course.department_id.toString() : ""
-    );
+    setDepartmentId(course.department_id ? course.department_id.toString() : "");
     setEditingCourseId(course.course_id);
     setError(null);
     console.log("📝 Form state after edit:", {
@@ -177,34 +173,34 @@ const CourseManagement: React.FC = () => {
   };
 
   const getDepartmentName = (departmentId: number) => {
-    const department = departments.find(
-      (dept) => dept.department_id === departmentId
-    );
+    const department = departments.find((dept) => dept.department_id === departmentId);
     return department ? department.name : "Unknown Department";
   };
 
   // Filtered and sorted courses
   const filteredAndSortedCourses = useMemo(() => {
-    let filtered = courses.filter((course) => {
+    const filtered = courses.filter((course) => {
       // Search filter
-      const searchMatch = !searchQuery || 
+      const searchMatch =
+        !searchQuery ||
         course.course_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.course_code.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       // Semester filter
       const semesterMatch = !filterSemester || String(course.semester) === String(filterSemester);
-      
+
       // Department filter
-      const departmentMatch = !filterDepartment || String(course.department_id) === String(filterDepartment);
-      
+      const departmentMatch =
+        !filterDepartment || String(course.department_id) === String(filterDepartment);
+
       return searchMatch && semesterMatch && departmentMatch;
     });
 
     // Sort
     filtered.sort((a, b) => {
-      if (sortBy === 'name') return a.course_name.localeCompare(b.course_name);
-      if (sortBy === 'code') return a.course_code.localeCompare(b.course_code);
-      if (sortBy === 'semester') return (a.semester || 0) - (b.semester || 0);
+      if (sortBy === "name") return a.course_name.localeCompare(b.course_name);
+      if (sortBy === "code") return a.course_code.localeCompare(b.course_code);
+      if (sortBy === "semester") return (a.semester || 0) - (b.semester || 0);
       return 0;
     });
 
@@ -214,7 +210,7 @@ const CourseManagement: React.FC = () => {
   // Department distribution for Pie chart
   const departmentDistribution = useMemo(() => {
     const distribution: { [key: string]: number } = {};
-    courses.forEach(course => {
+    courses.forEach((course) => {
       const deptName = getDepartmentName(course.department_id);
       distribution[deptName] = (distribution[deptName] || 0) + 1;
     });
@@ -223,32 +219,34 @@ const CourseManagement: React.FC = () => {
 
   const departmentChartData = {
     labels: Object.keys(departmentDistribution),
-    datasets: [{
-      data: Object.values(departmentDistribution),
-      backgroundColor: [
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(16, 185, 129, 0.8)',
-        'rgba(168, 85, 247, 0.8)',
-        'rgba(251, 146, 60, 0.8)',
-        'rgba(236, 72, 153, 0.8)',
-        'rgba(14, 165, 233, 0.8)',
-      ],
-      borderColor: [
-        'rgb(59, 130, 246)',
-        'rgb(16, 185, 129)',
-        'rgb(168, 85, 247)',
-        'rgb(251, 146, 60)',
-        'rgb(236, 72, 153)',
-        'rgb(14, 165, 233)',
-      ],
-      borderWidth: 2,
-    }],
+    datasets: [
+      {
+        data: Object.values(departmentDistribution),
+        backgroundColor: [
+          "rgba(59, 130, 246, 0.8)",
+          "rgba(16, 185, 129, 0.8)",
+          "rgba(168, 85, 247, 0.8)",
+          "rgba(251, 146, 60, 0.8)",
+          "rgba(236, 72, 153, 0.8)",
+          "rgba(14, 165, 233, 0.8)",
+        ],
+        borderColor: [
+          "rgb(59, 130, 246)",
+          "rgb(16, 185, 129)",
+          "rgb(168, 85, 247)",
+          "rgb(251, 146, 60)",
+          "rgb(236, 72, 153)",
+          "rgb(14, 165, 233)",
+        ],
+        borderWidth: 2,
+      },
+    ],
   };
 
   // Semester distribution for Bar chart
   const semesterDistribution = useMemo(() => {
     const distribution: number[] = new Array(8).fill(0);
-    courses.forEach(course => {
+    courses.forEach((course) => {
       if (course.semester >= 1 && course.semester <= 8) {
         distribution[course.semester - 1]++;
       }
@@ -257,15 +255,17 @@ const CourseManagement: React.FC = () => {
   }, [courses]);
 
   const semesterChartData = {
-    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6', 'Sem 7', 'Sem 8'],
-    datasets: [{
-      label: 'Number of Courses',
-      data: semesterDistribution,
-      backgroundColor: 'rgba(59, 130, 246, 0.8)',
-      borderColor: 'rgb(59, 130, 246)',
-      borderWidth: 2,
-      borderRadius: 8,
-    }],
+    labels: ["Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7", "Sem 8"],
+    datasets: [
+      {
+        label: "Number of Courses",
+        data: semesterDistribution,
+        backgroundColor: "rgba(59, 130, 246, 0.8)",
+        borderColor: "rgb(59, 130, 246)",
+        borderWidth: 2,
+        borderRadius: 8,
+      },
+    ],
   };
 
   const chartOptions = {
@@ -273,11 +273,11 @@ const CourseManagement: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom' as const,
+        position: "bottom" as const,
         labels: { padding: 15, font: { size: 11 }, usePointStyle: true },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
         padding: 12,
       },
     },
@@ -286,7 +286,7 @@ const CourseManagement: React.FC = () => {
   const barChartOptions = {
     ...chartOptions,
     scales: {
-      y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+      y: { beginAtZero: true, grid: { color: "rgba(0, 0, 0, 0.05)" } },
       x: { grid: { display: false } },
     },
   };
@@ -378,7 +378,10 @@ const CourseManagement: React.FC = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
         {/* Total Courses Card */}
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.1s'}}>
+        <div
+          className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.1s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
@@ -397,7 +400,10 @@ const CourseManagement: React.FC = () => {
         </div>
 
         {/* Departments Card */}
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.2s'}}>
+        <div
+          className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.2s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
@@ -416,15 +422,22 @@ const CourseManagement: React.FC = () => {
         </div>
 
         {/* Filtered Results Card */}
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.3s'}}>
+        <div
+          className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.3s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
               <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">Showing Results</p>
-              <p className="text-3xl sm:text-4xl font-bold mb-2">{filteredAndSortedCourses.length}</p>
+              <p className="text-3xl sm:text-4xl font-bold mb-2">
+                {filteredAndSortedCourses.length}
+              </p>
               <div className="flex items-center mt-2">
                 <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm">
-                  {(filterSemester || filterDepartment || searchQuery) ? '🔍 Filtered' : '✓ All courses'}
+                  {filterSemester || filterDepartment || searchQuery
+                    ? "🔍 Filtered"
+                    : "✓ All courses"}
                 </span>
               </div>
             </div>
@@ -435,11 +448,16 @@ const CourseManagement: React.FC = () => {
         </div>
 
         {/* Analytics Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.4s'}}>
+        <div
+          className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.4s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
-              <p className="text-orange-100 text-xs sm:text-sm font-medium mb-1">Avg Per Department</p>
+              <p className="text-orange-100 text-xs sm:text-sm font-medium mb-1">
+                Avg Per Department
+              </p>
               <p className="text-3xl sm:text-4xl font-bold mb-2">
                 {departments.length > 0 ? Math.ceil(courses.length / departments.length) : 0}
               </p>
@@ -460,7 +478,10 @@ const CourseManagement: React.FC = () => {
       {courses.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
           {/* Department Distribution Pie Chart */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 hover:shadow-2xl transition-all duration-300 border-t-4 border-blue-500 animate-slideInLeft" style={{animationDelay: '0.5s'}}>
+          <div
+            className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 hover:shadow-2xl transition-all duration-300 border-t-4 border-blue-500 animate-slideInLeft"
+            style={{ animationDelay: "0.5s" }}
+          >
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span className="text-xl sm:text-2xl mr-2">🎯</span>
               <span className="text-sm sm:text-base">Courses by Department</span>
@@ -471,7 +492,10 @@ const CourseManagement: React.FC = () => {
           </div>
 
           {/* Semester Distribution Bar Chart */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 hover:shadow-2xl transition-all duration-300 border-t-4 border-purple-500 animate-slideInRight" style={{animationDelay: '0.5s'}}>
+          <div
+            className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 hover:shadow-2xl transition-all duration-300 border-t-4 border-purple-500 animate-slideInRight"
+            style={{ animationDelay: "0.5s" }}
+          >
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <span className="text-xl sm:text-2xl mr-2">📊</span>
               <span className="text-sm sm:text-base">Courses by Semester</span>
@@ -484,7 +508,10 @@ const CourseManagement: React.FC = () => {
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 animate-slideInUp" style={{animationDelay: '0.6s'}}>
+      <div
+        className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 animate-slideInUp"
+        style={{ animationDelay: "0.6s" }}
+      >
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
@@ -496,7 +523,9 @@ const CourseManagement: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm text-sm"
               />
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">🔍</span>
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">
+                🔍
+              </span>
             </div>
           </div>
 
@@ -509,7 +538,9 @@ const CourseManagement: React.FC = () => {
             >
               <option value="">All Semesters</option>
               {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                <option key={sem} value={sem}>Semester {sem}</option>
+                <option key={sem} value={sem}>
+                  Semester {sem}
+                </option>
               ))}
             </select>
 
@@ -520,7 +551,9 @@ const CourseManagement: React.FC = () => {
             >
               <option value="">All Departments</option>
               {departments.map((dept) => (
-                <option key={dept.department_id} value={dept.department_id}>{dept.name}</option>
+                <option key={dept.department_id} value={dept.department_id}>
+                  {dept.name}
+                </option>
               ))}
             </select>
 
@@ -551,7 +584,10 @@ const CourseManagement: React.FC = () => {
       </div>
 
       {/* Courses Grid */}
-      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 animate-slideInUp" style={{animationDelay: '0.7s'}}>
+      <div
+        className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 animate-slideInUp"
+        style={{ animationDelay: "0.7s" }}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
             <span className="text-2xl sm:text-3xl mr-2">📋</span>
@@ -565,10 +601,12 @@ const CourseManagement: React.FC = () => {
               <Lottie animationData={CourseIcon} loop={true} />
             </div>
             <p className="text-gray-500 text-lg font-medium">
-              {courses.length === 0 ? 'No courses yet' : 'No courses match your filters'}
+              {courses.length === 0 ? "No courses yet" : "No courses match your filters"}
             </p>
             <p className="text-gray-400 text-sm mt-1">
-              {courses.length === 0 ? 'Add your first course to get started' : 'Try adjusting your search or filters'}
+              {courses.length === 0
+                ? "Add your first course to get started"
+                : "Try adjusting your search or filters"}
             </p>
           </div>
         ) : (
@@ -577,13 +615,15 @@ const CourseManagement: React.FC = () => {
               <div
                 key={course.course_id}
                 className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg animate-scaleIn"
-                style={{animationDelay: `${0.05 * index}s`}}
+                style={{ animationDelay: `${0.05 * index}s` }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-2xl">📖</span>
-                      <h3 className="text-base font-bold text-gray-900 line-clamp-2">{course.course_name}</h3>
+                      <h3 className="text-base font-bold text-gray-900 line-clamp-2">
+                        {course.course_name}
+                      </h3>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full font-medium">
@@ -603,7 +643,7 @@ const CourseManagement: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2 mt-4">
                   <button
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all transform hover:scale-105 flex items-center justify-center gap-1"
@@ -639,8 +679,8 @@ const CourseManagement: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar animate-scaleIn">
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4 rounded-t-2xl flex items-center justify-between">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span className="text-2xl">{editingCourseId ? '✏️' : '➕'}</span>
-                {editingCourseId ? 'Edit Course' : 'Add New Course'}
+                <span className="text-2xl">{editingCourseId ? "✏️" : "➕"}</span>
+                {editingCourseId ? "Edit Course" : "Add New Course"}
               </h2>
               <button
                 onClick={() => {
@@ -698,7 +738,9 @@ const CourseManagement: React.FC = () => {
                   >
                     <option value="">Select Semester</option>
                     {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                      <option key={sem} value={sem}>Semester {sem}</option>
+                      <option key={sem} value={sem}>
+                        Semester {sem}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -716,7 +758,9 @@ const CourseManagement: React.FC = () => {
                   >
                     <option value="">Select Department</option>
                     {departments.map((dept) => (
-                      <option key={dept.department_id} value={dept.department_id}>{dept.name}</option>
+                      <option key={dept.department_id} value={dept.department_id}>
+                        {dept.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -731,12 +775,12 @@ const CourseManagement: React.FC = () => {
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>{editingCourseId ? 'Updating...' : 'Adding...'}</span>
+                      <span>{editingCourseId ? "Updating..." : "Adding..."}</span>
                     </>
                   ) : (
                     <>
-                      <span className="text-lg">{editingCourseId ? '💾' : '➕'}</span>
-                      <span>{editingCourseId ? 'Update Course' : 'Add Course'}</span>
+                      <span className="text-lg">{editingCourseId ? "💾" : "➕"}</span>
+                      <span>{editingCourseId ? "Update Course" : "Add Course"}</span>
                     </>
                   )}
                 </button>

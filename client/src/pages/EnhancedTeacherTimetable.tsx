@@ -1,17 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { fetchTeacherTimetable, fetchTimetableViewSettingsBySection } from '../services/api';
+import React, { useEffect, useMemo, useState } from "react";
+import { fetchTeacherTimetable, fetchTimetableViewSettingsBySection } from "../services/api";
 import {
   Calendar,
   Clock,
   MapPin,
   Users,
   BookOpen,
-  Filter,
   Download,
-  Share2,
   Bell,
-  ChevronLeft,
-  ChevronRight,
   Grid3x3,
   List,
   Zap,
@@ -26,7 +22,7 @@ import {
   Moon,
   Search,
   RefreshCw,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface TimetableEntry {
   schedule_id: number;
@@ -54,15 +50,14 @@ const EnhancedTeacherTimetable: React.FC = () => {
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'timeline'>('list');
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "timeline">("list");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'lecture' | 'lab' | 'tutorial'>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<"all" | "lecture" | "lab" | "tutorial">("all");
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [showStats, setShowStats] = useState(true);
+  const [showStats] = useState(true);
 
   // View settings
-  const [gridView, setGridView] = useState(true);
   const [gridStart, setGridStart] = useState("08:00");
   const [gridEnd, setGridEnd] = useState("18:00");
   const [slotMinutes, setSlotMinutes] = useState(30);
@@ -70,7 +65,7 @@ const EnhancedTeacherTimetable: React.FC = () => {
   const [breakStart, setBreakStart] = useState("12:00");
   const [breakEnd, setBreakEnd] = useState("13:00");
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   // Real-time clock
   useEffect(() => {
@@ -83,13 +78,13 @@ const EnhancedTeacherTimetable: React.FC = () => {
     const slots: string[] = [];
     const startTime = new Date(`1970-01-01T${gridStart}:00`);
     const endTime = new Date(`1970-01-01T${gridEnd}:00`);
-    let currentTime = new Date(startTime);
-    
+    const currentTime = new Date(startTime);
+
     while (currentTime <= endTime) {
       slots.push(currentTime.toTimeString().substring(0, 5));
       currentTime.setMinutes(currentTime.getMinutes() + slotMinutes);
     }
-    
+
     return slots;
   }, [gridStart, gridEnd, slotMinutes]);
 
@@ -97,22 +92,22 @@ const EnhancedTeacherTimetable: React.FC = () => {
   const stats: ClassStats = useMemo(() => {
     const dayCount: { [key: string]: number } = {};
     let totalMinutes = 0;
-    
-    timetable.forEach(entry => {
+
+    timetable.forEach((entry) => {
       dayCount[entry.day_of_week] = (dayCount[entry.day_of_week] || 0) + 1;
-      
-      const [startHour, startMin] = entry.start_time.split(':').map(Number);
-      const [endHour, endMin] = entry.end_time.split(':').map(Number);
-      totalMinutes += (endHour * 60 + endMin) - (startHour * 60 + startMin);
+
+      const [startHour, startMin] = entry.start_time.split(":").map(Number);
+      const [endHour, endMin] = entry.end_time.split(":").map(Number);
+      totalMinutes += endHour * 60 + endMin - (startHour * 60 + startMin);
     });
 
-    const busiestDay = Object.entries(dayCount).sort((a, b) => b[1] - a[1])[0]?.[0] || 'None';
-    
+    const busiestDay = Object.entries(dayCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "None";
+
     return {
       totalClasses: timetable.length,
-      lecturesCount: timetable.filter(e => e.class_type?.toLowerCase() === 'lecture').length,
-      labsCount: timetable.filter(e => e.class_type?.toLowerCase() === 'lab').length,
-      tutorialsCount: timetable.filter(e => e.class_type?.toLowerCase() === 'tutorial').length,
+      lecturesCount: timetable.filter((e) => e.class_type?.toLowerCase() === "lecture").length,
+      labsCount: timetable.filter((e) => e.class_type?.toLowerCase() === "lab").length,
+      tutorialsCount: timetable.filter((e) => e.class_type?.toLowerCase() === "tutorial").length,
       busiestDay,
       avgClassesPerDay: timetable.length / 6,
       totalHours: totalMinutes / 60,
@@ -121,24 +116,25 @@ const EnhancedTeacherTimetable: React.FC = () => {
 
   // Filter timetable
   const filteredTimetable = useMemo(() => {
-    return timetable.filter(entry => {
-      const matchesSearch = entry.course_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          entry.course_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          entry.classroom.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesType = filterType === 'all' || entry.class_type?.toLowerCase() === filterType;
+    return timetable.filter((entry) => {
+      const matchesSearch =
+        entry.course_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        entry.course_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        entry.classroom.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = filterType === "all" || entry.class_type?.toLowerCase() === filterType;
       const matchesDay = !selectedDay || entry.day_of_week === selectedDay;
-      
+
       return matchesSearch && matchesType && matchesDay;
     });
   }, [timetable, searchQuery, filterType, selectedDay]);
 
   // Organize by day
   const organizedTimetable = useMemo(() => {
-    return days.map(day => ({
+    return days.map((day) => ({
       day,
       classes: filteredTimetable
-        .filter(entry => entry.day_of_week === day)
-        .sort((a, b) => a.start_time.localeCompare(b.start_time))
+        .filter((entry) => entry.day_of_week === day)
+        .sort((a, b) => a.start_time.localeCompare(b.start_time)),
     }));
   }, [filteredTimetable]);
 
@@ -146,11 +142,9 @@ const EnhancedTeacherTimetable: React.FC = () => {
   const getCurrentClass = () => {
     const now = currentTime.toTimeString().substring(0, 5);
     const today = days[currentTime.getDay() - 1];
-    
-    return timetable.find(entry => 
-      entry.day_of_week === today &&
-      entry.start_time <= now &&
-      entry.end_time > now
+
+    return timetable.find(
+      (entry) => entry.day_of_week === today && entry.start_time <= now && entry.end_time > now
     );
   };
 
@@ -158,48 +152,48 @@ const EnhancedTeacherTimetable: React.FC = () => {
   const getNextClass = () => {
     const now = currentTime.toTimeString().substring(0, 5);
     const today = days[currentTime.getDay() - 1];
-    
+
     return timetable
-      .filter(entry => entry.day_of_week === today && entry.start_time > now)
+      .filter((entry) => entry.day_of_week === today && entry.start_time > now)
       .sort((a, b) => a.start_time.localeCompare(b.start_time))[0];
   };
 
   // Get time period
   const getTimePeriod = (time: string) => {
-    const hour = parseInt(time.split(':')[0]);
-    if (hour < 12) return { icon: Sunrise, label: 'Morning', color: 'text-amber-500' };
-    if (hour < 17) return { icon: Sun, label: 'Afternoon', color: 'text-orange-500' };
-    if (hour < 20) return { icon: Sunset, label: 'Evening', color: 'text-purple-500' };
-    return { icon: Moon, label: 'Night', color: 'text-indigo-500' };
+    const hour = parseInt(time.split(":")[0]);
+    if (hour < 12) return { icon: Sunrise, label: "Morning", color: "text-amber-500" };
+    if (hour < 17) return { icon: Sun, label: "Afternoon", color: "text-orange-500" };
+    if (hour < 20) return { icon: Sunset, label: "Evening", color: "text-purple-500" };
+    return { icon: Moon, label: "Night", color: "text-indigo-500" };
   };
 
   // Class type styling
   const getClassTypeStyle = (classType: string) => {
-    const type = classType?.toLowerCase() || 'lecture';
+    const type = classType?.toLowerCase() || "lecture";
     const styles = {
       lecture: {
-        gradient: 'from-blue-500 via-blue-600 to-indigo-600',
-        bg: 'bg-blue-50',
-        text: 'text-blue-700',
-        border: 'border-blue-300',
-        icon: '🎓',
-        glow: 'shadow-blue-500/50',
+        gradient: "from-blue-500 via-blue-600 to-indigo-600",
+        bg: "bg-blue-50",
+        text: "text-blue-700",
+        border: "border-blue-300",
+        icon: "🎓",
+        glow: "shadow-blue-500/50",
       },
       lab: {
-        gradient: 'from-purple-500 via-purple-600 to-pink-600',
-        bg: 'bg-purple-50',
-        text: 'text-purple-700',
-        border: 'border-purple-300',
-        icon: '🔬',
-        glow: 'shadow-purple-500/50',
+        gradient: "from-purple-500 via-purple-600 to-pink-600",
+        bg: "bg-purple-50",
+        text: "text-purple-700",
+        border: "border-purple-300",
+        icon: "🔬",
+        glow: "shadow-purple-500/50",
       },
       tutorial: {
-        gradient: 'from-green-500 via-emerald-600 to-teal-600',
-        bg: 'bg-green-50',
-        text: 'text-green-700',
-        border: 'border-green-300',
-        icon: '📚',
-        glow: 'shadow-green-500/50',
+        gradient: "from-green-500 via-emerald-600 to-teal-600",
+        bg: "bg-green-50",
+        text: "text-green-700",
+        border: "border-green-300",
+        icon: "📚",
+        glow: "shadow-green-500/50",
       },
     };
     return styles[type as keyof typeof styles] || styles.lecture;
@@ -210,9 +204,9 @@ const EnhancedTeacherTimetable: React.FC = () => {
     try {
       const sectionId = 1;
       const settings = await fetchTimetableViewSettingsBySection(sectionId);
-      
+
       if (settings) {
-        setGridView(settings.gridView);
+        // setGridView(settings.gridView);
         setGridStart(settings.gridStart);
         setGridEnd(settings.gridEnd);
         setSlotMinutes(settings.slotMinutes);
@@ -221,37 +215,37 @@ const EnhancedTeacherTimetable: React.FC = () => {
         setBreakEnd(settings.breakEnd);
       }
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      console.error("Failed to load settings:", error);
     }
   };
 
   useEffect(() => {
     const getTimetable = async () => {
       try {
-        const rawUser = localStorage.getItem('user');
+        const rawUser = localStorage.getItem("user");
         const user = rawUser ? JSON.parse(rawUser) : null;
         const teacherId = user?.profile?.teacher_id || user?.user_id || user?.id;
-        
+
         if (teacherId) {
           await loadCoordinatorViewSettings(String(teacherId));
           const data = await fetchTeacherTimetable(String(teacherId));
-          
+
           const mapped = (Array.isArray(data) ? data : []).map((e: any) => ({
             day_of_week: e.day_of_week,
-            course_name: e.course?.course_name ?? e.course_name ?? 'Unknown Course',
-            course_code: e.course?.course_code ?? e.course_code ?? 'N/A',
+            course_name: e.course?.course_name ?? e.course_name ?? "Unknown Course",
+            course_code: e.course?.course_code ?? e.course_code ?? "N/A",
             start_time: e.start_time,
             end_time: e.end_time,
             schedule_id: e.schedule_id ?? e.id,
-            class_type: e.class_type || 'Lecture',
-            classroom: e.classroom || 'TBA',
-            section: e.section?.section_name || e.section_id || 'N/A',
+            class_type: e.class_type || "Lecture",
+            classroom: e.classroom || "TBA",
+            section: e.section?.section_name || e.section_id || "N/A",
           }));
-          
+
           setTimetable(mapped);
         }
       } catch (err) {
-        setError('Failed to fetch timetable');
+        setError("Failed to fetch timetable");
       } finally {
         setLoading(false);
       }
@@ -291,7 +285,7 @@ const EnhancedTeacherTimetable: React.FC = () => {
             <AlertCircle className="w-20 h-20 text-red-500 mx-auto mb-6" />
             <h3 className="text-3xl font-bold text-gray-800 mb-4">Oops!</h3>
             <p className="text-gray-600 mb-8">{error}</p>
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
             >
@@ -317,7 +311,12 @@ const EnhancedTeacherTimetable: React.FC = () => {
                 </span>
               </h1>
               <p className="text-gray-600 text-lg">
-                {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {currentTime.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </p>
               <div className="flex items-center gap-2 mt-2">
                 <Clock className="w-5 h-5 text-purple-600" />
@@ -337,7 +336,9 @@ const EnhancedTeacherTimetable: React.FC = () => {
                 <h3 className="text-2xl font-bold mb-1">{currentClass.course_name}</h3>
                 <div className="space-y-1 text-sm opacity-90">
                   <div>📍 {currentClass.classroom}</div>
-                  <div>⏰ {currentClass.start_time} - {currentClass.end_time}</div>
+                  <div>
+                    ⏰ {currentClass.start_time} - {currentClass.end_time}
+                  </div>
                 </div>
               </div>
             ) : nextClass ? (
@@ -349,7 +350,9 @@ const EnhancedTeacherTimetable: React.FC = () => {
                 <h3 className="text-2xl font-bold mb-1">{nextClass.course_name}</h3>
                 <div className="space-y-1 text-sm opacity-90">
                   <div>📍 {nextClass.classroom}</div>
-                  <div>⏰ {nextClass.start_time} - {nextClass.end_time}</div>
+                  <div>
+                    ⏰ {nextClass.start_time} - {nextClass.end_time}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -379,22 +382,28 @@ const EnhancedTeacherTimetable: React.FC = () => {
             <TrendingUp className="w-8 h-8 mb-3 opacity-80" />
             <div className="text-4xl font-bold mb-2">{stats.busiestDay}</div>
             <div className="text-purple-100">Busiest Day</div>
-            <div className="text-sm mt-2 opacity-80">{stats.avgClassesPerDay.toFixed(1)} avg/day</div>
+            <div className="text-sm mt-2 opacity-80">
+              {stats.avgClassesPerDay.toFixed(1)} avg/day
+            </div>
           </div>
 
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
             <Star className="w-8 h-8 mb-3 opacity-80" />
             <div className="text-4xl font-bold mb-2">{stats.lecturesCount}</div>
             <div className="text-green-100">Lectures</div>
-            <div className="text-sm mt-2 opacity-80">{stats.labsCount} Labs • {stats.tutorialsCount} Tutorials</div>
+            <div className="text-sm mt-2 opacity-80">
+              {stats.labsCount} Labs • {stats.tutorialsCount} Tutorials
+            </div>
           </div>
 
           <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-6 text-white shadow-xl">
             <Coffee className="w-8 h-8 mb-3 opacity-80" />
-            <div className="text-4xl font-bold mb-2">{breakEnabled ? 'Yes' : 'No'}</div>
+            <div className="text-4xl font-bold mb-2">{breakEnabled ? "Yes" : "No"}</div>
             <div className="text-orange-100">Break Time</div>
             {breakEnabled && (
-              <div className="text-sm mt-2 opacity-80">{breakStart} - {breakEnd}</div>
+              <div className="text-sm mt-2 opacity-80">
+                {breakStart} - {breakEnd}
+              </div>
             )}
           </div>
         </div>
@@ -432,33 +441,33 @@ const EnhancedTeacherTimetable: React.FC = () => {
           {/* View Mode Toggle */}
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
-                viewMode === 'grid'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-200'
+                viewMode === "grid"
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-200"
               }`}
             >
               <Grid3x3 className="w-4 h-4" />
               Grid
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
-                viewMode === 'list'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-200'
+                viewMode === "list"
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-200"
               }`}
             >
               <List className="w-4 h-4" />
               List
             </button>
             <button
-              onClick={() => setViewMode('timeline')}
+              onClick={() => setViewMode("timeline")}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
-                viewMode === 'timeline'
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-200'
+                viewMode === "timeline"
+                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-200"
               }`}
             >
               <Calendar className="w-4 h-4" />
@@ -479,20 +488,20 @@ const EnhancedTeacherTimetable: React.FC = () => {
             onClick={() => setSelectedDay(null)}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
               !selectedDay
-                ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             All Days
           </button>
-          {days.map(day => (
+          {days.map((day) => (
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
               className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
                 selectedDay === day
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               {day.substring(0, 3)}
@@ -511,7 +520,7 @@ const EnhancedTeacherTimetable: React.FC = () => {
       ) : (
         <>
           {/* Enhanced Grid View */}
-          {viewMode === 'grid' && (
+          {viewMode === "grid" && (
             <div className="bg-white rounded-3xl shadow-xl border border-purple-100 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -521,35 +530,45 @@ const EnhancedTeacherTimetable: React.FC = () => {
                         <Clock className="w-5 h-5 inline mr-2" />
                         Time
                       </th>
-                      {days.map(day => (
-                        <th key={day} className="p-4 text-center text-white font-bold min-w-[220px]">
+                      {days.map((day) => (
+                        <th
+                          key={day}
+                          className="p-4 text-center text-white font-bold min-w-[220px]"
+                        >
                           <div>{day}</div>
                           <div className="text-xs opacity-80 mt-1">
-                            {organizedTimetable.find(d => d.day === day)?.classes.length || 0} classes
+                            {organizedTimetable.find((d) => d.day === day)?.classes.length || 0}{" "}
+                            classes
                           </div>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {timeSlots.map(timeSlot => {
-                      const isBreakTime = breakEnabled && timeSlot >= breakStart && timeSlot < breakEnd;
+                    {timeSlots.map((timeSlot) => {
+                      const isBreakTime =
+                        breakEnabled && timeSlot >= breakStart && timeSlot < breakEnd;
                       const timePeriod = getTimePeriod(timeSlot);
-                      
+
                       return (
-                        <tr key={timeSlot} className={`border-b border-gray-100 transition-all hover:bg-purple-50 ${
-                          isBreakTime ? 'bg-orange-50' : ''
-                        }`}>
-                          <td className={`p-4 font-semibold sticky left-0 ${
-                            isBreakTime ? 'bg-orange-100' : 'bg-gray-50'
-                          } border-r border-gray-200`}>
+                        <tr
+                          key={timeSlot}
+                          className={`border-b border-gray-100 transition-all hover:bg-purple-50 ${
+                            isBreakTime ? "bg-orange-50" : ""
+                          }`}
+                        >
+                          <td
+                            className={`p-4 font-semibold sticky left-0 ${
+                              isBreakTime ? "bg-orange-100" : "bg-gray-50"
+                            } border-r border-gray-200`}
+                          >
                             <div className="flex items-center gap-2">
                               {isBreakTime ? (
                                 <Coffee className="w-5 h-5 text-orange-600" />
                               ) : (
                                 <timePeriod.icon className={`w-5 h-5 ${timePeriod.color}`} />
                               )}
-                              <span className={isBreakTime ? 'text-orange-700' : 'text-gray-700'}>
+                              <span className={isBreakTime ? "text-orange-700" : "text-gray-700"}>
                                 {timeSlot}
                               </span>
                             </div>
@@ -559,21 +578,31 @@ const EnhancedTeacherTimetable: React.FC = () => {
                               </div>
                             )}
                           </td>
-                          {days.map(day => {
-                            const classForTimeSlot = filteredTimetable.find(entry => 
-                              entry.day_of_week === day && 
-                              entry.start_time <= timeSlot && 
-                              entry.end_time > timeSlot
+                          {days.map((day) => {
+                            const classForTimeSlot = filteredTimetable.find(
+                              (entry) =>
+                                entry.day_of_week === day &&
+                                entry.start_time <= timeSlot &&
+                                entry.end_time > timeSlot
                             );
 
                             return (
-                              <td key={`${day}-${timeSlot}`} className={`p-2 min-h-[80px] relative ${
-                                isBreakTime ? 'bg-orange-50' : ''
-                              }`}>
+                              <td
+                                key={`${day}-${timeSlot}`}
+                                className={`p-2 min-h-[80px] relative ${
+                                  isBreakTime ? "bg-orange-50" : ""
+                                }`}
+                              >
                                 {classForTimeSlot ? (
-                                  <div className={`bg-gradient-to-br ${getClassTypeStyle(classForTimeSlot.class_type).gradient} text-white p-4 rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200 cursor-pointer`}>
+                                  <div
+                                    className={`bg-gradient-to-br ${
+                                      getClassTypeStyle(classForTimeSlot.class_type).gradient
+                                    } text-white p-4 rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200 cursor-pointer`}
+                                  >
                                     <div className="flex items-center justify-between mb-2">
-                                      <span className="text-2xl">{getClassTypeStyle(classForTimeSlot.class_type).icon}</span>
+                                      <span className="text-2xl">
+                                        {getClassTypeStyle(classForTimeSlot.class_type).icon}
+                                      </span>
                                       <span className="text-xs bg-white/30 px-2 py-1 rounded-full font-medium">
                                         {classForTimeSlot.class_type}
                                       </span>
@@ -614,10 +643,13 @@ const EnhancedTeacherTimetable: React.FC = () => {
           )}
 
           {/* Enhanced List View */}
-          {viewMode === 'list' && (
+          {viewMode === "list" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {organizedTimetable.map(({ day, classes }) => (
-                <div key={day} className="bg-white rounded-3xl shadow-xl border border-purple-100 overflow-hidden transform hover:scale-105 transition-all duration-300">
+                <div
+                  key={day}
+                  className="bg-white rounded-3xl shadow-xl border border-purple-100 overflow-hidden transform hover:scale-105 transition-all duration-300"
+                >
                   <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white p-6">
                     <div className="flex items-center justify-between">
                       <div>
@@ -635,10 +667,10 @@ const EnhancedTeacherTimetable: React.FC = () => {
                         <p className="text-gray-400 text-sm mt-2">Enjoy your free day! 🎉</p>
                       </div>
                     ) : (
-                      classes.map(classItem => {
+                      classes.map((classItem) => {
                         const style = getClassTypeStyle(classItem.class_type);
                         const period = getTimePeriod(classItem.start_time);
-                        
+
                         return (
                           <div
                             key={classItem.schedule_id}
@@ -689,10 +721,13 @@ const EnhancedTeacherTimetable: React.FC = () => {
           )}
 
           {/* Timeline View */}
-          {viewMode === 'timeline' && (
+          {viewMode === "timeline" && (
             <div className="space-y-6">
               {organizedTimetable.map(({ day, classes }) => (
-                <div key={day} className="bg-white rounded-3xl shadow-xl p-8 border border-purple-100">
+                <div
+                  key={day}
+                  className="bg-white rounded-3xl shadow-xl p-8 border border-purple-100"
+                >
                   <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                     {day}
                   </h2>
@@ -705,14 +740,18 @@ const EnhancedTeacherTimetable: React.FC = () => {
                     <div className="relative pl-8 border-l-4 border-purple-200 space-y-8">
                       {classes.map((classItem, index) => {
                         const style = getClassTypeStyle(classItem.class_type);
-                        const period = getTimePeriod(classItem.start_time);
-                        
+                        const _period = getTimePeriod(classItem.start_time);
+
                         return (
                           <div key={classItem.schedule_id} className="relative">
-                            <div className={`absolute -left-[42px] w-8 h-8 rounded-full bg-gradient-to-br ${style.gradient} flex items-center justify-center text-white shadow-lg`}>
+                            <div
+                              className={`absolute -left-[42px] w-8 h-8 rounded-full bg-gradient-to-br ${style.gradient} flex items-center justify-center text-white shadow-lg`}
+                            >
                               {index + 1}
                             </div>
-                            <div className={`bg-gradient-to-br ${style.gradient} text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200`}>
+                            <div
+                              className={`bg-gradient-to-br ${style.gradient} text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-200`}
+                            >
                               <div className="flex items-start justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                   <span className="text-4xl">{style.icon}</span>

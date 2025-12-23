@@ -12,6 +12,12 @@
     "build": "npm run build-client && npm run build-server",
     "dev-client": "cd client && npm start",
     "dev-server": "cd server && npm run dev",
+    "lint": "npm run lint:server && npm run lint:client",
+    "lint:server": "cd server && npx eslint src --ext .ts",
+    "lint:client": "cd client && npx eslint src --ext .ts,.tsx",
+    "lint:fix": "npm run lint:fix:server && npm run lint:fix:client",
+    "lint:fix:server": "cd server && npx eslint src --ext .ts --fix",
+    "lint:fix:client": "cd client && npx eslint src --ext .ts,.tsx --fix",
     "vercel-build": "cd client && npm install && npm run build"
   },
   "author": "Optimistic Mutant Coders",

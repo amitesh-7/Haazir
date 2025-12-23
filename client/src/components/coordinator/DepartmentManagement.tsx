@@ -1,27 +1,32 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   fetchAllDepartments,
-  fetchAllCourses,
   createCourse,
   updateCourse,
   deleteCourse,
   api,
 } from "../../services/api";
 import SectionManagement from "./SectionManagement";
-import BulkSectionEnrollment from './BulkSectionEnrollmentSimple';
+import BulkSectionEnrollment from "./BulkSectionEnrollmentSimple";
 import BatchBifurcation from "./BatchBifurcation";
-import Lottie from 'lottie-react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import Lottie from "lottie-react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+import BuildingIcon from "../../assets/lottie/building-icon.json";
+import CourseIcon from "../../assets/lottie/Courses.json";
+import StudentIcon from "../../assets/lottie/STUDENT.json";
+import AnalyticsIcon from "../../assets/lottie/analytics-icon.json";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-// Import Lottie animations
-import BuildingIcon from '../../assets/lottie/building-icon.json';
-import CourseIcon from '../../assets/lottie/Courses.json';
-import StudentIcon from '../../assets/lottie/STUDENT.json';
-import AnalyticsIcon from '../../assets/lottie/analytics-icon.json';
 
 const DepartmentManagement: React.FC = () => {
   const [departments, setDepartments] = useState<any[]>([]);
@@ -38,7 +43,7 @@ const DepartmentManagement: React.FC = () => {
   });
   const [courseError, setCourseError] = useState<string | null>(null);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
-  
+
   // Student enrollment and batch bifurcation states
   const [selectedSectionForBifurcation, setSelectedSectionForBifurcation] = useState<any>(null);
   const [showStudentEnrollment, setShowStudentEnrollment] = useState(false);
@@ -139,10 +144,7 @@ const DepartmentManagement: React.FC = () => {
       setCourseError("Course name and code are required");
       return;
     }
-    if (
-      courseForm.course_name.trim().length < 2 ||
-      courseForm.course_code.trim().length < 2
-    ) {
+    if (courseForm.course_name.trim().length < 2 || courseForm.course_code.trim().length < 2) {
       setCourseError("Course name and code must be at least 2 characters");
       return;
     }
@@ -162,8 +164,7 @@ const DepartmentManagement: React.FC = () => {
       setCourseForm({ course_name: "", course_code: "" });
       await loadCourses(selectedDeptId);
     } catch (e: any) {
-      const msg =
-        e?.response?.data?.message || e?.message || "Failed to save course";
+      const msg = e?.response?.data?.message || e?.message || "Failed to save course";
       setCourseError(msg);
     }
   };
@@ -180,21 +181,21 @@ const DepartmentManagement: React.FC = () => {
 
   // Chart Data - Department Statistics
   const departmentStatsData = {
-    labels: departments.map(d => (d.name ?? d.department_name).split(' ')[0]),
+    labels: departments.map((d) => (d.name ?? d.department_name).split(" ")[0]),
     datasets: [
       {
-        label: 'Courses',
+        label: "Courses",
         data: departments.map(() => Math.floor(Math.random() * 20) + 5),
-        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: "rgba(59, 130, 246, 0.8)",
+        borderColor: "rgb(59, 130, 246)",
         borderWidth: 2,
         borderRadius: 8,
       },
       {
-        label: 'Students',
+        label: "Students",
         data: departments.map(() => Math.floor(Math.random() * 200) + 50),
-        backgroundColor: 'rgba(16, 185, 129, 0.8)',
-        borderColor: 'rgb(16, 185, 129)',
+        backgroundColor: "rgba(16, 185, 129, 0.8)",
+        borderColor: "rgb(16, 185, 129)",
         borderWidth: 2,
         borderRadius: 8,
       },
@@ -206,7 +207,7 @@ const DepartmentManagement: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: "top" as const,
         labels: {
           padding: 15,
           font: { size: 12 },
@@ -214,14 +215,14 @@ const DepartmentManagement: React.FC = () => {
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
         padding: 12,
       },
     },
     scales: {
       y: {
         beginAtZero: true,
-        grid: { color: 'rgba(0, 0, 0, 0.05)', drawBorder: false },
+        grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
       },
       x: {
         grid: { display: false },
@@ -311,11 +312,16 @@ const DepartmentManagement: React.FC = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-8">
         {/* Total Departments Card */}
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.1s'}}>
+        <div
+          className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.1s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
-              <p className="text-purple-100 text-xs sm:text-sm font-medium mb-1">Total Departments</p>
+              <p className="text-purple-100 text-xs sm:text-sm font-medium mb-1">
+                Total Departments
+              </p>
               <p className="text-3xl sm:text-4xl font-bold mb-2">{departments.length}</p>
               <div className="flex items-center mt-2">
                 <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm">
@@ -330,7 +336,10 @@ const DepartmentManagement: React.FC = () => {
         </div>
 
         {/* Total Courses Card */}
-        <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.2s'}}>
+        <div
+          className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.2s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
@@ -338,7 +347,7 @@ const DepartmentManagement: React.FC = () => {
               <p className="text-3xl sm:text-4xl font-bold mb-2">{courses.length}</p>
               <div className="flex items-center mt-2">
                 <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm">
-                  {selectedDeptId ? `In selected dept` : 'All departments'}
+                  {selectedDeptId ? `In selected dept` : "All departments"}
                 </span>
               </div>
             </div>
@@ -349,7 +358,10 @@ const DepartmentManagement: React.FC = () => {
         </div>
 
         {/* Active Sections Card */}
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.3s'}}>
+        <div
+          className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.3s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
@@ -368,11 +380,16 @@ const DepartmentManagement: React.FC = () => {
         </div>
 
         {/* Analytics Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp" style={{animationDelay: '0.4s'}}>
+        <div
+          className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden animate-slideInUp"
+          style={{ animationDelay: "0.4s" }}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           <div className="flex items-start justify-between relative z-10">
             <div className="flex-1">
-              <p className="text-orange-100 text-xs sm:text-sm font-medium mb-1">Avg Courses/Dept</p>
+              <p className="text-orange-100 text-xs sm:text-sm font-medium mb-1">
+                Avg Courses/Dept
+              </p>
               <p className="text-3xl sm:text-4xl font-bold mb-2">
                 {departments.length > 0 ? Math.ceil(courses.length / departments.length) : 0}
               </p>
@@ -391,7 +408,10 @@ const DepartmentManagement: React.FC = () => {
 
       {/* Department Statistics Chart */}
       {departments.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 hover:shadow-2xl transition-all duration-300 border-t-4 border-purple-500 animate-slideInUp" style={{animationDelay: '0.5s'}}>
+        <div
+          className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 hover:shadow-2xl transition-all duration-300 border-t-4 border-purple-500 animate-slideInUp"
+          style={{ animationDelay: "0.5s" }}
+        >
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <span className="text-xl sm:text-2xl mr-2">📊</span>
             <span className="text-sm sm:text-base">Department Statistics</span>
@@ -403,7 +423,10 @@ const DepartmentManagement: React.FC = () => {
       )}
 
       {/* Departments Management */}
-      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 animate-slideInLeft" style={{animationDelay: '0.6s'}}>
+      <div
+        className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 animate-slideInLeft"
+        style={{ animationDelay: "0.6s" }}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
             <span className="text-2xl sm:text-3xl mr-2">🏛️</span>
@@ -423,7 +446,7 @@ const DepartmentManagement: React.FC = () => {
               placeholder="Enter department name (e.g., Computer Science)"
               value={newDeptName}
               onChange={(e) => setNewDeptName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && createDepartment()}
+              onKeyPress={(e) => e.key === "Enter" && createDepartment()}
             />
             <button
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-2"
@@ -445,25 +468,29 @@ const DepartmentManagement: React.FC = () => {
               <div
                 key={id}
                 className={`bg-gradient-to-br ${
-                  isSelected 
-                    ? 'from-purple-500 to-indigo-600 text-white shadow-xl' 
-                    : 'from-gray-50 to-gray-100 text-gray-900 hover:from-purple-50 hover:to-indigo-50'
+                  isSelected
+                    ? "from-purple-500 to-indigo-600 text-white shadow-xl"
+                    : "from-gray-50 to-gray-100 text-gray-900 hover:from-purple-50 hover:to-indigo-50"
                 } rounded-xl p-5 transition-all duration-300 hover:shadow-lg cursor-pointer border-2 ${
-                  isSelected ? 'border-purple-300' : 'border-transparent hover:border-purple-200'
+                  isSelected ? "border-purple-300" : "border-transparent hover:border-purple-200"
                 } animate-scaleIn`}
-                style={{animationDelay: `${0.1 * index}s`}}
+                style={{ animationDelay: `${0.1 * index}s` }}
                 onClick={() => !isEditing && setSelectedDeptId(id)}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3 flex-1">
-                    <div className={`w-3 h-3 rounded-full ${isSelected ? 'bg-white animate-pulse' : 'bg-purple-400'}`}></div>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        isSelected ? "bg-white animate-pulse" : "bg-purple-400"
+                      }`}
+                    ></div>
                     {isEditing ? (
                       <input
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 text-sm focus:ring-2 focus:ring-purple-500"
                         value={editingDeptName}
                         onChange={(e) => setEditingDeptName(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        onKeyPress={(e) => e.key === 'Enter' && saveDept()}
+                        onKeyPress={(e) => e.key === "Enter" && saveDept()}
                         autoFocus
                       />
                     ) : (
@@ -471,7 +498,7 @@ const DepartmentManagement: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mt-4">
                   {isEditing ? (
                     <div className="flex gap-2 w-full" onClick={(e) => e.stopPropagation()}>
@@ -494,15 +521,25 @@ const DepartmentManagement: React.FC = () => {
                   ) : (
                     <div className="flex gap-2 w-full" onClick={(e) => e.stopPropagation()}>
                       <button
-                        className={`flex-1 ${isSelected ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} px-3 py-2 rounded-lg font-medium text-sm transition-all`}
+                        className={`flex-1 ${
+                          isSelected
+                            ? "bg-white/20 hover:bg-white/30 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        } px-3 py-2 rounded-lg font-medium text-sm transition-all`}
                         onClick={() => startEditDept(d)}
                       >
                         ✏️ Edit
                       </button>
                       <button
-                        className={`flex-1 ${isSelected ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-red-600 hover:bg-red-700 text-white'} px-3 py-2 rounded-lg font-medium text-sm transition-all`}
+                        className={`flex-1 ${
+                          isSelected
+                            ? "bg-white/20 hover:bg-white/30 text-white"
+                            : "bg-red-600 hover:bg-red-700 text-white"
+                        } px-3 py-2 rounded-lg font-medium text-sm transition-all`}
                         onClick={() => {
-                          if (window.confirm(`Delete department "${d.name ?? d.department_name}"?`)) {
+                          if (
+                            window.confirm(`Delete department "${d.name ?? d.department_name}"?`)
+                          ) {
                             deleteDept(id);
                           }
                         }}
@@ -544,8 +581,8 @@ const DepartmentManagement: React.FC = () => {
                 }}
                 className={`px-4 py-2 rounded-md font-medium transition-colors ${
                   showStudentEnrollment
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Bulk Section Enrollment
@@ -557,8 +594,8 @@ const DepartmentManagement: React.FC = () => {
                 }}
                 className={`px-4 py-2 rounded-md font-medium transition-colors ${
                   showBatchBifurcation
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 Batch Bifurcation
@@ -568,7 +605,7 @@ const DepartmentManagement: React.FC = () => {
 
           {showStudentEnrollment && (
             <div className="mt-4">
-              <BulkSectionEnrollment 
+              <BulkSectionEnrollment
                 departmentId={selectedDeptId}
                 onEnrollmentComplete={() => {
                   // Refresh data if needed
@@ -585,15 +622,17 @@ const DepartmentManagement: React.FC = () => {
                   Select Section for Batch Bifurcation
                 </label>
                 <select
-                  value={selectedSectionForBifurcation?.section_id || ''}
+                  value={selectedSectionForBifurcation?.section_id || ""}
                   onChange={(e) => {
-                    const section = availableSections.find(s => s.section_id === Number(e.target.value));
+                    const section = availableSections.find(
+                      (s) => s.section_id === Number(e.target.value)
+                    );
                     setSelectedSectionForBifurcation(section || null);
                   }}
                   className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent min-w-[300px]"
                 >
                   <option value="">Select a section</option>
-                  {availableSections.map(section => (
+                  {availableSections.map((section) => (
                     <option key={section.section_id} value={section.section_id}>
                       {section.section_name} (Semester {section.semester})
                     </option>
@@ -617,11 +656,19 @@ const DepartmentManagement: React.FC = () => {
       )}
 
       {/* Courses Management */}
-      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 animate-slideInRight" style={{animationDelay: '0.7s'}}>
+      <div
+        className="bg-white rounded-2xl shadow-xl p-4 sm:p-5 md:p-6 mb-6 sm:mb-8 animate-slideInRight"
+        style={{ animationDelay: "0.7s" }}
+      >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center">
             <span className="text-2xl sm:text-3xl mr-2">📚</span>
-            Courses {selectedDeptId && `in ${departments.find(d => String(d.department_id ?? d.id) === selectedDeptId)?.name ?? 'Selected Department'}`}
+            Courses{" "}
+            {selectedDeptId &&
+              `in ${
+                departments.find((d) => String(d.department_id ?? d.id) === selectedDeptId)?.name ??
+                "Selected Department"
+              }`}
           </h2>
         </div>
 
@@ -637,8 +684,8 @@ const DepartmentManagement: React.FC = () => {
         {/* Add/Edit Course Form */}
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 mb-6 border border-blue-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-            <span className="mr-2">{editingCourseId ? '✏️' : '➕'}</span>
-            {editingCourseId ? 'Edit Course' : 'Add New Course'}
+            <span className="mr-2">{editingCourseId ? "✏️" : "➕"}</span>
+            {editingCourseId ? "Edit Course" : "Add New Course"}
           </h3>
           {!selectedDeptId && (
             <div className="mb-3 bg-amber-50 border-l-4 border-amber-500 p-3 rounded">
@@ -665,7 +712,7 @@ const DepartmentManagement: React.FC = () => {
               onClick={submitCourse}
               disabled={!selectedDeptId}
             >
-              <span className="text-lg">{editingCourseId ? '💾' : '➕'}</span>
+              <span className="text-lg">{editingCourseId ? "💾" : "➕"}</span>
               <span>{editingCourseId ? "Update Course" : "Add Course"}</span>
             </button>
           </div>
@@ -678,7 +725,7 @@ const DepartmentManagement: React.FC = () => {
               <div
                 key={c.course_id}
                 className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-5 border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 hover:shadow-lg animate-scaleIn"
-                style={{animationDelay: `${0.1 * index}s`}}
+                style={{ animationDelay: `${0.1 * index}s` }}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -693,7 +740,7 @@ const DepartmentManagement: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2 mt-4">
                   <button
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium text-sm transition-all transform hover:scale-105 flex items-center justify-center gap-1"
@@ -730,7 +777,9 @@ const DepartmentManagement: React.FC = () => {
             <div className="w-20 h-20 mx-auto mb-4 opacity-50">
               <Lottie animationData={CourseIcon} loop={true} />
             </div>
-            <p className="text-gray-500 text-lg font-medium">Select a department to manage courses</p>
+            <p className="text-gray-500 text-lg font-medium">
+              Select a department to manage courses
+            </p>
             <p className="text-gray-400 text-sm mt-1">Choose a department from the list above</p>
           </div>
         )}

@@ -5,6 +5,8 @@ import User from "../models/User";
 import Student from "../models/Student";
 import Teacher from "../models/Teacher";
 import Section from "../models/Section";
+import logger from "../utils/logger";
+import { AuthenticatedRequest, TokenPayload } from "../types/auth";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key";
 const JWT_EXPIRE = process.env.JWT_EXPIRE || "7d";
@@ -27,39 +29,32 @@ export const register = async (req: Request, res: Response) => {
   } = req.body;
 
   try {
-    console.log("📝 Registration request received:", {
-      email,
-      role,
-      name,
-      rollNumber,
-      departmentId,
-      sectionId,
-      semester,
-      contactNumber,
-      parentName,
-      parentContact,
-      address,
-    });
+    logger.info("Registration request received", { email, role, name });
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      console.log("❌ User already exists with email:", email);
+      logger.warn("Registration failed: user already exists", { email });
       return res.status(400).json({
-        message: `A user with email '${email}' already exists. Please use a different email address.`,
+        success: false,
+        error: {
+          code: "USER_EXISTS",
+          message: `A user with email '${email}' already exists. Please use a different email address.`,
+        },
+        meta: { timestamp: new Date().toISOString() },
       });
     }
 
     // Validate required fields
     if (!email || !password || !role) {
-      console.log("❌ Missing basic required fields:", {
-        email: !!email,
-        password: !!password,
-        role: !!role,
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email, password, and role are required",
+        },
+        meta: { timestamp: new Date().toISOString() },
       });
-      return res
-        .status(400)
-        .json({ message: "Email, password, and role are required" });
     }
 
     // Hash password
@@ -75,24 +70,16 @@ export const register = async (req: Request, res: Response) => {
 
     // Create role-specific profile
     if (role === "student") {
-      console.log("🎓 Creating student profile with data:", {
-        name,
-        rollNumber,
-        departmentId,
-        semester,
-        sectionId,
-      });
+      logger.debug("Creating student profile", { name, rollNumber, departmentId, semester });
 
       if (!name || !rollNumber || !departmentId || !semester) {
-        console.log("❌ Missing student required fields:", {
-          name: !!name,
-          rollNumber: !!rollNumber,
-          departmentId: !!departmentId,
-          semester: !!semester,
-        });
         return res.status(400).json({
-          message:
-            "For student registration, name, rollNumber, departmentId and semester are required",
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "For student registration, name, rollNumber, departmentId and semester are required",
+          },
+          meta: { timestamp: new Date().toISOString() },
         });
       }
 
@@ -110,8 +97,6 @@ export const register = async (req: Request, res: Response) => {
         address: address ?? null,
       };
 
-      console.log("📊 Student data to create:", studentData);
-
       await Student.create(studentData);
     } else if (role === "teacher" && name && departmentId) {
       await Teacher.create({
@@ -122,27 +107,38 @@ export const register = async (req: Request, res: Response) => {
     }
 
     // Generate token
-    const payload = {
+    const payload: TokenPayload = {
       user_id: newUser.user_id,
       email: newUser.email,
-      role: newUser.role,
+      role: newUser.role as any,
     };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 
+    logger.info("User registered successfully", { userId: newUser.user_id, email, role });
+
     res.status(201).json({
-      message: "User registered successfully",
-      token,
-      user: {
-        user_id: newUser.user_id,
-        email: newUser.email,
-        role: newUser.role,
+      success: true,
+      data: {
+        message: "User registered successfully",
+        token,
+        user: {
+          user_id: newUser.user_id,
+          email: newUser.email,
+          role: newUser.role,
+        },
       },
+      meta: { timestamp: new Date().toISOString() },
     });
   } catch (error: any) {
-    console.error("Registration error:", error);
+    logger.error("Registration error", error);
     res.status(500).json({
-      message: "Error registering user",
-      error: error.message,
+      success: false,
+      error: {
+        code: "REGISTRATION_ERROR",
+        message: "Error registering user",
+        details: process.env.NODE_ENV !== "production" ? error.message : undefined,
+      },
+      meta: { timestamp: new Date().toISOString() },
     });
   }
 };
@@ -154,9 +150,14 @@ export const login = async (req: Request, res: Response) => {
   try {
     // Validate input
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email and password are required" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and password are required",
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
     // Find user with associated profiles
@@ -169,20 +170,36 @@ export const login = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      logger.warn("Login failed: user not found", { email });
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Invalid email or password",
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
     // Verify password
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      logger.warn("Login failed: invalid password", { email });
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Invalid email or password",
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
     // Generate token
-    const payload = {
+    const payload: TokenPayload = {
       user_id: user.user_id,
       email: user.email,
-      role: user.role,
+      role: user.role as any,
     };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 
@@ -203,29 +220,55 @@ export const login = async (req: Request, res: Response) => {
       userData.name = (user as any).teacher.name;
     }
 
+    logger.info("User logged in successfully", { userId: user.user_id, role: user.role });
+
+    // Return response in both old and new format for backward compatibility
     res.json({
+      success: true,
       message: "Login successful",
       token,
       user: userData,
+      data: {
+        token,
+        user: userData,
+      },
+      meta: { timestamp: new Date().toISOString() },
     });
   } catch (error: any) {
-    console.error("Login error:", error);
+    logger.error("Login error", error);
     res.status(500).json({
-      message: "Error logging in",
-      error: error.message,
+      success: false,
+      error: {
+        code: "LOGIN_ERROR",
+        message: "Error logging in",
+        details: process.env.NODE_ENV !== "production" ? error.message : undefined,
+      },
+      meta: { timestamp: new Date().toISOString() },
     });
   }
 };
 
 // Logout user (client-side token invalidation)
 export const logout = (req: Request, res: Response) => {
-  res.json({ message: "User logged out successfully" });
+  res.json({
+    success: true,
+    data: { message: "User logged out successfully" },
+    meta: { timestamp: new Date().toISOString() },
+  });
 };
 
 // Get current user profile
-export const getProfile = async (req: any, res: Response) => {
+export const getProfile = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = req.user.user_id;
+    const userId = req.user?.user_id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Authentication required" },
+        meta: { timestamp: new Date().toISOString() },
+      });
+    }
 
     const user = await User.findByPk(userId, {
       attributes: ["user_id", "email", "role"],
@@ -236,39 +279,65 @@ export const getProfile = async (req: any, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        error: { code: "NOT_FOUND", message: "User not found" },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
-    res.json({ user });
+    res.json({
+      success: true,
+      data: { user },
+      meta: { timestamp: new Date().toISOString() },
+    });
   } catch (error: any) {
-    console.error("Get profile error:", error);
+    logger.error("Get profile error", error);
     res.status(500).json({
-      message: "Error fetching user profile",
-      error: error.message,
+      success: false,
+      error: {
+        code: "PROFILE_ERROR",
+        message: "Error fetching user profile",
+        details: process.env.NODE_ENV !== "production" ? error.message : undefined,
+      },
+      meta: { timestamp: new Date().toISOString() },
     });
   }
 };
 
 // Change password
-export const changePassword = async (req: any, res: Response) => {
+export const changePassword = async (req: AuthenticatedRequest, res: Response) => {
   const { currentPassword, newPassword } = req.body;
 
   try {
     if (!currentPassword || !newPassword) {
-      return res
-        .status(400)
-        .json({ message: "Current password and new password are required" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Current password and new password are required",
+        },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
-    const user = await User.findByPk(req.user.user_id);
+    const user = await User.findByPk(req.user?.user_id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        error: { code: "NOT_FOUND", message: "User not found" },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
     // Verify current password
     const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
+      return res.status(400).json({
+        success: false,
+        error: { code: "INVALID_PASSWORD", message: "Current password is incorrect" },
+        meta: { timestamp: new Date().toISOString() },
+      });
     }
 
     // Hash new password
@@ -278,12 +347,23 @@ export const changePassword = async (req: any, res: Response) => {
     // Update password
     await user.update({ password_hash: hashedNewPassword });
 
-    res.json({ message: "Password changed successfully" });
+    logger.info("Password changed successfully", { userId: user.user_id });
+
+    res.json({
+      success: true,
+      data: { message: "Password changed successfully" },
+      meta: { timestamp: new Date().toISOString() },
+    });
   } catch (error: any) {
-    console.error("Change password error:", error);
+    logger.error("Change password error", error);
     res.status(500).json({
-      message: "Error changing password",
-      error: error.message,
+      success: false,
+      error: {
+        code: "PASSWORD_CHANGE_ERROR",
+        message: "Error changing password",
+        details: process.env.NODE_ENV !== "production" ? error.message : undefined,
+      },
+      meta: { timestamp: new Date().toISOString() },
     });
   }
 };

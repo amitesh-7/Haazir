@@ -34,7 +34,7 @@ const ViewTimetable: React.FC = () => {
         const startTime = new Date(`1970-01-01T${gridStart}:00`);
         const endTime = new Date(`1970-01-01T${gridEnd}:00`);
         
-        let currentTime = new Date(startTime);
+        const currentTime = new Date(startTime);
         
         while (currentTime <= endTime) {
             const timeString = currentTime.toTimeString().substring(0, 5);

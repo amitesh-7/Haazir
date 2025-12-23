@@ -16,6 +16,12 @@ import {
   Filler,
 } from "chart.js";
 import { Line, Doughnut, Bar } from "react-chartjs-2";
+import StudentAnimation from "../assets/lottie/STUDENT.json";
+import TeacherAnimation from "../assets/lottie/Teaching.json";
+import CourseAnimation from "../assets/lottie/Courses.json";
+import AttendanceAnimation from "../assets/lottie/Attendance-icon.json";
+import MultiUserIcon from "../assets/lottie/multi-user-icon.json";
+import CheckmarkIcon from "../assets/lottie/checkmark-circle.json";
 import "../styles/coordinatorDashboard.css";
 
 // Register Chart.js components
@@ -31,16 +37,6 @@ ChartJS.register(
   Legend,
   Filler
 );
-
-// Import Lottie animations
-import StudentAnimation from "../assets/lottie/STUDENT.json";
-import TeacherAnimation from "../assets/lottie/Teaching.json";
-import CourseAnimation from "../assets/lottie/Courses.json";
-import AttendanceAnimation from "../assets/lottie/Attendance-icon.json";
-// Import Activity Feed Lottie animations
-import MultiUserIcon from "../assets/lottie/multi-user-icon.json";
-import CheckmarkIcon from "../assets/lottie/checkmark-circle.json";
-import BuildingIcon from "../assets/lottie/building-icon.json";
 
 interface User {
   user_id: number;
@@ -83,16 +79,10 @@ const CoordinatorDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
-  const [showQuickActions, setShowQuickActions] = useState(false);
   const history = useHistory();
 
   // Debug: Log every render
-  console.log(
-    "🎨 CoordinatorDashboard rendering. User:",
-    user,
-    "Stats:",
-    stats
-  );
+  console.log("🎨 CoordinatorDashboard rendering. User:", user, "Stats:", stats);
 
   // Define fetchDashboardData with useCallback to prevent re-creation
   const fetchDashboardData = useCallback(async () => {
@@ -122,37 +112,33 @@ const CoordinatorDashboard: React.FC = () => {
       const activities: Activity[] = [];
 
       if (data.recentActivity?.recentStudents) {
-        data.recentActivity.recentStudents
-          .slice(0, 3)
-          .forEach((student: any) => {
-            activities.push({
-              id: student.id,
-              type: "student",
-              title: "New Student Registered",
-              description: `${student.name} (${
-                student.rollNumber || "N/A"
-              }) - ${student.department || "N/A"}`,
-              timestamp: new Date(student.createdAt).toLocaleString(),
-              icon: "👤",
-              lottieAnimation: MultiUserIcon,
-            });
+        data.recentActivity.recentStudents.slice(0, 3).forEach((student: any) => {
+          activities.push({
+            id: student.id,
+            type: "student",
+            title: "New Student Registered",
+            description: `${student.name} (${student.rollNumber || "N/A"}) - ${
+              student.department || "N/A"
+            }`,
+            timestamp: new Date(student.createdAt).toLocaleString(),
+            icon: "👤",
+            lottieAnimation: MultiUserIcon,
           });
+        });
       }
 
       if (data.recentActivity?.recentTeachers) {
-        data.recentActivity.recentTeachers
-          .slice(0, 2)
-          .forEach((teacher: any) => {
-            activities.push({
-              id: teacher.id,
-              type: "teacher",
-              title: "New Teacher Added",
-              description: `${teacher.name} - ${teacher.department || "N/A"}`,
-              timestamp: new Date(teacher.createdAt).toLocaleString(),
-              icon: "👨‍🏫",
-              lottieAnimation: TeacherAnimation,
-            });
+        data.recentActivity.recentTeachers.slice(0, 2).forEach((teacher: any) => {
+          activities.push({
+            id: teacher.id,
+            type: "teacher",
+            title: "New Teacher Added",
+            description: `${teacher.name} - ${teacher.department || "N/A"}`,
+            timestamp: new Date(teacher.createdAt).toLocaleString(),
+            icon: "👨‍🏫",
+            lottieAnimation: TeacherAnimation,
           });
+        });
       }
 
       setRecentActivities(activities.slice(0, 5));
@@ -282,13 +268,7 @@ const CoordinatorDashboard: React.FC = () => {
 
   // 2. Department Distribution Doughnut Chart
   const departmentData = {
-    labels: [
-      "Computer Science",
-      "Mathematics",
-      "Physics",
-      "Chemistry",
-      "Biology",
-    ],
+    labels: ["Computer Science", "Mathematics", "Physics", "Chemistry", "Biology"],
     datasets: [
       {
         data: [35, 25, 15, 15, 10],
@@ -445,9 +425,7 @@ const CoordinatorDashboard: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center">
           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-lg font-semibold text-gray-800">
-            Loading Dashboard...
-          </p>
+          <p className="text-lg font-semibold text-gray-800">Loading Dashboard...</p>
         </div>
       </div>
     );
@@ -482,9 +460,7 @@ const CoordinatorDashboard: React.FC = () => {
                 aria-label="Refresh dashboard data"
               >
                 <svg
-                  className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${
-                    loading ? "animate-spin" : ""
-                  }`}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${loading ? "animate-spin" : ""}`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -496,9 +472,7 @@ const CoordinatorDashboard: React.FC = () => {
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                <span className="hidden sm:inline">
-                  {loading ? "Refreshing..." : "Refresh"}
-                </span>
+                <span className="hidden sm:inline">{loading ? "Refreshing..." : "Refresh"}</span>
                 <span className="sm:hidden">🔄</span>
               </button>
               <button
@@ -539,23 +513,16 @@ const CoordinatorDashboard: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="flex items-start justify-between relative z-10">
               <div className="flex-1">
-                <p className="text-blue-100 text-xs sm:text-sm font-medium mb-1">
-                  Total Students
-                </p>
-                <p className="text-3xl sm:text-4xl font-bold mb-2">
-                  {stats.students}
-                </p>
+                <p className="text-blue-100 text-xs sm:text-sm font-medium mb-1">Total Students</p>
+                <p className="text-3xl sm:text-4xl font-bold mb-2">{stats.students}</p>
                 {(stats.recentStudents || 0) > 0 && (
                   <div className="flex items-center mt-2">
                     <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full flex items-center backdrop-blur-sm">
-                      <span className="mr-1">↗️</span> +{stats.recentStudents}{" "}
-                      new this week
+                      <span className="mr-1">↗️</span> +{stats.recentStudents} new this week
                     </span>
                   </div>
                 )}
-                <p className="text-blue-100 text-[10px] sm:text-xs mt-2">
-                  Active enrollments
-                </p>
+                <p className="text-blue-100 text-[10px] sm:text-xs mt-2">Active enrollments</p>
               </div>
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 opacity-90 group-hover:scale-110 transition-all duration-300">
                 <Lottie animationData={StudentAnimation} loop={true} />
@@ -571,17 +538,12 @@ const CoordinatorDashboard: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <div className="flex items-start justify-between relative z-10">
               <div className="flex-1">
-                <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
-                  Total Teachers
-                </p>
-                <p className="text-3xl sm:text-4xl font-bold mb-2">
-                  {stats.teachers}
-                </p>
+                <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">Total Teachers</p>
+                <p className="text-3xl sm:text-4xl font-bold mb-2">{stats.teachers}</p>
                 {(stats.recentTeachers || 0) > 0 && (
                   <div className="flex items-center mt-2">
                     <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full flex items-center backdrop-blur-sm">
-                      <span className="mr-1">↗️</span> +{stats.recentTeachers}{" "}
-                      new
+                      <span className="mr-1">↗️</span> +{stats.recentTeachers} new
                     </span>
                   </div>
                 )}
@@ -606,9 +568,7 @@ const CoordinatorDashboard: React.FC = () => {
                 <p className="text-purple-100 text-xs sm:text-sm font-medium mb-1">
                   Active Courses
                 </p>
-                <p className="text-3xl sm:text-4xl font-bold mb-2">
-                  {stats.courses}
-                </p>
+                <p className="text-3xl sm:text-4xl font-bold mb-2">{stats.courses}</p>
                 <div className="flex items-center mt-2">
                   <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full flex items-center backdrop-blur-sm">
                     📚 This semester
@@ -635,17 +595,13 @@ const CoordinatorDashboard: React.FC = () => {
                 <p className="text-orange-100 text-xs sm:text-sm font-medium mb-1">
                   Avg Attendance
                 </p>
-                <p className="text-3xl sm:text-4xl font-bold mb-2">
-                  {stats.todayAttendance}%
-                </p>
+                <p className="text-3xl sm:text-4xl font-bold mb-2">{stats.todayAttendance}%</p>
                 <div className="flex items-center mt-2">
                   <span className="text-[10px] sm:text-xs bg-white/20 px-2 py-1 rounded-full flex items-center backdrop-blur-sm">
                     <span className="mr-1">↗️</span> +2.3% this week
                   </span>
                 </div>
-                <p className="text-orange-100 text-[10px] sm:text-xs mt-2">
-                  Institution-wide
-                </p>
+                <p className="text-orange-100 text-[10px] sm:text-xs mt-2">Institution-wide</p>
               </div>
               <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 opacity-90 group-hover:scale-110 transition-all duration-300">
                 <Lottie animationData={AttendanceAnimation} loop={true} />
@@ -675,15 +631,10 @@ const CoordinatorDashboard: React.FC = () => {
                   >
                     {activity.lottieAnimation ? (
                       <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
-                        <Lottie
-                          animationData={activity.lottieAnimation}
-                          loop={true}
-                        />
+                        <Lottie animationData={activity.lottieAnimation} loop={true} />
                       </div>
                     ) : (
-                      <div className="text-2xl sm:text-3xl flex-shrink-0">
-                        {activity.icon}
-                      </div>
+                      <div className="text-2xl sm:text-3xl flex-shrink-0">{activity.icon}</div>
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
@@ -704,12 +655,8 @@ const CoordinatorDashboard: React.FC = () => {
                 <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3">
                   <Lottie animationData={CheckmarkIcon} loop={true} />
                 </div>
-                <p className="text-xs sm:text-sm font-medium">
-                  No recent activity
-                </p>
-                <p className="text-xs text-gray-300 mt-1">
-                  Activities will appear here
-                </p>
+                <p className="text-xs sm:text-sm font-medium">No recent activity</p>
+                <p className="text-xs text-gray-300 mt-1">Activities will appear here</p>
               </div>
             )}
           </div>
@@ -726,12 +673,8 @@ const CoordinatorDashboard: React.FC = () => {
                 <div className="flex items-center">
                   <span className="text-2xl mr-3">✅</span>
                   <div>
-                    <h4 className="font-semibold text-green-800 text-sm">
-                      System Healthy
-                    </h4>
-                    <p className="text-xs text-green-700 mt-1">
-                      All services operational
-                    </p>
+                    <h4 className="font-semibold text-green-800 text-sm">System Healthy</h4>
+                    <p className="text-xs text-green-700 mt-1">All services operational</p>
                   </div>
                 </div>
               </div>
@@ -741,12 +684,8 @@ const CoordinatorDashboard: React.FC = () => {
                 <div className="flex items-center">
                   <span className="text-2xl mr-3">📅</span>
                   <div>
-                    <h4 className="font-semibold text-blue-800 text-sm">
-                      Classes Today
-                    </h4>
-                    <p className="text-xs text-blue-700 mt-1">
-                      28 classes scheduled
-                    </p>
+                    <h4 className="font-semibold text-blue-800 text-sm">Classes Today</h4>
+                    <p className="text-xs text-blue-700 mt-1">28 classes scheduled</p>
                   </div>
                 </div>
               </div>
@@ -756,12 +695,8 @@ const CoordinatorDashboard: React.FC = () => {
                 <div className="flex items-center">
                   <span className="text-2xl mr-3">👤</span>
                   <div>
-                    <h4 className="font-semibold text-purple-800 text-sm">
-                      Active Now
-                    </h4>
-                    <p className="text-xs text-purple-700 mt-1">
-                      {stats.activeUsers} users online
-                    </p>
+                    <h4 className="font-semibold text-purple-800 text-sm">Active Now</h4>
+                    <p className="text-xs text-purple-700 mt-1">{stats.activeUsers} users online</p>
                   </div>
                 </div>
               </div>
@@ -788,10 +723,7 @@ const CoordinatorDashboard: React.FC = () => {
               <span className="text-sm sm:text-base">Attendance Trends</span>
             </h3>
             <div className="h-[250px] sm:h-[280px] md:h-[300px]">
-              <Line
-                data={attendanceTrendData}
-                options={attendanceTrendOptions}
-              />
+              <Line data={attendanceTrendData} options={attendanceTrendOptions} />
             </div>
             <p className="text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 text-center">
               Weekly attendance performance overview
@@ -805,9 +737,7 @@ const CoordinatorDashboard: React.FC = () => {
           >
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
               <span className="text-xl sm:text-2xl mr-2">🎯</span>
-              <span className="text-sm sm:text-base">
-                Department Distribution
-              </span>
+              <span className="text-sm sm:text-base">Department Distribution</span>
             </h3>
             <div className="h-[250px] sm:h-[280px] md:h-[300px]">
               <Doughnut data={departmentData} options={departmentOptions} />
@@ -996,9 +926,7 @@ const CoordinatorDashboard: React.FC = () => {
             <div className="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
               <div className="w-4 h-4 bg-green-500 rounded-full mr-3 animate-pulse"></div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  Backend API
-                </p>
+                <p className="text-sm font-semibold text-gray-900">Backend API</p>
                 <p className="text-xs text-green-600">Online • 99.9% uptime</p>
               </div>
             </div>
@@ -1012,9 +940,7 @@ const CoordinatorDashboard: React.FC = () => {
             <div className="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
               <div className="w-4 h-4 bg-green-500 rounded-full mr-3 animate-pulse"></div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  Authentication
-                </p>
+                <p className="text-sm font-semibold text-gray-900">Authentication</p>
                 <p className="text-xs text-green-600">Active • JWT Secured</p>
               </div>
             </div>
