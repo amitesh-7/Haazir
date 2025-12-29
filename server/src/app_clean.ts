@@ -42,12 +42,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Log startup
-logger.info('Starting Haazir API Server', { port: PORT, env: process.env.NODE_ENV });
+logger.info("Starting Haazir API Server", { port: PORT, env: process.env.NODE_ENV });
 
 // Security middleware - apply first
 app.use(securityHeaders);
 app.use(sanitizeRequest);
-app.use(preventParamPollution(['ids', 'fields'])); // Allow array params for these
+app.use(preventParamPollution(["ids", "fields"])); // Allow array params for these
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
@@ -57,19 +57,30 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 const normalizeOrigin = (value?: string | null) =>
   value ? value.trim().replace(/\/$/, "") : undefined;
 
+// Support comma-separated CORS_ORIGIN in env vars and explicit domain allowlist
+const envCorsOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((v) => normalizeOrigin(v))
+  .filter(Boolean) as string[];
+
+const frontendUrlNormalized = normalizeOrigin(process.env.FRONTEND_URL);
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5000",
   "https://haazir-six.vercel.app",
-  process.env.FRONTEND_URL,
-  process.env.CORS_ORIGIN,
+  frontendUrlNormalized,
+  ...envCorsOrigins,
+  // Add production domain for haazir.me
+  "https://haazir.me",
+  "https://www.haazir.me",
 ]
   .map(normalizeOrigin)
   .filter(Boolean) as string[];
 
 const allowedOriginSet = new Set(allowedOrigins);
 
-logger.info('CORS configuration loaded', { origins: Array.from(allowedOriginSet) });
+logger.info("CORS configuration loaded", { origins: Array.from(allowedOriginSet) });
 
 app.use(
   cors({
@@ -92,7 +103,7 @@ app.use(
         return callback(null, true);
       }
 
-      logger.warn('CORS blocked origin', { origin, allowed: Array.from(allowedOriginSet) });
+      logger.warn("CORS blocked origin", { origin, allowed: Array.from(allowedOriginSet) });
       return callback(null, false);
     },
     credentials: true,
@@ -135,15 +146,15 @@ app.use("/api/upload", uploadRoutes);
 // Health check endpoint with detailed status
 app.get("/api/health", (req, res) => {
   const healthData = {
-    status: "healthy", 
+    status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     version: process.env.npm_package_version || "2.0.0",
     environment: process.env.NODE_ENV || "development",
     cache: cacheService.getStats(),
   };
-  
-  res.json({ 
+
+  res.json({
     success: true,
     data: healthData,
     meta: { timestamp: new Date().toISOString() },
@@ -152,7 +163,7 @@ app.get("/api/health", (req, res) => {
 
 // Default route
 app.get("/", (req, res) => {
-  res.json({ 
+  res.json({
     success: true,
     data: { message: "Haazir API Server is running!" },
     meta: { timestamp: new Date().toISOString() },
@@ -168,7 +179,7 @@ app.use(errorHandler);
 // Start server (only in non-production environment)
 if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
-    logger.info('Server started successfully', {
+    logger.info("Server started successfully", {
       port: PORT,
       apiUrl: `http://localhost:${PORT}/api`,
       healthCheck: `http://localhost:${PORT}/api/health`,
@@ -183,8 +194,8 @@ const gracefulShutdown = (signal: string) => {
   process.exit(0);
 };
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 // Export for Vercel serverless
 export default app;
