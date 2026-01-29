@@ -69,6 +69,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5000",
   "https://haazir-six.vercel.app",
+  "https://haazir-one.vercel.app",
   frontendUrlNormalized,
   ...envCorsOrigins,
   // Add production domain for haazir.me
