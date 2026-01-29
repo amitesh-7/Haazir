@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Haazir - A modern web-based attendance tracking system for students, teachers, and coordinators.",
   "main": "dist/app_clean.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "start": "node dist/app_clean.js",
     "dev": "ts-node-dev src/app_clean.ts",

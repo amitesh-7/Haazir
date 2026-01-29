@@ -3,6 +3,9 @@
   "version": "2.0.0",
   "private": true,
   "description": "Haazir - Smart Attendance Management System with Face Recognition",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "install-client": "cd client && npm install",
     "install-server": "cd server && npm install",

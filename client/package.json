@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "homepage": "/",
+  "engines": {
+    "node": "20.x"
+  },
   "proxy": "http://localhost:5000",
   "scripts": {
     "start": "craco start",
